@@ -1,0 +1,46 @@
+#' Assess significance of q-values and sort by significance
+#'
+#' Given matrix with at least a column containing q-values and (optionally) a column containing p-values, or a list of such matrices, and a significance level, this function adds a column "signif" to the matrix/matrices containing 0 if the q-value is insignificant and 1 if the q-value is significant at the given level.
+#' Moreover, if a column conataining p-values is given, this function sorts the values in the matrix/matrices from small to large p-values, with NA values at the bottom. If no column with p-values is given, sorting will be done on the q-values, which might be less accurate.
+#' @param coefmatlist Either a matrix containing a column termed "pval" and a column termed "qval", or a list of such matrices.
+#' @param level	The significance level at which the q-value needs to be controlled. Defaults to 5\%.
+#' @param qcol A character string or numeric index indicating the column containing the q-values. Defaults to "qval".
+#' @param pcol Optional. A character string or numeric index indicating the column containing the p-values. Sorting on p-values is more accurate than sorting on q-values. If you don't have a column containing p-values or would want to sort only on q-values, set \code{pcol} to \code{NULL}. Defaults to "pval".
+#' @return Depending on the input, either a matrix or a list of matrices with an extra numeric column termed "\code{qval}", containing corrected p-values.
+#' @examples #Create a contrast matrix L for investigating whether all 10 pairwise contrasts between conditions conc6A, conc6B, conc6D and conc6E differ from zero:
+#' L <- makeContrast(contrasts=c("conc6B-conc6A","conc6C-conc6A","conc6D-conc6A","conc6E-conc6A","conc6C-conc6B","conc6D-conc6B","conc6E-conc6B","conc6D-conc6C","conc6E-conc6C","conc6E-conc6D"),
+#' levels=c("conc6A","conc6B","conc6C","conc6D","conc6E"))
+#' #Load the protLM object protmodel:
+#' protmodel <- data(modelRR, package="MSqRob")
+#' #Test the contrast L:
+#' protvalues <- test.protLMcontrast(protmodel,L)
+#' #Adjust the p-values by Benjamini-Hochberg FDR:
+#' protvalues <- prot.p.adjust(protvalues)
+#' #Assess the significance of the q-values:
+#' protvalues <- prot.signif(protvalues)
+#' @export
+prot.signif <- function(coefmatlist, level=0.05, qcol="qval", pcol="pval")
+{
+
+  nolist <- FALSE
+
+  if(!is.list(coefmatlist) || is.data.frame(coefmatlist)){
+    coefmatlist <- list(coefmatlist)
+    nolist <- TRUE}
+
+    coefmatlist <- lapply(coefmatlist, function(x) {
+      y <- data.frame(x, signif=x[,qcol]<level)
+
+      #If there is a column with p-values, sort first on p-values
+      if(!is.null(pcol)){y <- y[order(abs(y[,pcol]), decreasing = FALSE),]}
+      #If there is a column with q-values, sort then on q-values (sometimes the order changes when performing stage-wise tests, e.g. different number of contrasts in first-stage ANOVA)
+      if(!is.null(qcol)){y <- y[order(abs(y[,qcol]), decreasing = FALSE),]}
+      return(y)
+    })
+
+    if(isTRUE(nolist)){coefmatlist <- coefmatlist[[1]]}
+
+    #else{stop("coefmatlist should either be a matrix or a list of matrices with at least a column containing p-values (pcol) and a column containing q-values (qcol).")}
+
+  return(coefmatlist)
+}
