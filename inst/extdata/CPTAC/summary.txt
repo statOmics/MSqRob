@@ -1,0 +1,92 @@
+Raw file	Experiment	Enzyme	Enzyme mode	Enzyme first search	Enzyme mode first search	Use enzyme first search	Variable modifications	Variable modifications first search	Use variable modifications first search	Multiplicity	Max. missed cleavages	Labels0	LC-MS run type	Time-dependent recalibration	MS	MS/MS	MS/MS Submitted	MS/MS Submitted (SIL)	MS/MS Submitted (ISO)	MS/MS Submitted (PEAK)	MS/MS Identified	MS/MS Identified (SIL)	MS/MS Identified (ISO)	MS/MS Identified (PEAK)	MS/MS Identified [%]	MS/MS Identified (SIL) [%]	MS/MS Identified (ISO) [%]	MS/MS Identified (PEAK) [%]	Peptide Sequences Identified	Peaks	Peaks Sequenced	Peaks Sequenced [%]	Peaks Repeatedly Sequenced	Peaks Repeatedly Sequenced [%]	Isotope Patterns	Isotope Patterns Sequenced	Isotope Patterns Sequenced (z>1)	Isotope Patterns Sequenced [%]	Isotope Patterns Sequenced (z>1) [%]	Isotope Patterns Repeatedly Sequenced	Isotope Patterns Repeatedly Sequenced [%]	Recalibrated	Av. Absolute Mass Deviation [ppm]	Mass Standard Deviation [ppm]	Av. Absolute Mass Deviation [mDa]	Mass Standard Deviation [mDa]	Label free norm param
+20080311_CPTAC6_07_6A005	6A_1	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6494	7562	7998	4988	0	3010	2242	2097	0	145	28.03	42.04	NaN	4.82	2148	381421	6074	1.59	160	2.63	39583	4886	4770	12.34	18.15	194	3.97	+	0.51668	0.70889	0.31035	0.44057	
+20080311_CPTAC6_10_6B019	6B_1	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6752	8069	10004	5910	0	4094	2512	2307	0	205	25.11	39.04	NaN	5.01	2386	472805	7519	1.59	219	2.91	52552	5643	5461	10.74	13.3	236	4.18	+	0.49887	0.67185	0.28606	0.40225	
+20080311_CPTAC6_13_6C012	6C_1	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6216	7687	7469	4043	0	3426	1791	1622	0	169	23.98	40.12	NaN	4.93	1678	365982	5801	1.59	152	2.62	39593	4228	4081	10.68	14.06	156	3.69	+	0.50507	0.70171	0.29941	0.42093	
+20080311_CPTAC6_16_6D014	6D_1	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6004	8342	9053	6113	0	2940	2838	2741	0	97	31.35	44.84	NaN	3.3	2578	365338	7129	1.95	136	1.91	45881	5964	5847	13	16.31	182	3.05	+	0.49074	0.66832	0.29225	0.40705	
+20080311_CPTAC6_19_6E010	6E_1	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5949	8560	9290	6402	0	2888	2775	2698	0	77	29.87	42.14	NaN	2.67	2496	382945	7426	1.94	141	1.9	48027	6246	6116	13.01	16.3	187	2.99	+	0.48227	0.65347	0.28721	0.39507	
+20080313_CPTAC6_07_6A005	6A_2	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6363	8866	10732	6974	0	3758	2737	2577	0	160	25.5	36.95	NaN	4.26	2581	447849	8248	1.84	304	3.69	43365	6592	6412	15.2	26.79	336	5.1	+	0.56354	0.76058	0.32661	0.45288	
+20080313_CPTAC6_10_6B019	6B_2	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6630	8399	10214	6460	0	3754	2358	2210	0	148	23.09	34.21	NaN	3.94	2228	534739	7823	1.46	270	3.45	50013	6107	5933	12.21	18.95	310	5.08	+	0.56383	0.75733	0.32611	0.45397	
+20080313_CPTAC6_13_6C012	6C_2	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6713	8264	10115	6151	0	3964	2647	2447	0	200	26.17	39.78	NaN	5.05	2488	588917	7702	1.31	230	2.99	63165	5856	5690	9.27	12.37	246	4.2	+	0.5309	0.7148	0.30625	0.41867	
+20080313_CPTAC6_16_6D014	6D_2	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6315	9758	11616	7762	0	3854	3501	3292	0	209	30.14	42.41	NaN	5.42	3188	606434	9264	1.53	224	2.42	69217	7460	7287	10.78	14.07	271	3.63	+	0.51986	0.69865	0.30298	0.41214	
+20080313_CPTAC6_19_6E010	6E_2	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6232	10210	12024	8152	0	3872	3224	3086	0	138	26.81	37.86	NaN	3.56	2906	575058	9681	1.68	237	2.45	66448	7836	7671	11.79	15.24	283	3.61	+	0.52065	0.70151	0.3064	0.42585	
+20080315_CPTAC6_07_6A005	6A_3	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6554	8355	10196	6268	0	3928	2338	2146	0	192	22.93	34.24	NaN	4.89	2163	556350	7836	1.41	218	2.78	60805	6006	5867	9.88	13.08	244	4.06	+	0.49882	0.67904	0.28915	0.39926	
+20080315_CPTAC6_10_6B019	6B_3	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6610	8153	10004	6052	0	3952	2157	2033	0	124	21.56	33.59	NaN	3.14	2053	551182	7646	1.39	213	2.79	59791	5802	5654	9.7	12.84	213	3.67	+	0.4929	0.6632	0.28741	0.39734	
+20080315_CPTAC6_13_6C012	6C_3	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6692	8440	10272	6400	0	3872	2448	2303	0	145	23.83	35.98	NaN	3.74	2275	564809	7907	1.4	232	2.93	62052	6109	5944	9.84	12.98	253	4.14	+	0.52803	0.71566	0.30439	0.41858	
+20080315_CPTAC6_16_6D014	6D_3	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6356	9809	11439	8045	0	3394	3241	3084	0	157	28.33	38.33	NaN	4.63	2878	576733	9328	1.62	253	2.71	66068	7722	7528	11.69	15.28	287	3.72	+	0.52532	0.70518	0.3096	0.42557	
+20080315_CPTAC6_19_6E010	6E_3	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		6271	10159	12008	8140	0	3868	3054	2936	0	118	25.43	36.07	NaN	3.05	2777	578384	9711	1.68	203	2.09	66451	7853	7632	11.82	15.44	259	3.3	+	0.55757	0.74668	0.32928	0.4515	
+mam_042408o_CPTAC_study6_6A018	6A_4	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5755	10165	10231	8829	0	1402	4945	4910	0	35	48.33	55.61	NaN	2.5	4549	555882	9211	1.66	231	2.51	54745	8479	8317	15.49	22.54	320	3.77	+	0.3026	0.48218	0.18564	0.29903	
+mam_042408o_CPTAC_study6_6B011	6B_4	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5680	9977	9985	8703	0	1282	4629	4589	0	40	46.36	52.73	NaN	3.12	4248	527496	9078	1.72	201	2.21	51980	8360	8235	16.08	23.72	291	3.48	+	0.30384	0.4577	0.18446	0.28266	
+mam_042408o_CPTAC_study6_6C008	6C_4	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5861	9622	9656	8314	0	1342	4532	4490	0	42	46.93	54.01	NaN	3.13	4176	536236	8755	1.63	186	2.12	52646	8025	7886	15.24	23.3	260	3.24	+	0.29303	0.43414	0.17965	0.27268	
+mam_042408o_CPTAC_study6_6D004	6D_4	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5781	9857	9927	8509	0	1418	4381	4350	0	31	44.13	51.12	NaN	2.19	3990	540142	8934	1.65	217	2.43	51953	8166	8023	15.72	24.57	310	3.8	+	0.2865	0.42525	0.17817	0.27223	
+mam_042408o_CPTAC_study6_6E004	6E_4	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5430	11433	11561	10179	0	1382	4310	4273	0	37	37.28	41.98	NaN	2.68	3786	611323	10534	1.72	277	2.63	65477	9702	9525	14.82	21.45	438	4.51	+	0.31327	0.47113	0.20177	0.3099	
+mam_050108o_CPTAC_study6_6A018	6A_5	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5503	11289	11291	9083	0	2208	4896	4858	0	38	43.36	53.48	NaN	1.72	4467	680558	10138	1.49	281	2.77	57085	8667	8482	15.18	22.12	378	4.36	+	0.27872	0.44207	0.17283	0.27544	
+mam_050108o_CPTAC_study6_6A018_080504183404	6A_6	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5399	11441	11406	9230	0	2176	4961	4930	0	31	43.49	53.41	NaN	1.42	4431	690135	10252	1.49	293	2.86	58627	8794	8577	15	21.9	392	4.46	+	0.29299	0.46445	0.18181	0.29254	
+mam_050108o_CPTAC_study6_6B011	6B_5	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5545	10807	10792	8586	0	2206	4414	4399	0	15	40.9	51.23	NaN	0.68	4039	658706	9670	1.47	260	2.69	52934	8203	8029	15.5	23.38	347	4.23	+	0.2992	0.45543	0.18407	0.28806	
+mam_050108o_CPTAC_study6_6B011_080504231912	6B_6	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5343	10763	10700	8696	0	2004	4365	4314	0	51	40.79	49.61	NaN	2.54	3964	641307	9692	1.51	273	2.82	55318	8311	8119	15.02	22.15	355	4.27	+	0.29889	0.45094	0.18524	0.28937	
+mam_050108o_CPTAC_study6_6C008	6C_5	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5580	10763	10840	8676	0	2164	4518	4482	0	36	41.68	51.66	NaN	1.66	4097	673279	9691	1.44	258	2.66	55387	8282	8102	14.95	22.73	352	4.25	+	0.28729	0.46168	0.17641	0.28563	
+mam_050108o_CPTAC_study6_6C008_080505040419	6C_6	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5601	10672	10664	8632	0	2032	4543	4495	0	48	42.6	52.07	NaN	2.36	4115	648644	9562	1.47	230	2.41	52969	8270	8106	15.61	23.36	321	3.88	+	0.28543	0.45618	0.17691	0.28534	
+mam_050108o_CPTAC_study6_6D004	6D_5	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5363	11633	11467	9657	0	1810	4660	4619	0	41	40.64	47.83	NaN	2.27	4169	716298	10606	1.48	288	2.72	64850	9211	9003	14.2	20.88	410	4.45	+	0.29138	0.43877	0.18487	0.2873	
+mam_050108o_CPTAC_study6_6D004_080505084927	6D_6	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5647	10917	10969	9041	0	1928	4524	4487	0	37	41.24	49.63	NaN	1.92	4064	659248	9906	1.5	231	2.33	57063	8643	8440	15.15	23	358	4.14	+	0.29093	0.43317	0.1864	0.28464	
+mam_050108o_CPTAC_study6_6E004	6E_5	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5291	12533	12557	10619	0	1938	4315	4279	0	36	34.36	40.3	NaN	1.86	3783	777463	11530	1.48	345	2.99	71150	10086	9860	14.18	20.03	495	4.91	+	0.29436	0.44427	0.19432	0.30062	
+mam_050108o_CPTAC_study6_6E004_080505133441	6E_6	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5314	11953	11963	10129	0	1834	4349	4314	0	35	36.35	42.59	NaN	1.91	3800	719556	10920	1.52	315	2.88	65445	9604	9385	14.67	21.11	486	5.06	+	0.29437	0.44962	0.19245	0.30481	
+Orbi2_study6a_W080314_6A013_yeast_S48_ft8_pc	6A_7	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5372	12863	15393	9007	0	6386	3939	3896	0	43	25.59	43.26	NaN	0.67	3452	410715	10633	2.59	278	2.61	33464	8537	8365	25.51	32.15	387	4.53	+	0.36776	0.51609	0.21804	0.31839	
+Orbi2_study6a_W080314_6B007_yeast_S48_ft8_pc	6B_7	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5308	12479	14743	8917	0	5826	3825	3786	0	39	25.94	42.46	NaN	0.67	3417	399167	10415	2.61	287	2.76	33241	8447	8270	25.41	31.74	401	4.75	+	0.35333	0.50256	0.2043	0.29045	
+Orbi2_study6a_W080314_6C001_yeast_S48_ft8_pc	6C_7	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5224	12487	14788	8948	0	5840	3815	3776	0	39	25.8	42.2	NaN	0.67	3428	385510	10414	2.7	233	2.24	33645	8545	8338	25.4	32.14	351	4.11	+	0.35549	0.50168	0.20902	0.30467	
+Orbi2_study6a_W080314_6D007_yeast_S48_ft8_pc	6D_7	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5184	12625	14779	9213	0	5566	3938	3877	0	61	26.65	42.08	NaN	1.1	3497	400671	10619	2.65	240	2.26	35096	8832	8632	25.17	31.75	338	3.83	+	0.35936	0.49817	0.21428	0.30346	
+Orbi2_study6a_W080314_6E008_yeast_S48_ft8_pc	6E_7	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5253	12931	14962	9902	0	5060	4059	4015	0	44	27.13	40.55	NaN	0.87	3489	410438	11153	2.72	254	2.28	37245	9424	9197	25.3	31.85	434	4.61	+	0.34962	0.49417	0.21492	0.31289	
+Orbi2_study6b_W080321_6A013_yeast_S48_ft8_pc_01	6A_8	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5277	15011	20017	8251	0	11766	3489	3446	0	43	17.43	41.76	NaN	0.37	3078	779317	11894	1.53	230	1.93	39280	7909	7579	20.13	29.26	309	3.91	+	0.35922	0.50904	0.21795	0.31179	
+Orbi2_study6b_W080321_6A013_yeast_S48_ft8_pc_02	6A_9	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5353	13946	17628	8202	0	9426	3656	3612	0	44	20.74	44.04	NaN	0.47	3250	731648	11171	1.53	254	2.27	40419	7820	7476	19.35	28.8	347	4.44	+	0.34927	0.50245	0.21191	0.31078	
+Orbi2_study6b_W080321_6B007_yeast_S48_ft8_pc_01	6B_8	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5219	14865	19527	8121	0	11406	3356	3333	0	23	17.19	41.04	NaN	0.2	2998	810582	11829	1.46	222	1.88	40687	7776	7443	19.11	28.56	317	4.08	+	0.37876	0.54236	0.22908	0.33313	
+Orbi2_study6b_W080321_6B007_yeast_S48_ft8_pc_02	6B_9	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5270	13848	17500	8306	0	9194	3637	3596	0	41	20.78	43.29	NaN	0.45	3264	703575	11200	1.59	231	2.06	39100	7936	7625	20.3	29.52	333	4.2	+	0.37045	0.52513	0.22286	0.32181	
+Orbi2_study6b_W080321_6C001_yeast_S48_ft8_pc_01	6C_8	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5159	14984	19572	8510	0	11062	3590	3538	0	52	18.34	41.57	NaN	0.47	3163	872631	12188	1.4	237	1.94	44210	8133	7786	18.4	27.41	332	4.08	+	0.36944	0.53482	0.22419	0.32703	
+Orbi2_study6b_W080321_6C001_yeast_S48_ft8_pc_02	6C_9	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5417	13484	16592	8508	0	8084	3882	3845	0	37	23.4	45.19	NaN	0.46	3427	638842	10985	1.72	227	2.07	38865	8145	7834	20.96	29.77	315	3.87	+	0.35825	0.50974	0.21677	0.31618	
+Orbi2_study6b_W080321_6D007_yeast_S48_ft8_pc_01	6D_8	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5063	15309	19781	9023	0	10758	3853	3806	0	47	19.48	42.18	NaN	0.44	3366	827832	12524	1.51	262	2.09	44057	8589	8247	19.5	28.08	386	4.49	+	0.36802	0.51924	0.2261	0.32703	
+Orbi2_study6b_W080321_6D007_yeast_S48_ft8_pc_02	6D_9	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5485	12721	15220	8808	0	6412	4151	4105	0	46	27.27	46.61	NaN	0.72	3635	509052	10604	2.08	203	1.91	35821	8447	8239	23.58	31.25	317	3.75	+	0.37363	0.51821	0.22505	0.32091	
+Orbi2_study6b_W080321_6E008_yeast_S48_ft8_pc_01	6E_8	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		4955	15692	20087	9711	0	10376	3734	3692	0	42	18.59	38.02	NaN	0.4	3157	892042	13341	1.5	266	1.99	49327	9248	8779	18.75	27.82	416	4.5	+	0.35421	0.49583	0.22742	0.32564	
+Orbi2_study6b_W080321_6E008_yeast_S48_ft8_pc_02	6E_9	Trypsin/P	Specific			False	Acetyl (Protein N-term);Oxidation (M);Gln->pyro-Glu		False	1	2		Standard		5390	13558	16087	9757	0	6330	4264	4232	0	32	26.51	43.37	NaN	0.51	3636	535741	11539	2.15	253	2.19	39825	9323	9081	23.41	30.55	400	4.29	+	0.35366	0.49421	0.22192	0.32357	
+6A_1																													2148																		
+6A_2																													2581																		
+6A_3																													2163																		
+6A_4																													4549																		
+6A_5																													4467																		
+6A_6																													4431																		
+6A_7																													3452																		
+6A_8																													3078																		
+6A_9																													3250																		
+6B_1																													2386																		
+6B_2																													2228																		
+6B_3																													2053																		
+6B_4																													4248																		
+6B_5																													4039																		
+6B_6																													3964																		
+6B_7																													3417																		
+6B_8																													2998																		
+6B_9																													3264																		
+6C_1																													1678																		
+6C_2																													2488																		
+6C_3																													2275																		
+6C_4																													4176																		
+6C_5																													4097																		
+6C_6																													4115																		
+6C_7																													3428																		
+6C_8																													3163																		
+6C_9																													3427																		
+6D_1																													2578																		
+6D_2																													3188																		
+6D_3																													2878																		
+6D_4																													3990																		
+6D_5																													4169																		
+6D_6																													4064																		
+6D_7																													3497																		
+6D_8																													3366																		
+6D_9																													3635																		
+6E_1																													2496																		
+6E_2																													2906																		
+6E_3																													2777																		
+6E_4																													3786																		
+6E_5																													3783																		
+6E_6																													3800																		
+6E_7																													3489																		
+6E_8																													3157																		
+6E_9																													3636																		
+Total															258173	501261	573119	367927	0	205192	165393	161923	0	3470	28.86	44.01	NaN	1.69	11466	26492982					2284922	352224	342873	15.42	21.55	14553	4.13		0.37024	0.54008	0.22435	0.33364	
