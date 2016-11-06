@@ -27,6 +27,7 @@
 #'  Molecular & Cellular Proteomics, 2016.
 #' @include protdata.R
 #' @include protLM.R
+#' @include dummyVars.R
 #' @export
 fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message=NULL,...)
 {
@@ -476,7 +477,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   # newContr["unordered"] <- "contr.ltfr"
   # options(contrasts = newContr)
 
-  dummies <- caret::dummyVars(formula_fix, data=x)
+  dummies <- dummyVars(formula_fix, data=x)
   dummies$sep <- ""
   attr(parsedFormula,"MSqRob_levels") <-  c(colnames(predict(dummies, newdata=x)),rownames(parsedFormula$reTrms$Zt[-Zt_indices,]))
 
@@ -539,7 +540,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
 
   #If all fixed effects are zero, there still needs to be an attribute called "MSqRob_levels"
   } else if(!isTRUE(error)){
-    dummies <- caret::dummyVars(formula_fix, data=x)
+    dummies <- dummyVars(formula_fix, data=x)
     dummies$sep <- ""
     attr(parsedFormula,"MSqRob_levels") <-  c(colnames(predict(dummies, newdata=x)),rownames(parsedFormula$reTrms$Zt))
 
