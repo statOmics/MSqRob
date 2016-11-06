@@ -348,7 +348,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     }
 
     outputlist$results <- RidgeSqM
-    outputlist$test <- "DONE!"
+    outputlist$test <-  "DONE!"
 
     ###Save output (unless no save: input$save==3)###
     if(input$save!=3){
@@ -370,7 +370,13 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     RData$levelOptions <- levelOptions()
     RData$random <- random
     RData$plot2DependentVars <- plot2DependentVars()
-    saves::saves(RData, file=file.path(savepath, paste0(input$project_name,"_","models.RDatas")))
+
+    wd_old <- getwd()
+    setwd(savepath)
+    saves::saves(RData, file=paste0(input$project_name,"_","models.RDatas"))
+    setwd(wd_old)
+
+    #save(RData, file=file.path(savepath, paste0(input$project_name,"_","models.RDatas")))
     openxlsx::write.xlsx(results, file = file.path(savepath, paste0(input$project_name,"_","results.xlsx")), colNames = TRUE, rowNames = TRUE)
     # #Bold header in Excel file:
     # headerStyle <- openxlsx::createStyle(textDecoration = "bold")
