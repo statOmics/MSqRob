@@ -70,7 +70,7 @@ Collate:
     'addVarFromVar.R'
     'countPeptides.R'
     'df2protdata.R'
-    'dummyVars.R'
+    'dummyVars_MSqRob.R'
     'protLM.R'
     'fit_model.R'
     'getBetaVcovDf.R'
