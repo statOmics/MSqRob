@@ -13,6 +13,9 @@
 #' @param k The tuning constant for the Huber mean when weighing down outliers. The default (\code{k = 1.345}) produces 95 \% efficiency relative to the sample mean when the population is normal but provides substantial resistance to outliers when it is not.
 #' @param tolPwrss A numeric value indicating the maximally tolerated deviation on the penalized weighted residual sum of squares when iteratively estimating the weights by M estimation.
 #' @param verbose A logical value indicating whether the models should be printed out. Defaults to \code{FALSE}.
+#' @param printProgress A logical indicating whether the R should print a message before fitting each model. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
 #' @return A \code{\link[=protLM-class]{protLM}} object containing the names of all proteins in the input \code{\link[=protdata-class]{protdata}} object and their corresponding fitted models.
 #' @examples data(proteinsCPTAC, package="MSqRob")
 #' #Fitting models for the first 10 proteins in the protdata object proteinsCPTAC using the robust ridge approach of Goeminne et al. (2015):
@@ -25,8 +28,18 @@
 #' @include protdata.R
 #' @include protLM.R
 #' @export
-fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE,...)
+fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message=NULL,...)
 {
+
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
 
   #Control: fixed en random connot be NULL at the same time!
   if(is.null(response)){stop("Please specify a response variable.")}
@@ -87,7 +100,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     data <- .adjustNames(data, random)
 
     #Fit the list of ridge models
-    modellist <- .createRidgeList(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,...)
+    modellist <- .createRidgeList(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,progress=progress,printProgress=printProgress,shiny=shiny,...)
 
   } else if(is.null(random)){
 
@@ -98,7 +111,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     attributes(terms) <- list(variables=c(response, fixed), factors=rbind(rep(0,length(fixed)),diag(1, length(fixed))), term.labels=fixed, order=rep(1, length(fixed)), intercept=1, response=1)
 
     #Fit the list of lm models
-    modellist <- .createLmList(data,weights,formula,fixed,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,...)
+    modellist <- .createLmList(data,weights,formula,fixed,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,progress=progress,printProgress=printProgress,shiny=shiny,...)
 
   }
   return(new("protLM", accession=protdata@accession, model=modellist, annotation=protdata@annotation))
@@ -206,10 +219,15 @@ makeFormulaPredictors <- function(input, intercept, effect){
 }
 
 #Create a list with fitted lm regression models
-.createLmList=function(data,weights,formula,predictors,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,...){
+.createLmList=function(data,weights,formula,predictors,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,progress=NULL,printProgress=NULL,shiny=FALSE,...){
+
+  count <- 0
 
   #Return a fitted lmerMod model with M estimation or fitted with given weights or NULL weights
   mapply(function(x,y){
+
+    count <<- count+1
+    upDateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
 
     n <- nrow(x)
     #If the weighs for this particular protein are of length 1, duplicate them to the correct length
@@ -258,8 +276,14 @@ makeFormulaPredictors <- function(input, intercept, effect){
 
 
 #Create a list with fitted ridge regression models
-.createRidgeList=function(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,...){
+.createRidgeList=function(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,progress=NULL,printProgress=NULL,shiny=FALSE,...){
+
+  count <- 0
+
   modellist <- mapply(function(x,y){
+
+    count <<- count+1
+    upDateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
 
     n <- nrow(x)
     #If the weighs for this particular protein are of length 1, duplicate them to the correct length

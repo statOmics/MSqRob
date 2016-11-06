@@ -14,14 +14,16 @@ makeAnnotation <- function(exp_annotation, type_annot=NULL, colClasses=NA){
 
     if(isTRUE(as.logical(grep(".xlsx[/\\]*$",exp_annotation))) || type_annot=="xlsx"){
 
-      if(Sys.info()['sysname']=="Windows"){
-
-        pData <- xlsx::read.xlsx(file=exp_annotation, sheetIndex = 1)
-        #Remove columns with all NA
-        pData <- pData[,!colSums(apply(pData, 2, is.na))==nrow(pData),drop=FALSE]
-        return(pData)
-
-      } else{pData <- openxlsx::read.xlsx(exp_annotation)}
+      # if(Sys.info()['sysname']=="Windows"){
+      #
+      #   pData <- xlsx::read.xlsx(file=exp_annotation, sheetIndex = 1)
+      #   #Remove columns with all NA
+      #   pData <- pData[,!colSums(apply(pData, 2, is.na))==nrow(pData),drop=FALSE]
+      #   return(pData)
+      #
+      # } else{
+          pData <- openxlsx::read.xlsx(exp_annotation)
+      # }
 
     } else{ #if(type_annot=="tab-delim")
       pData <- read.table(exp_annotation, sep="\t", header=TRUE, row.names = NULL)

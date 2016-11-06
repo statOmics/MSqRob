@@ -10,7 +10,7 @@
 #' @param split A character indicating which string is used to separate accession groups.
 #' @param exp_annotation Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no (extra) annotation to be added.
 #' @param type_annot If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.
-#' @param intensity_col A character indicating the column that contains the quantitative values of interest (mostly peak intensities or peak areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the LFQbench_ImportDIAData function).
+#' @param quant_col A character indicating the column that contains the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the \code{\link{importDIAData}} function).
 #' @param run_col A character indicating the column in data frame \code{df} that contains the mass spec run names.
 #' @param aggr_by A character indicating the column by which the data should be aggregated. We advise to aggregate the data by peptide sequence (thus aggregate over different charge states and modification statuses of the same peptide). If you only want to aggregate over charge states, set \code{aggr_by} to the column corresponding to the modified sequences. If no aggregation at all is desired, create a new column in which you paste together the modified sequences and the charge states. Data will never be aggregated over different \code{run_col}.
 #' @param aggr_function The function used to aggregate intensity data. Defaults to \code{"sum"}.
@@ -31,12 +31,12 @@
 #' @return A preprocessed data frame that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.
 #' @include preprocess_hlpFunctions.R
 #' @export
-preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_annot=NULL, intensity_col="quant_value", run_col, aggr_by, aggr_function="sum", logtransform=TRUE, base=2, normalisation, smallestUniqueGroups=TRUE, useful_properties, filter, filter_symbol, minIdentified=2, colClasses_df=NA, colClasses_exp=NA, ...)
+preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_annot=NULL, quant_col="quant_value", run_col, aggr_by, aggr_function="sum", logtransform=TRUE, base=2, normalisation, smallestUniqueGroups=TRUE, useful_properties, filter, filter_symbol, minIdentified=2, colClasses_df=NA, colClasses_exp=NA, ...)
 {
   #df <- read.table(file, sep = "\t", header = TRUE, quote="", comment.char = "", na.strings = c("NA","#N/A"))
 
   #Remove potential NA rows
-  df <- df[!is.na(df[,intensity_col]),]
+  df <- df[!is.na(df[,quant_col]),]
 
   #1. Aggregate peptides with the same sequence (parameter "aggr_by") (but maybe different charges and/or modifications)
 
@@ -59,7 +59,7 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
       tmp <- df[df$MSqRob_ID==uniqueIDs[i], , drop=FALSE]
       df2[i,] <- apply(tmp, 2, function(x){paste0(unique(x), collapse = split)})
-      df2[i,intensity_col] <- do.call(aggr_function,list(tmp[,intensity_col]))
+      df2[i,quant_col] <- do.call(aggr_function,list(tmp[,quant_col]))
 
     }
 
@@ -79,6 +79,10 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
   }
 
+  # Faster way to aggregate: check importDIAData.R: maybe implement here and in preprocess_wide.R as well!!!!!!!!
+  # data <- data %>% ungroup() %>% group_by_(filename.var, get(aggr_by),
+  #                                          protein.var) %>% summarise_(quant_value = sumquant)
+
   #If colClasses_df is specified, change the colClasses
   df <- addColClasses(df, colClasses_df)
 
@@ -86,9 +90,9 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
   if(isTRUE(logtransform)){
     #Log transform
-    df[,intensity_col] <- log(df[,intensity_col], base=base)
+    df[,quant_col] <- log(df[,quant_col], base=base)
     #Change -Inf values in the peptide intensities to NA
-    df[,intensity_col][is.infinite(df[,intensity_col])] <- NA
+    df[,quant_col][is.infinite(df[,quant_col])] <- NA
   }
 
   #3. Change format for normalisation
@@ -98,7 +102,7 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
   #Everything to matrix format
   for(i in 1:length(runs)){
-    normmatrix[1:sum(df[,run_col]==runs[i]),i] <- df[,intensity_col][df[,run_col]==runs[i]]
+    normmatrix[1:sum(df[,run_col]==runs[i]),i] <- df[,quant_col][df[,run_col]==runs[i]]
   }
 
   #4. Normalisation
@@ -126,7 +130,7 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
   #Put everything back...
   for(i in 1:length(runs)){
-    df[,intensity_col][df[,run_col]==runs[i]] <- normmatrix[1:sum(df[,run_col]==runs[i]),i]
+    df[,quant_col][df[,run_col]==runs[i]] <- normmatrix[1:sum(df[,run_col]==runs[i]),i]
   }
 
 
@@ -155,7 +159,7 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
   if(!(accession %in% useful_properties)){useful_properties <- c(accession,useful_properties)}
   if(!(aggr_by %in% useful_properties)){useful_properties <- c(aggr_by,useful_properties)}
   if(!(run_col %in% useful_properties)){useful_properties <- c(run_col,useful_properties)}
-  if(!(intensity_col %in% useful_properties)){useful_properties <- c(intensity_col,useful_properties)}
+  if(!(quant_col %in% useful_properties)){useful_properties <- c(quant_col,useful_properties)}
 
   df <- df[,useful_properties]
 
@@ -189,7 +193,7 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 #' @param accession A character indicating the column that contains the unit on which you want to do inference (typically the protein identifiers). Defaults to "EG.ProteinId".
 #' @param exp_annotation Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no (extra) annotation to be added.
 #' @param type_annot If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.
-#' @param intensity_col A character indicating the column that contains the quantitative values of interest (mostly peak intensities or peak areas under the curve). Defaults to "quant_value"  (the name of the column after importing via the LFQbench_ImportDIAData function). When using data imported via the \code{\link{read_long})} function, this should be set to \code{"FG.NormalizedTotalPeakArea"}.
+#' @param quant_col A character indicating the column that contains the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to "quant_value" (the name of the column after importing via the \code{\link{importDIAData}} function).
 #' @param run_col A character indicating the column that contains the mass spec run names. Defaults to \code{"R.FileName"}.
 #' @param aggr_by A character indicating the column by which the data should be aggregated. The default \code{"EG.StrippedSequence"} will aggregate the data over different charge states and modification statuses. If you only want to aggregate over charge states, set \code{aggr_by} to the "EG.ModifiedSequence" column. If no aggregation at all is desired, create a new column in which you paste together the "EG.ModifiedSequence" and the "FG.Charge". Data will never be aggregated over different \code{run_col}.
 #' @param aggr_function The function used to aggregate intensity data. Defaults to \code{"sum"}.
@@ -209,9 +213,9 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 #' @param ... Optional arguments to be passed to the normalisation methods.
 #' @return A preprocessed data frame that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.
 #' @export
-preprocess_Spectronaut <- function(df, accession="EG.ProteinId", exp_annotation=NULL, type_annot=NULL, intensity_col="quant_value", run_col="R.FileName", aggr_by="EG.StrippedSequence", aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("species"), filter="EG.IsDecoy", filter_symbol=TRUE, minIdentified=2, colClasses_df=NA, colClasses_exp=NA, ...){
+preprocess_Spectronaut <- function(df, accession="EG.ProteinId", exp_annotation=NULL, type_annot=NULL, quant_col="quant_value", run_col="R.FileName", aggr_by="EG.StrippedSequence", aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("species"), filter="EG.IsDecoy", filter_symbol=TRUE, minIdentified=2, colClasses_df=NA, colClasses_exp=NA, ...){
 
-  dfnew <- preprocess_long(df, accession=accession, split="/", exp_annotation=exp_annotation, type_annot=type_annot, intensity_col=intensity_col, run_col=run_col, aggr_by=aggr_by, aggr_function=aggr_function, logtransform=logtransform, base=base, normalisation=normalisation, smallestUniqueGroups=smallestUniqueGroups, useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified, colClasses_df=colClasses_df, colClasses_exp=colClasses_exp)
+  dfnew <- preprocess_long(df, accession=accession, split="/", exp_annotation=exp_annotation, type_annot=type_annot, quant_col=quant_col, run_col=run_col, aggr_by=aggr_by, aggr_function=aggr_function, logtransform=logtransform, base=base, normalisation=normalisation, smallestUniqueGroups=smallestUniqueGroups, useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified, colClasses_df=colClasses_df, colClasses_exp=colClasses_exp)
   return(dfnew)
 
 }
@@ -228,7 +232,7 @@ preprocess_Spectronaut <- function(df, accession="EG.ProteinId", exp_annotation=
 #' @param accession A character indicating the column that contains the unit on which you want to do inference (typically the protein identifiers). Defaults to "ProteinName".
 #' @param exp_annotation Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no (extra) annotation to be added.
 #' @param type_annot If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.
-#' @param intensity_col A character indicating the column that contains the quantitative values of interest (mostly peak intensities or peak areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the LFQbench_ImportDIAData function). When using data imported via the \code{\link{read_long})} function, this should be set to \code{"TotalArea"}.
+#' @param quant_col A character indicating the column that contains the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the \code{\link{importDIAData}} function).
 #' @param run_col A character indicating the column that contains the mass spec run names. Defaults to \code{"ReplicateName"}.
 #' @param aggr_by A character indicating the column by which the data should be aggregated. The default \code{"PeptideSequence"} will aggregate the data over different charge states and modification statuses. If you only want to aggregate over charge states, set \code{aggr_by} to the "ModifiedSequence" column. If no aggregation at all is desired, create a new column in which you paste together the "ModifiedSequence" and the "PrecursorCharge". Data will never be aggregated over different \code{run_col}.
 #' @param aggr_function The function used to aggregate intensity data. Defaults to \code{"sum"}.
@@ -248,9 +252,9 @@ preprocess_Spectronaut <- function(df, accession="EG.ProteinId", exp_annotation=
 #' @param ... Optional arguments to be passed to the normalisation methods.
 #' @return A preprocessed data frame that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.
 #' @export
-preprocess_Skyline <- function(df, accession="ProteinName", exp_annotation=NULL, type_annot=NULL, intensity_col="quant_value", run_col="ReplicateName", aggr_by="PeptideSequence", aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("ProteinName","ProteinDescription","ProteinAccession","PeptideSequence"), filter="IsDecoy", filter_symbol="True", minIdentified=2, colClasses_df=NA, colClasses_exp=NA, ...){
+preprocess_Skyline <- function(df, accession="ProteinName", exp_annotation=NULL, type_annot=NULL, quant_col="quant_value", run_col="ReplicateName", aggr_by="PeptideSequence", aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("ProteinName","ProteinDescription","ProteinAccession","PeptideSequence"), filter="IsDecoy", filter_symbol="True", minIdentified=2, colClasses_df=NA, colClasses_exp=NA, ...){
 
-  dfnew <- preprocess_long(df, accession=accession, split="/", exp_annotation=exp_annotation, type_annot=type_annot, intensity_col=intensity_col, run_col=run_col, aggr_by=aggr_by, aggr_function=aggr_function, logtransform=logtransform, base=base, normalisation=normalisation, smallestUniqueGroups=smallestUniqueGroups, useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified, colClasses_df=colClasses_df, colClasses_exp=colClasses_exp)
+  dfnew <- preprocess_long(df, accession=accession, split="/", exp_annotation=exp_annotation, type_annot=type_annot, quant_col=quant_col, run_col=run_col, aggr_by=aggr_by, aggr_function=aggr_function, logtransform=logtransform, base=base, normalisation=normalisation, smallestUniqueGroups=smallestUniqueGroups, useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified, colClasses_df=colClasses_df, colClasses_exp=colClasses_exp)
   return(dfnew)
 
 }

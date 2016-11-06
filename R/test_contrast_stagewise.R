@@ -18,27 +18,31 @@
 #' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.
 #' @param pars_df Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the models that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the models will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
 #' @param satterthwaite A logical indicating whether the Satterthwaite approximation for the degrees of freedom should be used instead of the classical trace of the Hat matrix. Defaults to \code{FALSE}.
+#' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
 #' @param ... Additional arguments to be passed to the squeezeVarRob function internally.
 #' @return A list of matrices, with each matrix in the list corresponding to a contrast in L. Each row of the matrix corresponds to a protein in the \code{\link[=protLM-class]{protLM}} object.
 #' The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast, the \code{pval} column holds the p-value corresponding to the contrast and the \code{qval} column holds the corrected p-values.
 #' Each matrix is sorted from smalles to largest \code{pval} with \code{NA} values at the bottom of the matrices.
 #' If \code{simplify=TRUE} and the \code{\link[=protLM-class]{protLM}} object contains only one element, the matrix is not present in a list.
 #' @include testProtLMContrast.R
+#' @include updateProgress.R
 #' @include prot_p_adjust.R
 #' @include prot_signif.R
 #' @include test_contrast_adjust.R
 #' @include prot_p_adjust_protwise.R
 #' @export
-test.contrast_stagewise <- function(protLM, L, add.annotations=TRUE, level=0.05, method_stage1="fdr", squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, ...)
+test.contrast_stagewise <- function(protLM, L, add.annotations=TRUE, level=0.05, method_stage1="fdr", squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, printProgress=FALSE, shiny=FALSE, message=NULL, ...)
 {
 
-  contrast_S1 <- test.contrast_adjust(protLM, L, level=level, method=method_stage1, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=TRUE, lfc=lfc, anova=TRUE, anova.na.ignore=TRUE, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite)
+  contrast_S1 <- test.contrast_adjust(protLM, L, level=level, method=method_stage1, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=TRUE, lfc=lfc, anova=TRUE, anova.na.ignore=TRUE, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, printProgress=printProgress, shiny=shiny, message=message)
 
   #Extract the ones that are significant in stage 1
   sign_setS1 <- subset(contrast_S1, contrast_S1[,"signif"]==1)
   significantS1 <- rownames(sign_setS1)
 
-  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=FALSE, lfc=lfc, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite)
+  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=FALSE, lfc=lfc, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, printProgress=printProgress, shiny=shiny, message=message)
 
   n_ann <- ncol(getAnnotations(protLM))
 

@@ -18,19 +18,34 @@
 #' @param satterthwaite A logical indicating whether the Satterthwaite approximation for the degrees of freedom should be used instead of the classical trace of the Hat matrix. Defaults to \code{FALSE}.
 #' @param lmerModFun Only used when \code{satterthwaite=TRUE}. \code{lmerModFun} indicates which deviance function should be used when calculating the Satterthwaite approximation for the degrees of freedom. The default (\code{NULL}) uses the lme4 \code{\link[=lme4::mkLmerDevfun]{mkLmerDevfun}} function to generate the deviance function. This parameter should only rarely, if ever, be changed.
 #' @param gradMethod Only used when \code{satterthwaite=TRUE}. One of "Richardson", "simple", or "complex" indicating the method to use for the gradient calculation by numerical approximation during the calculation of the Satterthwaite approximation for the degrees of freedom. Defaults to "simple".
+#' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
 #' @param ... Additional arguments to be passed to the squeezeVarRob function.
 #' @return A list of data frames, with each data frame in the list corresponding to a contrast in L. Each row of the data frame corresponds to a protein in the \code{\link[=protLM-class]{protLM}} object.
 #' The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast and the \code{pval} column holds the p-value corresponding to the contrast.
 #' If \code{simplify=TRUE} and the \code{\link[=protLM-class]{protLM}} object contains only one element, the data frame is not present in a list.
 #' @include protdata.R
+#' @include updateProgress.R
 #' @include protLM.R
 #' @include getBetaVcovDf.R
 #' @include getBetaVcovDfList.R
 #' @include testContrast.R
 #' @include squeezePars.R
 #' @export
-test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun=NULL, gradMethod="simple", ...)
+test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun=NULL, gradMethod="simple", printProgress=FALSE, shiny=FALSE, message=NULL, ...)
 {
+
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
+
   if(is.null(rownames(L))) stop("L should be a matrix with row names corresponding to model predictors.")
 
   #if(!all(rownames(L) %in% rownames(betaVcovDf$beta))) stop(paste0("\"",rownames(L)[!(rownames(L) %in% rownames(betaVcovDf$beta))],"\" does not correspond to any model predictor."))
@@ -71,6 +86,9 @@ test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE
 
   for(i in 1:length(models))
   {
+
+    upDateProgress(progress=progress, detail=paste0("Testing contrast(s) for protein ",i," of ",length(models),"."), n=length(models), shiny=shiny, print=isTRUE(printProgress))
+
     beta <- betas[[i]]
     vcov <- vcovs[[i]]
     sigma <- sigmas[i]
@@ -99,7 +117,7 @@ test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE
 
     #If satterthwaite is TRUE, we use the Satterthwaite approximation for df
     if(isTRUE(satterthwaite)){
-    df <- dfSatterthwaite(lmerModFun, model, vcov, sigma, L2)
+    df <- dfSatterthwaite(lmerModFun, model, vcov, sigma, L2, gradMethod)
 
     #Change df to df_exp if you use the more conservative dfs based on the experimental units
     #Note: you should use the normal dfs for the squeezing of the variances!!!
@@ -172,7 +190,7 @@ getXlevels=function(model, class){
   }
 }
 
-dfSatterthwaite=function(lmerModFun, model, vcov, sigma, L2){
+dfSatterthwaite=function(lmerModFun, model, vcov, sigma, L2, gradMethod){
 
   #This function is only used for df calculation for inference => we use the vcov that is calculated back to the original scale!
 

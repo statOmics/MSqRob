@@ -9,11 +9,9 @@
 #' @param split A character indicating which string is used to separate accession groups.
 #' @param exp_annotation Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no annotation to be added.
 #' @param type_annot If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.
-
-#' @param intensity_cols Either a character or numeric vector indicating the columns that contain the quantitative values of interest (mostly peak intensities or peak areas under the curve) or a character string of length one indicating a pattern that is unique for the column names of the columns that contain the quantitative values of interest.
+#' @param quant_cols Either a character or numeric vector indicating the columns that contain the quantitative values of interest (mostly peptide intensities or peptide areas under the curve) or a character string of length one indicating a pattern that is unique for the column names of the columns that contain the quantitative values of interest.
 #' @param aggr_by A character indicating the column by which the data should be aggregated. We advise to aggregate the data by peptide sequence (thus aggregate over different charge states and modification statuses of the same peptide). If you only want to aggregate over charge states, set \code{aggr_by} to the column corresponding to the modified sequences. If no aggregation at all is desired, create a new column in which you paste together the modified sequences and the charge states.
 #' @param aggr_function The function used to aggregate intensity data. Defaults to \code{"sum"}.
-
 #' @param logtransform A logical value indicating whether the intensities should be log-transformed. Defaults to \code{TRUE}.
 #' @param base A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.
 #' @param normalisation A character vector of length one that describes how to normalise the data frame \code{df}. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.
@@ -31,7 +29,7 @@
 #' @return A preprocessed \code{\link[=MSnSet-class]{MSnSet}} object that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.
 #' @include preprocess_hlpFunctions.R
 #' @export
-preprocess_wide <- function(df, accession, split, exp_annotation=NULL, type_annot=NULL, intensity_cols, aggr_by, aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=NULL, filter=NULL, filter_symbol=NULL, minIdentified=2, colClasses=NA, printProgress=FALSE, shiny=FALSE, ...)
+preprocess_wide <- function(df, accession, split, exp_annotation=NULL, type_annot=NULL, quant_cols, aggr_by, aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=NULL, filter=NULL, filter_symbol=NULL, minIdentified=2, colClasses=NA, printProgress=FALSE, shiny=FALSE, ...)
 {
 
   progress <- NULL
@@ -44,8 +42,8 @@ preprocess_wide <- function(df, accession, split, exp_annotation=NULL, type_anno
     progress$set(message = "Preprocessing...", value = 0)
   }
 
-  #If intensity_cols has length one => it is a pattern => select all columns corresponding to this pattern
-  if(is.character(intensity_cols) & length(intensity_cols==1)){intensity_cols <- colnames(df)[grepl("Intensity.",colnames(df))]}
+  #If quant_cols has length one => it is a pattern => select all columns corresponding to this pattern
+  if(is.character(quant_cols) & length(quant_cols==1)){quant_cols <- colnames(df)[grepl("Intensity.",colnames(df))]}
 
   #Error control
   if(!all(useful_properties %in% colnames(df))){stop("Argument \"useful_properties\" must only contain column names of the data frame df.")}
@@ -72,7 +70,7 @@ preprocess_wide <- function(df, accession, split, exp_annotation=NULL, type_anno
 
       tmp <- df[df$MSqRob_ID==uniqueIDs[i], , drop=FALSE]
       df2[i,] <- apply(tmp, 2, function(x){paste0(unique(x), collapse = split)})
-      df2[i,intensity_cols] <- apply(tmp[,intensity_cols, drop=FALSE],2,aggr_function)
+      df2[i,quant_cols] <- apply(tmp[,quant_cols, drop=FALSE],2,aggr_function)
 
     }
 
@@ -93,8 +91,8 @@ preprocess_wide <- function(df, accession, split, exp_annotation=NULL, type_anno
   }
 
 
-  intensities <- as.matrix(df[,intensity_cols])
-  df <- df[ , -which(names(df) %in% intensity_cols)]
+  intensities <- as.matrix(df[,quant_cols])
+  df <- df[ , -which(names(df) %in% quant_cols)]
 
   #2. Log-transform
 
@@ -173,7 +171,7 @@ preprocess_wide <- function(df, accession, split, exp_annotation=NULL, type_anno
   #Retain only those properties in the fData slot that are useful (or might be useful) for our further analysis:
   #This always includes the accession (protein) as well as the peptide identifier (almost always)
   #If the accession is not present, add it
-  #"intensity_cols" is not necessary here, as it is part of "intensities"
+  #"quant_cols" is not necessary here, as it is part of "intensities"
   if(!(accession %in% useful_properties)){useful_properties <- c(accession,useful_properties)}
   if(!(aggr_by %in% useful_properties)){useful_properties <- c(aggr_by,useful_properties)}
   df <- df[,useful_properties]
