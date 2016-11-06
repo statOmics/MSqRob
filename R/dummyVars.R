@@ -162,3 +162,54 @@ dummyVars.default <- function (formula, data, sep = ".", levelsOnly = FALSE, ful
   out
 
 }
+
+
+#' @rdname dummyVars
+#' @method predict dummyVars
+#' @importFrom stats delete.response model.frame model.matrix na.pass
+#' @export
+predict.dummyVars <- function(object, newdata, na.action = na.pass, ...)
+{
+  if(is.null(newdata)) stop("newdata must be supplied")
+  if(!is.data.frame(newdata)) newdata <- as.data.frame(newdata)
+  if(!all(object$vars %in% names(newdata))) stop(
+    paste("Variable(s)",
+          paste("'", object$vars[object$vars %in% names(newdata)],
+                "'", sep = "",
+                collapse = ", "),
+          "are not in newdata"))
+  Terms <- object$terms
+  Terms <- delete.response(Terms)
+  if(!object$fullRank)
+  {
+    oldContr <- options("contrasts")$contrasts
+    newContr <- oldContr
+    newContr["unordered"] <- "contr.ltfr"
+    options(contrasts = newContr)
+  }
+  m <- model.frame(Terms, newdata, na.action = na.action, xlev = object$lvls)
+
+  x <- model.matrix(Terms, m)
+  if(!object$fullRank) options(contrasts = oldContr)
+
+  if(object$levelsOnly) {
+    for(i in object$facVars) {
+      for(j in object$lvls[[i]]) {
+        from_text <- paste0(i, j)
+        colnames(x) <- gsub(from_text, j, colnames(x), fixed = TRUE)
+      }
+    }
+  }
+  if(!is.null(object$sep) & !object$levelsOnly) {
+    for(i in object$facVars[order(-nchar(object$facVars))]) {
+      ## the default output form model.matrix is NAMElevel with no separator.
+      for(j in object$lvls[[i]]) {
+        from_text <- paste0(i, j)
+        to_text <- paste(i, j, sep = object$sep)
+        colnames(x) <- gsub(from_text, to_text, colnames(x), fixed = TRUE)
+      }
+    }
+  }
+  x[, colnames(x) != "(Intercept)", drop = FALSE]
+}
+
