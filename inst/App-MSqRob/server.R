@@ -66,7 +66,12 @@ shinyServer(function(input, output, session) {
 #Set Filter option
 ########################################
 filterOptions <- reactive({
-	if(is.null(input$peptides)){NULL} else{as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="")))}
+	if(is.null(input$peptides)){
+	  NULL
+	} else{
+  # req(input$peptides)
+	as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="")))
+	  }
   	})
 selectedFilter <- reactive({
 if(!any(c("Reverse", "Contaminant", "Potential contaminant", "Potential.contaminant") %in% filterOptions())) {
@@ -109,9 +114,9 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
   })
 #Generate option of factor levels
   levelOptions <- reactive({
-    if((is.null(fixedOptions2()) | is.null(input$fixed)) & (input$save!=2 | is.null(modelDatapath()))){
+    if((is.null(fixedOptions2()) | is.null(input$fixed)) & (input$save!=2 | is.null(input$load_model$datapath))){
       NULL
-    } else if(input$save==2 & !is.null(modelDatapath())){
+    } else if(input$save==2 & !is.null(input$load_model$datapath)){
       #Load models
       # progressSave <- NULL
       # # Create a Progress object
@@ -123,7 +128,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
       #Load only levelOptions (much faster!)
       RData <- try(saves::loads(file=modelDatapath(), variables="levelOptions"), silent=TRUE)
-      if(inherits(RData, 'try-error')){stop("Loading of model file failed. Pleas provide a valid RData model file.")}
+      if(inherits(RData, 'try-error')){stop("Loading of model file failed. Pleas provide a valid RDatas model file.")}
       levelOptions <- RData$levelOptions
     } else{
       optionsFixedSelected <- fixedOptions2()[,input$fixed,drop=FALSE]
@@ -284,7 +289,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     if(input$save==2){
       #Load models
       RData <- try(saves::loads(modelDatapath()), silent=TRUE)
-      if(attr(RData,"class")=="try-error"){stop("Loading of model file failed. Pleas provide a valid RData model file.")}
+      if(attr(RData,"class")=="try-error"){stop("Loading of model file failed. Pleas provide a valid RDatas model file.")}
       outputlist$RData <- RData #contains slots "proteins" and "models"
       random <- RData$random
       #levelOptions is loaded in "levelOptions" reactive, needs to work before "go" button is pressed!
@@ -586,9 +591,9 @@ proxy = dataTableProxy('table')
 ###Detail Plot###
 #Drop down menu for plot 2
 plot2DependentVars <- reactive({
-  if(input$save==2 & !is.null(modelDatapath())){
+  if(input$save==2 & !is.null(input$load_model$datapath)){
     RData <- try(saves::loads(file=modelDatapath(), variables="plot2DependentVars"), silent=TRUE)
-    if(inherits(RData, 'try-error')){stop("Loading of model file failed. Pleas provide a valid RData model file.")}
+    if(inherits(RData, 'try-error')){stop("Loading of model file failed. Pleas provide a valid RDatas model file.")}
     plot2DependentVars <- RData$plot2DependentVars
   } else{
     plot2DependentVars <- as.list(c(input$fixed, input$random))
