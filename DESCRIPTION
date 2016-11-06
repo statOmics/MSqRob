@@ -16,7 +16,6 @@ Author: Ludger Goeminne [aut],
 Maintainer: Lieven Clement <lieven.clement@UGent.be>
 Depends:
     R (>= 3.0.1),
-    caret,
     lme4
 Imports:
     Biobase,
@@ -71,6 +70,7 @@ Collate:
     'addVarFromVar.R'
     'countPeptides.R'
     'df2protdata.R'
+    'dummyVars.R'
     'protLM.R'
     'fit_model.R'
     'getBetaVcovDf.R'
