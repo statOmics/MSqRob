@@ -5,7 +5,7 @@
 \title{Preprocess data in "wide" format}
 \usage{
 preprocess_wide(df, accession, split, exp_annotation = NULL,
-  type_annot = NULL, intensity_cols, aggr_by, aggr_function = "sum",
+  type_annot = NULL, quant_cols, aggr_by, aggr_function = "sum",
   logtransform = TRUE, base = 2, normalisation = "quantiles",
   smallestUniqueGroups = TRUE, useful_properties = NULL, filter = NULL,
   filter_symbol = NULL, minIdentified = 2, colClasses = NA,
@@ -22,7 +22,7 @@ preprocess_wide(df, accession, split, exp_annotation = NULL,
 
 \item{type_annot}{If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.}
 
-\item{intensity_cols}{Either a character or numeric vector indicating the columns that contain the quantitative values of interest (mostly peak intensities or peak areas under the curve) or a character string of length one indicating a pattern that is unique for the column names of the columns that contain the quantitative values of interest.}
+\item{quant_cols}{Either a character or numeric vector indicating the columns that contain the quantitative values of interest (mostly peptide intensities or peptide areas under the curve) or a character string of length one indicating a pattern that is unique for the column names of the columns that contain the quantitative values of interest.}
 
 \item{aggr_by}{A character indicating the column by which the data should be aggregated. We advise to aggregate the data by peptide sequence (thus aggregate over different charge states and modification statuses of the same peptide). If you only want to aggregate over charge states, set \code{aggr_by} to the column corresponding to the modified sequences. If no aggregation at all is desired, create a new column in which you paste together the modified sequences and the charge states.}
 

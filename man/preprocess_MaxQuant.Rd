@@ -10,7 +10,7 @@ preprocess_MaxQuant(MSnSet, accession = "Proteins", exp_annotation = NULL,
   useful_properties = c("Proteins", "Sequence", "PEP"),
   filter = c("Contaminant", "Reverse"), filter_symbol = "+",
   minIdentified = 2, remove_only_site = FALSE, file_proteinGroups = NULL,
-  colClasses = NA, printProgress = FALSE, shiny = FALSE)
+  colClasses = NA, printProgress = FALSE, shiny = FALSE, message = NULL)
 }
 \arguments{
 \item{MSnSet}{An \code{\link[=MSnSet-class]{MSnSet}} object that contains data originating from MaxQuant's peptides.txt file.}
@@ -48,6 +48,8 @@ Possible values are \code{NA} (the default, when \code{type.convert} is used), \
 \item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
 
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
 }
 \value{
 A preprocessed \code{\link[=MSnSet-class]{MSnSet}} object that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.

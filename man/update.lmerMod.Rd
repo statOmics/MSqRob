@@ -4,7 +4,7 @@
 \alias{update.lmerMod}
 \title{Update lmerMod object with new thetas without changing the pointers of other objects}
 \usage{
-\method{update}{lmerMod}(object, theta, ...)
+update.lmerMod(object, theta, ...)
 }
 \arguments{
 \item{object}{A \code{\link[=lmerMod-class]{lmerMod}} object of which residual standard deviations and/or model parameters need to be squeezed.}

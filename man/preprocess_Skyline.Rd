@@ -5,10 +5,9 @@
 \title{Preprocess Skyline tsv files}
 \usage{
 preprocess_Skyline(df, accession = "ProteinName", exp_annotation = NULL,
-  type_annot = NULL, intensity_col = "quant_value",
-  run_col = "ReplicateName", aggr_by = "PeptideSequence",
-  aggr_function = "sum", logtransform = TRUE, base = 2,
-  normalisation = "quantiles", smallestUniqueGroups = TRUE,
+  type_annot = NULL, quant_col = "quant_value", run_col = "ReplicateName",
+  aggr_by = "PeptideSequence", aggr_function = "sum", logtransform = TRUE,
+  base = 2, normalisation = "quantiles", smallestUniqueGroups = TRUE,
   useful_properties = c("ProteinName", "ProteinDescription",
   "ProteinAccession", "PeptideSequence"), filter = "IsDecoy",
   filter_symbol = "True", minIdentified = 2, colClasses_df = NA,
@@ -23,7 +22,7 @@ preprocess_Skyline(df, accession = "ProteinName", exp_annotation = NULL,
 
 \item{type_annot}{If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.}
 
-\item{intensity_col}{A character indicating the column that contains the quantitative values of interest (mostly peak intensities or peak areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the LFQbench_ImportDIAData function). When using data imported via the \code{\link{read_long})} function, this should be set to \code{"TotalArea"}.}
+\item{quant_col}{A character indicating the column that contains the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the \code{\link{importDIAData}} function).}
 
 \item{run_col}{A character indicating the column that contains the mass spec run names. Defaults to \code{"ReplicateName"}.}
 

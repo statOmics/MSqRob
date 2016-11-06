@@ -5,7 +5,7 @@
 \title{Preprocess data in "long" format}
 \usage{
 preprocess_long(df, accession, split, exp_annotation = NULL,
-  type_annot = NULL, intensity_col = "quant_value", run_col, aggr_by,
+  type_annot = NULL, quant_col = "quant_value", run_col, aggr_by,
   aggr_function = "sum", logtransform = TRUE, base = 2, normalisation,
   smallestUniqueGroups = TRUE, useful_properties, filter, filter_symbol,
   minIdentified = 2, colClasses_df = NA, colClasses_exp = NA, ...)
@@ -21,7 +21,7 @@ preprocess_long(df, accession, split, exp_annotation = NULL,
 
 \item{type_annot}{If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.}
 
-\item{intensity_col}{A character indicating the column that contains the quantitative values of interest (mostly peak intensities or peak areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the LFQbench_ImportDIAData function).}
+\item{quant_col}{A character indicating the column that contains the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the \code{\link{importDIAData}} function).}
 
 \item{run_col}{A character indicating the column in data frame \code{df} that contains the mass spec run names.}
 

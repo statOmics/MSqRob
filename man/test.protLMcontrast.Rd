@@ -8,7 +8,8 @@ test.protLMcontrast(protLM, L, add.annotations = TRUE, squeezeVar = TRUE,
   par_squeeze = NULL, min_df = 1, custom_dfs = NULL, robust_var = TRUE,
   simplify = TRUE, lfc = 0, anova = FALSE, anova.na.ignore = TRUE,
   exp_unit = NULL, pars_df = NULL, satterthwaite = FALSE,
-  lmerModFun = NULL, gradMethod = "simple", ...)
+  lmerModFun = NULL, gradMethod = "simple", printProgress = FALSE,
+  shiny = FALSE, message = NULL, ...)
 }
 \arguments{
 \item{protLM}{An object of class \code{\link[=protLM-class]{protLM}}.}
@@ -43,6 +44,12 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 \item{lmerModFun}{Only used when \code{satterthwaite=TRUE}. \code{lmerModFun} indicates which deviance function should be used when calculating the Satterthwaite approximation for the degrees of freedom. The default (\code{NULL}) uses the lme4 \code{\link[=lme4::mkLmerDevfun]{mkLmerDevfun}} function to generate the deviance function. This parameter should only rarely, if ever, be changed.}
 
 \item{gradMethod}{Only used when \code{satterthwaite=TRUE}. One of "Richardson", "simple", or "complex" indicating the method to use for the gradient calculation by numerical approximation during the calculation of the Satterthwaite approximation for the degrees of freedom. Defaults to "simple".}
+
+\item{printProgress}{A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.}
+
+\item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
 
 \item{...}{Additional arguments to be passed to the squeezeVarRob function.}
 }

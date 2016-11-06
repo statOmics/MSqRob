@@ -4,7 +4,8 @@
 \alias{read_MaxQuant}
 \title{Import a MaxQuant peptides.txt file}
 \usage{
-read_MaxQuant(file, pattern = "Intensity.", remove_pattern = TRUE)
+read_MaxQuant(file, pattern = "Intensity.", remove_pattern = TRUE,
+  shiny = FALSE, message = NULL)
 }
 \arguments{
 \item{file}{The name of a MaxQuant peptides.txt file. For more details about how this argument can be specified, see \code{\link[utils]{read.table}}.}
@@ -12,6 +13,10 @@ read_MaxQuant(file, pattern = "Intensity.", remove_pattern = TRUE)
 \item{pattern}{A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values. Defaults to "Intensity.".}
 
 \item{remove_pattern}{A logical indicating whether the expression in "pattern" should be removed from the column names in the resulting \code{\link[=MSnSet-class]{MSnSet}} object. Defaults to \code{TRUE}.}
+
+\item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
 }
 \value{
 An object of class \code{\link[=MSnSet-class]{MSnSet}}.
