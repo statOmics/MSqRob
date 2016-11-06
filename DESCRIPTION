@@ -8,7 +8,7 @@ Authors@R: c(
     "lieven.clement@UGent.be"),
     person("Lieven", "Clement", role = c("aut", "cre"), email =
     "lieven.clement@UGent.be"))
-Version: 0.4
+Version: 0.6
 Date: 2015-07-07
 Author: Ludger Goeminne [aut],
     Kris Gevaert [ctb],
@@ -16,20 +16,29 @@ Author: Ludger Goeminne [aut],
 Maintainer: Lieven Clement <lieven.clement@UGent.be>
 Depends:
     R (>= 3.0.1),
-    caret
+    caret,
+    lme4
 Imports:
+    Biobase,
+    DT,
+    grDevices,
+    LFQbench,
+    limma,
+    MASS,
+    Matrix,
     methods,
+    MSnbase,
+    numDeriv,
+    openxlsx,
+    plyr,
+    preprocessCore,
+    saves,
+    shiny,
+    shinyjs,
     statmod,
     utils,
-    Matrix,
-    lme4,
-    MASS,
-    limma,
-    numDeriv,
-    plyr,
-    LFQbench
+    vsn
 Suggests:
-    preprocessCore,
     zoo,
     knitr
 Description: The MSqRob package allows a user to do quantitative protein-level
@@ -54,6 +63,7 @@ URL: http://www.r-project.org, http://www.another.url, http://cran.r-
     project.org/package=MSqRob
 BugReports: http://pkgname.bugtracker.url
 Collate:
+    'updateProgress.R'
     'preprocess_hlpFunctions.R'
     'preprocess_MaxQuant.R'
     'protdata.R'
