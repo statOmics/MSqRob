@@ -11,7 +11,7 @@ install.packages("devtools")
 library(devtools)
 ~~~~
 
-Then, install the package `LFQbench`:
+Then, install the dependency package `LFQbench`:
 
 ~~~~
 devtools::install_github("IFIproteomics/LFQbench")
