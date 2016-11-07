@@ -23,13 +23,13 @@
 #'
 #' Given a formula and initial data set, the class \code{dummyVars_MSqRob} gathers all
 #' the information needed to produce a full set of dummy variables for any data
-#' set. It uses \code{contr.ltfr} as the base function to do this.
+#' set. It uses \code{contr.ltfr_MSqRob} as the base function to do this.
 #'
 #' \code{class2ind} is most useful for converting a factor outcome vector to a
 #' matrix of dummy variables.
 #'
 #' @aliases dummyVars_MSqRob dummyVars_MSqRob.default predict.dummyVars_MSqRob
-#' contr.ltfr
+#' contr.ltfr_MSqRob
 #' @param formula An appropriate R model formula, see References
 #' @param data A data frame with the predictors of interest
 #' @param sep An optional separator between factor variable names and their
@@ -60,8 +60,8 @@
 #'
 #' The \code{predict} function produces a data frame.
 #'
-#' \code{contr.ltfr} generates a design matrix.
-#' @author \code{contr.ltfr} is a small modification of
+#' \code{contr.ltfr_MSqRob} generates a design matrix.
+#' @author \code{contr.ltfr_MSqRob} is a small modification of
 #' \code{\link[stats]{contr.treatment}} by Max Kuhn
 #' @seealso \code{\link[stats]{model.matrix}}, \code{\link[stats]{contrasts}},
 #' \code{\link[stats]{formula}}
@@ -184,7 +184,7 @@ predict.dummyVars_MSqRob <- function(object, newdata, na.action = na.pass, ...)
   {
     oldContr <- options("contrasts")$contrasts
     newContr <- oldContr
-    newContr["unordered"] <- "contr.ltfr"
+    newContr["unordered"] <- "contr.ltfr_MSqRob"
     options(contrasts = newContr)
   }
   m <- model.frame(Terms, newdata, na.action = na.action, xlev = object$lvls)
@@ -216,7 +216,7 @@ predict.dummyVars_MSqRob <- function(object, newdata, na.action = na.pass, ...)
 
 #' @rdname dummyVars_MSqRob
 #' @export
-contr.ltfr <- function (n, contrasts = TRUE, sparse = FALSE)
+contr.ltfr_MSqRob <- function (n, contrasts = TRUE, sparse = FALSE)
 {
   if (is.numeric(n) && length(n) == 1L) {
     if (n > 1L)
