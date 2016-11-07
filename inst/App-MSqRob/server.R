@@ -365,7 +365,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     results <- outputlist$results
 
     savepath <- getDataPath(saveFolder$folder)
-    savepath <- gsub("//","/",paste0(savepath, paste0(input$project_name,"_",gsub(" |:","_",Sys.time()))))
+    savepath <- gsub("//","/",file.path(savepath, paste0(input$project_name,"_",gsub(" |:","_",Sys.time()))))
     dir.create(savepath)
     RData <- outputlist$RData #2 slots: "proteins" and "models"
     RData$levelOptions <- levelOptions()
