@@ -364,16 +364,19 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     models <- outputlist$RData$models
     results <- outputlist$results
 
-    savepath <- paste0(saveFolder$folder, paste0(input$project_name,"_",gsub(" |:","_",Sys.time())))
+    savepath <- getDataPath(saveFolder$folder)
+    savepath <- gsub("//","/",paste0(saveFolder$folder, paste0(input$project_name,"_",gsub(" |:","_",Sys.time()))))
     dir.create(savepath)
     RData <- outputlist$RData #2 slots: "proteins" and "models"
     RData$levelOptions <- levelOptions()
     RData$random <- random
     RData$plot2DependentVars <- plot2DependentVars()
 
+    RData_env <- new.env()
+    assign("RData", RData, RData_env)
     wd_old <- getwd()
     setwd(savepath)
-    saves::saves(RData, file=paste0(input$project_name,"_","models.RDatas"))
+    saves_MSqRob(RData, file=paste0(input$project_name,"_","models.RDatas"), envir=RData_env)
     setwd(wd_old)
 
     #save(RData, file=file.path(savepath, paste0(input$project_name,"_","models.RDatas")))

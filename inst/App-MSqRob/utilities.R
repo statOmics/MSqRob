@@ -194,3 +194,56 @@ fileInput <- function (inputId, label, multiple = FALSE, accept = NULL, width = 
              tags$div(class = "progress-bar")))
 }
 
+
+#'@export
+saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite = FALSE,
+          ultra.fast = FALSE)
+{
+  names <- as.character(substitute(list(...)))[-1L]
+  list <- c(list, names)
+  if (ultra.fast == TRUE) {
+    df <- list[1]
+    data <- get(df, envir=envir)
+    dir.create(df)
+    e <- as.environment(data)
+    for (i in 1:length(data)) {
+      save(list = names(data)[i], file = paste(df, "/",
+                                               names(data)[i], ".RData", sep = ""), compress = FALSE,
+           precheck = FALSE, envir = e)
+    }
+    return(invisible(df))
+  }
+  if (is.null(file))
+    file <- paste(list, ".RDatas", sep = "")
+  if (length(list) != length(file))
+    stop("Bad number of files given!")
+  for (i in 1:length(list)) {
+    if (inherits(try(data <- get(list[i], envir=envir), silent = TRUE),
+                 "try-error"))
+      stop(paste("No dataframe/list given or `", list[i],
+                 "` is not a dataframe/list!"))
+    if (file.exists(file[i])) {
+      if (overwrite == TRUE) {
+        file.remove(file[i])
+      }
+      else {
+        stop(paste("Destination filename `", file[i],
+                   "` already exists! Use other filename or use paramater `overwrite` set to TRUE."))
+      }
+    }
+    if (!is.data.frame(data) & !is.list(data))
+      stop(paste("No dataframe/list given or `", list[i],
+                 "` is not a dataframe/list!"))
+    tmp <- tempfile("saves.dir-")
+    dir.create(tmp)
+    e <- as.environment(data)
+    lapply(names(data), function(x) save(list = x, file = paste(tmp,
+                                                                "/", x, ".RData", sep = ""), envir = e))
+    w <- getwd()
+    setwd(tmp)
+    tar(paste(w, "/", file[i], sep = ""), ".", compression = "none")
+    setwd(w)
+    unlink(tmp, recursive = TRUE)
+  }
+  invisible(file)
+}
