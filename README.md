@@ -14,7 +14,7 @@ library(devtools)
 Then we call this to install `MSqRob`:
 
 ~~~~
-install_github("ludgergoeminne/MSqRob")
+devtools::install_github("ludgergoeminne/MSqRob")
 library(MSqRob)
 ~~~~
 
