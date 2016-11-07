@@ -4,7 +4,7 @@ Robust statistical inference for quantitative LC-MS proteomics.
 
 ## Installation
 
-On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/
+On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows
 
 First, we need to install the package `devtools`:
 
