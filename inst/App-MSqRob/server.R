@@ -127,8 +127,8 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       # progressSave$set(message = "Loading settings...", value = 0)
 
       #Load only levelOptions (much faster!)
-      RData <- try(saves::loads(file=modelDatapath(), variables="levelOptions"), silent=TRUE)
-      if(inherits(RData, 'try-error')){stop("Loading of model file failed. Pleas provide a valid RDatas model file.")}
+      RData <- try(loads_MSqRob(file=modelDatapath(), variables="levelOptions"), silent=TRUE)
+      if(inherits(RData, 'try-error')){stop("Loading of model file failed. Please provide a valid RDatas model file.")}
       levelOptions <- RData$levelOptions
     } else{
       optionsFixedSelected <- fixedOptions2()[,input$fixed,drop=FALSE]
@@ -287,10 +287,20 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
                     results=NULL)
 
     if(input$save==2){
-      #Load models
-      RData <- try(saves::loads(modelDatapath()), silent=TRUE)
-      if(attr(RData,"class")=="try-error"){stop("Loading of model file failed. Pleas provide a valid RDatas model file.")}
-      outputlist$RData <- RData #contains slots "proteins" and "models"
+
+      progressSave <- NULL
+      # Create a Progress object
+      progressSave <- shiny::Progress$new()
+
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progressSave$close())
+      progressSave$set(message = "Step 1: loading models", value = 0)
+
+      #Load models: levelOptions and plot2DependentVars are loaded in their respective reactives!
+      RData <- try(loads_MSqRob(file=modelDatapath(), variables=c("proteins","models","random")), silent=TRUE)
+      if(class(RData)=="try-error"){stop("Loading of model file failed. Please provide a valid RDatas model file.")}
+      outputlist$RData$proteins <- RData$proteins
+      outputlist$RData$models <- RData$models
       random <- RData$random
       #levelOptions is loaded in "levelOptions" reactive, needs to work before "go" button is pressed!
     }else{
@@ -301,14 +311,14 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       fs_type <- NULL
 
       processedvals = processInput(input)
-      peptides = read_MaxQuant(peptidesDatapath(), pattern="Intensity.", shiny=TRUE, message="Step 1/5: importing data...")
+      peptides = read_MaxQuant(peptidesDatapath(), pattern="Intensity.", shiny=TRUE, message="Step 1/6: importing data...")
 
       useful_properties = unique(c(processedvals[["proteins"]],processedvals[["annotations"]],input$fixed,input$random)[c(processedvals[["proteins"]],processedvals[["annotations"]],input$fixed,input$random) %in% colnames(Biobase::fData(peptides))])
-      peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Step 2/5: preprocessing data...")
+      peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Step 2/6: preprocessing data...")
       Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2))
-      proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Step 3/5: converting data...")
+      proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Step 3/6: converting data...")
 
-      models <- fit.model(protdata=proteins, response="quant_value", fixed=input$fixed, random=input$random, printProgress=TRUE, shiny=TRUE, message="Step 4/5: fitting models...")
+      models <- fit.model(protdata=proteins, response="quant_value", fixed=input$fixed, random=input$random, printProgress=TRUE, shiny=TRUE, message="Step 4/6: fitting models...")
 
       outputlist$RData$proteins <- proteins
       outputlist$RData$models <- models
@@ -335,15 +345,15 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
     #If standard
     if(input$analysis_type=="standard"){
-    RidgeSqM <- test.contrast_adjust(models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message="Step 5/5: calculating contrasts...")
+    RidgeSqM <- test.contrast_adjust(models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message="Step 5/6: calculating contrasts...")
 
     #If stagewise
     } else if(input$analysis_type=="stagewise"){
-    RidgeSqM <- test.contrast_stagewise(models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message="Step 5/5: calculating contrasts...")
+    RidgeSqM <- test.contrast_stagewise(models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message="Step 5/6: calculating contrasts...")
 
     #If ANOVA
     } else if(input$analysis_type=="ANOVA"){
-    RidgeSqM <- test.contrast_adjust(models, L, simplify=FALSE, par_squeeze=par_squeeze, anova=TRUE, anova.na.ignore=FALSE, printProgress=TRUE, shiny=TRUE, message="Step 5/5: calculating contrasts...")
+    RidgeSqM <- test.contrast_adjust(models, L, simplify=FALSE, par_squeeze=par_squeeze, anova=TRUE, anova.na.ignore=FALSE, printProgress=TRUE, shiny=TRUE, message="Step 5/6: calculating contrasts...")
     names(RidgeSqM) <- "ANOVA"
     }
 
@@ -601,8 +611,8 @@ proxy = dataTableProxy('table')
 #Drop down menu for plot 2
 plot2DependentVars <- reactive({
   if(input$save==2 & !is.null(input$load_model$datapath)){
-    RData <- try(saves::loads(file=modelDatapath(), variables="plot2DependentVars"), silent=TRUE)
-    if(inherits(RData, 'try-error')){stop("Loading of model file failed. Pleas provide a valid RDatas model file.")}
+    RData <- try(loads_MSqRob(file=modelDatapath(), variables="plot2DependentVars"), silent=TRUE)
+    if(inherits(RData, 'try-error')){stop("Loading of model file failed. Please provide a valid RDatas model file.")}
     plot2DependentVars <- RData$plot2DependentVars
   } else{
     plot2DependentVars <- as.list(c(input$fixed, input$random))

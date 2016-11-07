@@ -247,3 +247,39 @@ saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite
   }
   invisible(file)
 }
+
+
+
+#'@export
+loads_MSqRob <- function (file = NULL, variables = NULL,
+          ultra.fast = FALSE)
+{
+  data <- list()
+  if (ultra.fast == TRUE) {
+    for (i in 1:length(variables)) {
+      f <- paste(file, "/", variables[i], ".RData", sep = "")
+      data[[paste(variables[i])]] <- local(get(load(f)))
+    }
+    names(data) <- variables
+    return(data)
+  }
+  if (is.null(variables) | is.null(file)) {
+    stop("Arguments missing! Specify a filename and variable names also to load.")
+  }
+  if (!file.exists(file)) {
+    stop("Archive not found!")
+  }
+  tmp <- tempfile("saves.dir-")
+  dir.create(tmp)
+  untar(file, exdir = tmp)
+  for (i in 1:length(variables)) {
+    f <- paste(tmp, "/", variables[i], ".RData", sep = "")
+    if (!file.exists(f)) {
+      stop(paste("Variable: <<", variables[i], ">> not found!"))
+    }
+    data[[paste(variables[i])]] <- local(get(load(f)))
+  }
+  #names(data) <- variables
+  unlink(tmp, recursive = TRUE)
+  return(data)
+}
