@@ -365,7 +365,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     results <- outputlist$results
 
     savepath <- getDataPath(saveFolder$folder)
-    savepath <- gsub("//","/",paste0(saveFolder$folder, paste0(input$project_name,"_",gsub(" |:","_",Sys.time()))))
+    savepath <- gsub("//","/",paste0(savepath, paste0(input$project_name,"_",gsub(" |:","_",Sys.time()))))
     dir.create(savepath)
     RData <- outputlist$RData #2 slots: "proteins" and "models"
     RData$levelOptions <- levelOptions()
@@ -376,7 +376,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     assign("RData", RData, RData_env)
     wd_old <- getwd()
     setwd(savepath)
-    saves_MSqRob(RData, file=paste0(input$project_name,"_","models.RDatas"), envir=RData_env)
+    saves_MSqRob(RData, envir=RData_env, file=paste0(input$project_name,"_","models.RDatas"))
     setwd(wd_old)
 
     #save(RData, file=file.path(savepath, paste0(input$project_name,"_","models.RDatas")))
