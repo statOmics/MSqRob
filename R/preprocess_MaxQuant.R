@@ -145,7 +145,7 @@ upDateProgress(progress=progress, detail="Removing less usefull properties", n=8
 #This always includes the accession (protein) as well as the peptide identifier (almost always)
 #If the accession is not present, add it
 if(!(accession %in% useful_properties)){useful_properties <- c(accession,useful_properties)}
-Biobase::fData(MSnSet) <- Biobase::fData(MSnSet)[,useful_properties]
+Biobase::fData(MSnSet) <- Biobase::fData(MSnSet)[,useful_properties, drop=FALSE]
 
 upDateProgress(progress=progress, detail=paste0("Removing peptides identified less than ", minIdentified," times"), n=8, shiny=shiny, print=isTRUE(printProgress))
 
