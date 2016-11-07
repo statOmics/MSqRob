@@ -18,7 +18,7 @@ devtools::install_github("IFIproteomics/LFQbench")
 library(LFQbench)
 ~~~~
 
-Then we call this to install `MSqRob`:
+Finally, we call this to install `MSqRob`:
 
 ~~~~
 devtools::install_github("ludgergoeminne/MSqRob")
