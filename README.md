@@ -13,14 +13,7 @@ install.packages("devtools")
 library(devtools)
 ~~~~
 
-Then, install the dependency package `LFQbench`:
-
-~~~~
-devtools::install_github("IFIproteomics/LFQbench")
-library(LFQbench)
-~~~~
-
-Finally, we call this to install `MSqRob`:
+Then, we call this to install `MSqRob`:
 
 ~~~~
 devtools::install_github("ludgergoeminne/MSqRob")
