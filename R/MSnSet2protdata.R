@@ -53,7 +53,7 @@ MSnSet2protdata <- function(MSnSet, accession, annotations=NULL, quant_name="qua
 
     sel <- fData[,accession] == accessions[i]
     intensities <- exprs[sel,,drop=FALSE]
-    properties <- fData[sel,]
+    properties <- fData[sel,,drop=FALSE]
     #If for the same accession in an annation column, there would be multiple different values, just paste them together.
     annotation_matrix[i,] <- apply(properties[,annotations], 2, function(x){paste0(unique(x))})
     properties <- properties[,-which(colnames(properties) %in% c(colnames(properties[,accession,drop=FALSE]),colnames(properties[,annotations,drop=FALSE]))), drop=FALSE]
