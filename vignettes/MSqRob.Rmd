@@ -22,8 +22,22 @@ This vignette will guide you through the main features of the MSqRob package. We
 
 ## Downloading, installing and loading MSqRob
 
-Installing the package
-......
+##Installing the package
+
+On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows
+
+First, we need to install the package devtools:
+```{r eval=FALSE}
+install.packages("devtools")
+library(devtools)
+```
+
+Then, we call this to install MSqRob from GitHub:
+
+```{r eval=FALSE}
+devtools::install_github("ludgergoeminne/MSqRob")
+library(MSqRob)
+```
 
 Loading the package is done via the `library` command, as with any other package.
 ```{r eval=FALSE}
