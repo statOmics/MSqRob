@@ -21,7 +21,6 @@ Imports:
     Biobase,
     DT,
     grDevices,
-    LFQbench,
     limma,
     MASS,
     Matrix,
@@ -37,6 +36,7 @@ Imports:
     utils,
     vsn
 Suggests:
+    LFQbench,
     zoo,
     knitr
 Description: The MSqRob package allows a user to do quantitative protein-level
