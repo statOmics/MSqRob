@@ -6,7 +6,7 @@ Robust statistical inference for quantitative LC-MS proteomics.
 
 On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows. Errors in MSqRob on Windows related to unable to zip the results Excel file might be related to errors in configuring RTools.
 
-First, we need to install the package `devtools`:
+To install MSqRob directly from GitHub, we first need to install the package `devtools`:
 
 ~~~~
 install.packages("devtools")
