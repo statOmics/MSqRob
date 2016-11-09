@@ -20,7 +20,10 @@
 #' @param satterthwaite A logical indicating whether the Satterthwaite approximation for the degrees of freedom should be used instead of the classical trace of the Hat matrix. Defaults to \code{FALSE}.
 #' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
-#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
+#' @param message_extractS1 Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma during stage 1, or \code{NULL} to hide the current message (if any).
+#' @param message_testS1 Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts during stage 1, or \code{NULL} to hide the current message (if any).
+#' @param message_extractS2 Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta during stage 2, vcov, df and sigma, or \code{NULL} to hide the current message (if any).
+#' @param message_testS2 Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts during stage 2, or \code{NULL} to hide the current message (if any).
 #' @param ... Additional arguments to be passed to the squeezeVarRob function internally.
 #' @return A list of matrices, with each matrix in the list corresponding to a contrast in L. Each row of the matrix corresponds to a protein in the \code{\link[=protLM-class]{protLM}} object.
 #' The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast, the \code{pval} column holds the p-value corresponding to the contrast and the \code{qval} column holds the corrected p-values.
@@ -33,16 +36,16 @@
 #' @include test_contrast_adjust.R
 #' @include prot_p_adjust_protwise.R
 #' @export
-test.contrast_stagewise <- function(protLM, L, add.annotations=TRUE, level=0.05, method_stage1="fdr", squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, printProgress=FALSE, shiny=FALSE, message=NULL, ...)
+test.contrast_stagewise <- function(protLM, L, add.annotations=TRUE, level=0.05, method_stage1="fdr", squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, printProgress=FALSE, shiny=FALSE, message_extractS1=NULL, message_testS1=NULL, message_extractS2=NULL, message_testS2=NULL, ...)
 {
 
-  contrast_S1 <- test.contrast_adjust(protLM, L, level=level, method=method_stage1, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=TRUE, lfc=lfc, anova=TRUE, anova.na.ignore=TRUE, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, printProgress=printProgress, shiny=shiny, message=message)
+  contrast_S1 <- test.contrast_adjust(protLM, L, level=level, method=method_stage1, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=TRUE, lfc=lfc, anova=TRUE, anova.na.ignore=TRUE, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, printProgress=printProgress, shiny=shiny, message_extract=message_extractS1, message_test=message_testS1)
 
   #Extract the ones that are significant in stage 1
   sign_setS1 <- subset(contrast_S1, contrast_S1[,"signif"]==1)
   significantS1 <- rownames(sign_setS1)
 
-  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=FALSE, lfc=lfc, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, printProgress=printProgress, shiny=shiny, message=message)
+  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=FALSE, lfc=lfc, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, printProgress=printProgress, shiny=shiny, message_extract=message_extractS2, message_test=message_testS2)
 
   n_ann <- ncol(getAnnotations(protLM))
 

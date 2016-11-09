@@ -28,6 +28,7 @@
 #' @include protdata.R
 #' @include protLM.R
 #' @include dummyVars_MSqRob.R
+#' @include updateProgress.R
 #' @export
 fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message=NULL,...)
 {
@@ -228,7 +229,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   mapply(function(x,y){
 
     count <<- count+1
-    upDateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
+    updateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
 
     n <- nrow(x)
     #If the weighs for this particular protein are of length 1, duplicate them to the correct length
@@ -284,7 +285,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   modellist <- mapply(function(x,y){
 
     count <<- count+1
-    upDateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
+    updateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
 
     n <- nrow(x)
     #If the weighs for this particular protein are of length 1, duplicate them to the correct length

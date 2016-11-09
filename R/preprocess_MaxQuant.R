@@ -85,7 +85,7 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 if(!all(useful_properties %in% colnames(Biobase::fData(MSnSet)))){stop("Argument \"useful_properties\" must only contain column names of the featureData slot.")}
 if(!all(filter %in% colnames(Biobase::fData(MSnSet)))){stop("One or more elements in the \"filter\" argument are no column names of the featureData slot of the MSnSet object.")}
 
-upDateProgress(progress=progress, detail="Log-transforming data", n=8, shiny=shiny, print=isTRUE(printProgress & logtransform))
+updateProgress(progress=progress, detail="Log-transforming data", n=8, shiny=shiny, print=isTRUE(printProgress & logtransform))
 
 if(isTRUE(logtransform)){
   #Log transform
@@ -97,7 +97,7 @@ exprs <- Biobase::exprs(MSnSet)
 exprs[is.infinite(exprs)] <- NA
 Biobase::exprs(MSnSet) <- exprs
 
-upDateProgress(progress=progress, detail="Normalizing data", n=8, shiny=shiny, print=isTRUE(printProgress & (normalisation!="none")))
+updateProgress(progress=progress, detail="Normalizing data", n=8, shiny=shiny, print=isTRUE(printProgress & (normalisation!="none")))
 
 #Normalisation
 if(normalisation!="none"){
@@ -105,7 +105,7 @@ if(normalisation!="none"){
     MSnbase::normalise(MSnSet, normalisation), error=function(e){stop("\"normalisation\" argument should be one of \"none\", \"sum\", \"max\", \"center.mean\", \"center.median\", \"quantiles\", \"quantiles.robust\", \"vsn\"")})
 }
 
-upDateProgress(progress=progress, detail="Removing overlapping protein groups", n=8, shiny=shiny, print=isTRUE(printProgress & smallestUniqueGroups))
+updateProgress(progress=progress, detail="Removing overlapping protein groups", n=8, shiny=shiny, print=isTRUE(printProgress & smallestUniqueGroups))
 
 #Our approach: a peptide can map to multiple proteins,
 #as long as there is none of these proteins present in a smaller subgroup
@@ -115,7 +115,7 @@ sel <- Biobase::fData(MSnSet)[,accession] %in% groups2
 MSnSet <- MSnSet[sel]
 }
 
-upDateProgress(progress=progress, detail="Removing contaminants and/or reverse sequences", n=8, shiny=shiny, print=isTRUE(printProgress & (length(filter)==0)))
+updateProgress(progress=progress, detail="Removing contaminants and/or reverse sequences", n=8, shiny=shiny, print=isTRUE(printProgress & (length(filter)==0)))
 
 #Remove contaminants and reverse sequences
 if(!is.null(filter)){
@@ -126,7 +126,7 @@ sel <- rowSums(filterdata!= filter_symbol)==length(filter)
 MSnSet <- MSnSet[sel]
 }
 
-upDateProgress(progress=progress, detail="Removing proteins only identified by modified peptides", n=8, shiny=shiny, print=isTRUE(printProgress & remove_only_site))
+updateProgress(progress=progress, detail="Removing proteins only identified by modified peptides", n=8, shiny=shiny, print=isTRUE(printProgress & remove_only_site))
 
 #Remove only identified by site if proteinGroups.txt file is given
 if(isTRUE(remove_only_site)){
@@ -139,7 +139,7 @@ if(isTRUE(remove_only_site)){
   MSnSet <- MSnSet[sel]
 }
 
-upDateProgress(progress=progress, detail="Removing less usefull properties", n=8, shiny=shiny, print=isTRUE(printProgress))
+updateProgress(progress=progress, detail="Removing less useful properties", n=8, shiny=shiny, print=isTRUE(printProgress))
 
 #Retain only those properties in the fData slot that are useful (or might be useful) for our further analysis:
 #This always includes the accession (protein) as well as the peptide identifier (almost always)
@@ -147,14 +147,14 @@ upDateProgress(progress=progress, detail="Removing less usefull properties", n=8
 if(!(accession %in% useful_properties)){useful_properties <- c(accession,useful_properties)}
 Biobase::fData(MSnSet) <- Biobase::fData(MSnSet)[,useful_properties, drop=FALSE]
 
-upDateProgress(progress=progress, detail=paste0("Removing peptides identified less than ", minIdentified," times"), n=8, shiny=shiny, print=isTRUE(printProgress))
+updateProgress(progress=progress, detail=paste0("Removing peptides identified less than ", minIdentified," times"), n=8, shiny=shiny, print=isTRUE(printProgress))
 
 #How many times shoud a peptide be identified?
 #We require by default at least 2 identifications of a peptide sequence, as with 1 identification, the model will be perfectly confounded
 keepers <- rowSums(!is.na(Biobase::exprs(MSnSet)))>=minIdentified
 MSnSet <- MSnSet[keepers]
 
-upDateProgress(progress=progress, detail=paste0("Adding experimental annotation"), n=8, shiny=shiny, print=isTRUE(printProgress & !is.null(exp_annotation)))
+updateProgress(progress=progress, detail="Adding experimental annotation", n=8, shiny=shiny, print=isTRUE(printProgress & !is.null(exp_annotation)))
 
 #Add experiment annotation
 if(!is.null(exp_annotation)){

@@ -9,6 +9,9 @@
 #' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.
 #' @param pars_df Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the models that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the models will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
 #' @param subset .......
+#' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
 #' @return A list with length equal to the \code{models} object containing list with four elements: (1) a named column matrix \code{beta} containing the parameter estimates, (2) a named square variance-covariance matrix \code{vcov}, (3) a numeric value \code{df} equal to the residual degrees of freedom and (4) a numeric value \code{sigma} equal to the residual standard deviation of the model.
 #' @examples #Load the protLM object protmodel:
 #' data(modelRRCPTAC, package="MSqRob")
@@ -21,9 +24,21 @@
 #' @include protLM.R
 #' @include getBetaVcovDf.R
 #' @include squeezeVarRob.R
+#' @include updateProgress.R
 #' @export
-getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_df=NULL, subset=NULL)
+getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_df=NULL, subset=NULL, printProgress=FALSE, shiny=FALSE, message=NULL)
 {
+
+  #Progress bar for extraction of beta, vcov, df and sigma
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
 
   #List of models:
   models <- getModels(protLM, simplify=FALSE)
@@ -36,6 +51,8 @@ getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_df=NULL, subset=NULL)
 
   for(i in 1:length(classes))
   {
+    updateProgress(progress=progress, detail=paste0("Extracting parameters for protein ",i," of ",length(classes),"."), n=length(classes), shiny=shiny, print=isTRUE(printProgress))
+
     if(classes[i] %in% c("lm","lmerMod"))  {
       betaVcovDfList[[i]] <- getBetaVcovDf(models[[i]], exp_unit=exp_unit, pars_df=pars_df, subset=subset)
     } else{

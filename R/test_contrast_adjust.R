@@ -22,7 +22,8 @@
 #' @param gradMethod Only used when \code{satterthwaite=TRUE}. One of "Richardson", "simple", or "complex" indicating the method to use for the gradient calculation by numerical approximation during the calculation of the Satterthwaite approximation for the degrees of freedom. Defaults to "simple".
 #' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
-#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
+#' @param message_extract Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma, or \code{NULL} to hide the current message (if any).
+#' @param message_test Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts, or \code{NULL} to hide the current message (if any).
 #' @param ... Additional arguments to be passed to the squeezeVarRob function internally.
 #' @return A list of matrices, with each matrix in the list corresponding to a contrast in L. Each row of the matrix corresponds to an accession in the \code{\link[=protLM-class]{protLM}} object.
 #' The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast, the \code{pval} column holds the p-value corresponding to the contrast and the \code{qval} column holds the corrected p-values.
@@ -33,9 +34,9 @@
 #' @include prot_p_adjust.R
 #' @include prot_signif.R
 #' @export
-test.contrast_adjust <- function(protLM, L, level=0.05, method="fdr", add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun = NULL, gradMethod = "simple", printProgress=FALSE, shiny=FALSE, message=NULL, ...)
+test.contrast_adjust <- function(protLM, L, level=0.05, method="fdr", add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun = NULL, gradMethod = "simple", printProgress=FALSE, shiny=FALSE, message_extract=NULL, message_test=NULL, ...)
 {
-  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=simplify, lfc=lfc, anova=anova, anova.na.ignore=anova.na.ignore, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, lmerModFun = lmerModFun, gradMethod = gradMethod, printProgress=printProgress, shiny=shiny, message=message, ...)
+  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=simplify, lfc=lfc, anova=anova, anova.na.ignore=anova.na.ignore, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, lmerModFun = lmerModFun, gradMethod = gradMethod, printProgress=printProgress, shiny=shiny, message_extract=message_extract, message_test=message_test, ...)
   contrasts <- prot.p.adjust(contrasts, method=method)
   contrasts <- prot.signif(contrasts, level=level)
   return(contrasts)

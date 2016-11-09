@@ -20,7 +20,8 @@
 #' @param gradMethod Only used when \code{satterthwaite=TRUE}. One of "Richardson", "simple", or "complex" indicating the method to use for the gradient calculation by numerical approximation during the calculation of the Satterthwaite approximation for the degrees of freedom. Defaults to "simple".
 #' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
-#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
+#' @param message_extract Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma, or \code{NULL} to hide the current message (if any).
+#' @param message_test Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts, or \code{NULL} to hide the current message (if any).
 #' @param ... Additional arguments to be passed to the squeezeVarRob function.
 #' @return A list of data frames, with each data frame in the list corresponding to a contrast in L. Each row of the data frame corresponds to a protein in the \code{\link[=protLM-class]{protLM}} object.
 #' The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast and the \code{pval} column holds the p-value corresponding to the contrast.
@@ -33,18 +34,8 @@
 #' @include testContrast.R
 #' @include squeezePars.R
 #' @export
-test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun=NULL, gradMethod="simple", printProgress=FALSE, shiny=FALSE, message=NULL, ...)
+test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun=NULL, gradMethod="simple", printProgress=FALSE, shiny=FALSE, message_extract=NULL, message_test=NULL, ...)
 {
-
-  progress <- NULL
-  if(isTRUE(shiny)){
-    # Create a Progress object
-    progress <- shiny::Progress$new()
-
-    # Make sure it closes when we exit this reactive, even if there's an error
-    on.exit(progress$close())
-    progress$set(message = message, value = 0)
-  }
 
   if(is.null(rownames(L))) stop("L should be a matrix with row names corresponding to model predictors.")
 
@@ -52,7 +43,18 @@ test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE
 
   protLM <- squeezePars(protLM, par_squeeze=par_squeeze, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var,...)
 
-  betaVcovDfList <- getBetaVcovDfList(protLM, exp_unit=exp_unit, pars_df=pars_df)
+  betaVcovDfList <- getBetaVcovDfList(protLM, exp_unit=exp_unit, pars_df=pars_df, printProgress=printProgress, shiny=shiny, message=message_extract)
+
+  #Progress bar for testing contrasts
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message_test, value = 0)
+  }
 
   betas <- lapply(betaVcovDfList, function(x) {return(x$beta)})
   vcovs <- lapply(betaVcovDfList, function(x) {return(x$vcov)})
@@ -87,7 +89,7 @@ test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE
   for(i in 1:length(models))
   {
 
-    upDateProgress(progress=progress, detail=paste0("Testing contrast(s) for protein ",i," of ",length(models),"."), n=length(models), shiny=shiny, print=isTRUE(printProgress))
+    updateProgress(progress=progress, detail=paste0("Testing contrast(s) for protein ",i," of ",length(models),"."), n=length(models), shiny=shiny, print=isTRUE(printProgress))
 
     beta <- betas[[i]]
     vcov <- vcovs[[i]]

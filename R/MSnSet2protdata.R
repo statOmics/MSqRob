@@ -49,7 +49,7 @@ MSnSet2protdata <- function(MSnSet, accession, annotations=NULL, quant_name="qua
 
   for(i in 1:length(accessions)){
 
-    upDateProgress(progress=progress, detail=paste0("Converting protein ",i," of ",length(accessions),"."), n=length(accessions), shiny=shiny, print=isTRUE(printProgress))
+    updateProgress(progress=progress, detail=paste0("Converting protein ",i," of ",length(accessions),"."), n=length(accessions), shiny=shiny, print=isTRUE(printProgress))
 
     sel <- fData[,accession] == accessions[i]
     intensities <- exprs[sel,,drop=FALSE]

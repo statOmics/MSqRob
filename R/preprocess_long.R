@@ -27,18 +27,46 @@
 #' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
 #' @param colClasses_exp character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
 #' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
 #' @param ... Optional arguments to be passed to the normalisation methods.
 #' @return A preprocessed data frame that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.
 #' @include preprocess_hlpFunctions.R
 #' @export
-preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_annot=NULL, quant_col="quant_value", run_col, aggr_by, aggr_function="sum", logtransform=TRUE, base=2, normalisation, smallestUniqueGroups=TRUE, useful_properties, filter, filter_symbol, minIdentified=2, colClasses_df=NA, colClasses_exp=NA, ...)
+preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_annot=NULL, quant_col="quant_value", run_col, aggr_by, aggr_function="sum", logtransform=TRUE, base=2, normalisation, smallestUniqueGroups=TRUE, useful_properties, filter, filter_symbol, minIdentified=2, colClasses_df=NA, colClasses_exp=NA, printProgress=FALSE, shiny=FALSE, message=NULL, ...)
 {
+
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
+
   #df <- read.table(file, sep = "\t", header = TRUE, quote="", comment.char = "", na.strings = c("NA","#N/A"))
 
   #Remove potential NA rows
   df <- df[!is.na(df[,quant_col]),]
 
   #1. Aggregate peptides with the same sequence (parameter "aggr_by") (but maybe different charges and/or modifications)
+
+  updateProgress(progress=progress, detail="Aggregating peptides", n=8, shiny=shiny, print=isTRUE(printProgress))
+
+  #New progress bar for aggregation of peptides!
+
+  progress2 <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress2 <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress2$close())
+    progress2$set(message = "Aggregating peptides", value = 0)
+  }
 
   df$MSqRob_ID <- apply(df[,c(aggr_by,filter,run_col), drop=FALSE], 1, paste , collapse = "_")
 
@@ -57,6 +85,7 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
     #22 minutes on our system...
     for(i in 1:n){
 
+      updateProgress(progress=progress2, detail=paste0("Aggregating peptide ",i," of ",n,"."), n=n, shiny=shiny, print=isTRUE(printProgress))
       tmp <- df[df$MSqRob_ID==uniqueIDs[i], , drop=FALSE]
       df2[i,] <- apply(tmp, 2, function(x){paste0(unique(x), collapse = split)})
       df2[i,quant_col] <- do.call(aggr_function,list(tmp[,quant_col]))
@@ -88,6 +117,8 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
   #2. Log-transform
 
+  updateProgress(progress=progress, detail="Log-transforming data", n=8, shiny=shiny, print=isTRUE(printProgress & logtransform))
+
   if(isTRUE(logtransform)){
     #Log transform
     df[,quant_col] <- log(df[,quant_col], base=base)
@@ -96,6 +127,9 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
   }
 
   #3. Change format for normalisation
+
+  updateProgress(progress=progress, detail="Normalizing data", n=8, shiny=shiny, print=isTRUE(printProgress & (normalisation!="none")))
+
   runs <- unique(df[,run_col])
   n_run <- vapply(runs, function(x) {return(sum(df[,run_col]==x))}, 1)
   normmatrix <- matrix(nrow=max(n_run), ncol=length(runs))
@@ -136,6 +170,9 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
   #5. Our approach: a peptide can map to multiple proteins,
   #as long as there is none of these proteins present in a smaller subgroup
+
+  updateProgress(progress=progress, detail="Removing overlapping protein groups", n=8, shiny=shiny, print=isTRUE(printProgress & smallestUniqueGroups))
+
   if(isTRUE(smallestUniqueGroups)){
     groups2 <- smallestUniqueGroups(df[,accession], split=split)
     sel <- df[,accession] %in% groups2
@@ -144,6 +181,9 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
 
   #6. Remove contaminants, reverse sequences, possibly only identified by site
+
+  updateProgress(progress=progress, detail="Removing contaminants and/or reverse sequences", n=8, shiny=shiny, print=isTRUE(printProgress & (length(filter)==0)))
+
   if(!is.null(filter)){
     filterdata <- df[,filter, drop=FALSE]
     #Sometimes, there are no contaminants or no reverse sequences, R then reads these empty columns as "NA"
@@ -166,11 +206,17 @@ preprocess_long <- function(df, accession, split, exp_annotation=NULL, type_anno
 
   #7. How many times shoud a peptide be identified?
   #We require by default at least 2 identifications of a peptide sequence, as with 1 identification, the model will be perfectly confounded
+
+  updateProgress(progress=progress, detail=paste0("Removing peptides identified less than ", minIdentified," times"), n=8, shiny=shiny, print=isTRUE(printProgress))
+
   keepers <- names(which(table(df[,aggr_by])>=minIdentified)) #Works only for character vector!!!
   df <- df[df[,aggr_by] %in% keepers,]
 
 
   #8. Add experiment annotation
+
+  updateProgress(progress=progress, detail="Adding experimental annotation", n=8, shiny=shiny, print=isTRUE(printProgress & !is.null(exp_annotation)))
+
   if(!is.null(exp_annotation)){
     #df <- dfLongAddAnnotation(df, run_col, exp_annotation, type_annot, colClasses_exp)
     attr(df, "MSqRob_exp_annotation") <- exp_annotation
