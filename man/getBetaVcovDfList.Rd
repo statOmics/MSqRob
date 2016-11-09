@@ -4,7 +4,8 @@
 \alias{getBetaVcovDfList}
 \title{Get a list of beta, vcov, df and sigma from a protLM object}
 \usage{
-getBetaVcovDfList(protLM, exp_unit = NULL, pars_df = NULL, subset = NULL)
+getBetaVcovDfList(protLM, exp_unit = NULL, pars_df = NULL, subset = NULL,
+  printProgress = FALSE, shiny = FALSE, message = NULL)
 }
 \arguments{
 \item{protLM}{An object of class \code{\link[=protLM-class]{protLM}}.}
@@ -15,6 +16,12 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 \item{pars_df}{Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the models that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the models will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).}
 
 \item{subset}{.......}
+
+\item{printProgress}{A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.}
+
+\item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
 }
 \value{
 A list with length equal to the \code{models} object containing list with four elements: (1) a named column matrix \code{beta} containing the parameter estimates, (2) a named square variance-covariance matrix \code{vcov}, (3) a numeric value \code{df} equal to the residual degrees of freedom and (4) a numeric value \code{sigma} equal to the residual standard deviation of the model.

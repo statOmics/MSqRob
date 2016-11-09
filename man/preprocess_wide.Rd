@@ -9,7 +9,7 @@ preprocess_wide(df, accession, split, exp_annotation = NULL,
   logtransform = TRUE, base = 2, normalisation = "quantiles",
   smallestUniqueGroups = TRUE, useful_properties = NULL, filter = NULL,
   filter_symbol = NULL, minIdentified = 2, colClasses = NA,
-  printProgress = FALSE, shiny = FALSE, ...)
+  printProgress = FALSE, shiny = FALSE, message = NULL, ...)
 }
 \arguments{
 \item{df}{A data frame that contains data in "wide" format.}
@@ -51,6 +51,8 @@ Possible values are \code{NA} (the default, when \code{type.convert} is used), \
 \item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
 
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
 
 \item{...}{Extra parameters to be passed to the normalisation functions.}
 }

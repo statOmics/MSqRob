@@ -8,7 +8,8 @@ preprocess_long(df, accession, split, exp_annotation = NULL,
   type_annot = NULL, quant_col = "quant_value", run_col, aggr_by,
   aggr_function = "sum", logtransform = TRUE, base = 2, normalisation,
   smallestUniqueGroups = TRUE, useful_properties, filter, filter_symbol,
-  minIdentified = 2, colClasses_df = NA, colClasses_exp = NA, ...)
+  minIdentified = 2, colClasses_df = NA, colClasses_exp = NA,
+  printProgress = FALSE, shiny = FALSE, message = NULL, ...)
 }
 \arguments{
 \item{df}{A data frame that contains data in "long" format.}
@@ -51,6 +52,12 @@ Possible values are \code{NA} (the default, when \code{type.convert} is used), \
 
 \item{colClasses_exp}{character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
 Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.}
+
+\item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
+
+\item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
 
 \item{...}{Optional arguments to be passed to the normalisation methods.}
 }

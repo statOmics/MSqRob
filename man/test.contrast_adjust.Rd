@@ -10,7 +10,7 @@ test.contrast_adjust(protLM, L, level = 0.05, method = "fdr",
   lfc = 0, anova = FALSE, anova.na.ignore = TRUE, exp_unit = NULL,
   pars_df = NULL, satterthwaite = FALSE, lmerModFun = NULL,
   gradMethod = "simple", printProgress = FALSE, shiny = FALSE,
-  message = NULL, ...)
+  message_extract = NULL, message_test = NULL, ...)
 }
 \arguments{
 \item{protLM}{An object of class \code{\link[=protLM-class]{protLM}}.}
@@ -54,7 +54,9 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
 
-\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
+\item{message_extract}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma, or \code{NULL} to hide the current message (if any).}
+
+\item{message_test}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts, or \code{NULL} to hide the current message (if any).}
 
 \item{...}{Additional arguments to be passed to the squeezeVarRob function internally.}
 }
