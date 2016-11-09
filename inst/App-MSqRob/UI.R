@@ -1,7 +1,6 @@
 library(shiny)
 library(DT)
 library(shinyjs)
-library(saves)
 source("utilities.R")
 
 #runApp("pathToApp/App-MsqRob-devel")
@@ -181,7 +180,8 @@ Choose significance level to visualize features with an FDR level below alpha.
                            )
                 ),
 		p("If only one data point is selected in the results table, this plot shows the individual log2 peptide intensities."),
-                htmlOutput("selectPlot2"),
+		            htmlOutput("selectMainPlot2"),
+		            htmlOutput("selectPlot2"),
                 htmlOutput("selectColPlot2"),
 		            htmlOutput("selectPchPlot2")
          	)

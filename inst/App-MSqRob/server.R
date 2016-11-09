@@ -7,7 +7,6 @@ library(MSqRob)
 library(MSnbase)
 library(grDevices)
 library(limma)
-library(saves)
 source("utilities.R")
 
 #Max file size: 500 MB
@@ -22,7 +21,7 @@ shinyServer(function(input, output, session) {
   saveFolder <- reactiveValues(folder = NULL)
   #
   output$folderError <- renderText({
-  if(is.null(saveFolder$folder)){stop("No output folder selected!")
+  if(is.null(saveFolder$folder) | length(saveFolder$folder)==0){stop("No output folder selected!")
   } else if(is.na(saveFolder$folder)){
     stop("No output folder selected!")
   } else if(!dir.exists(saveFolder$folder)){
@@ -31,12 +30,16 @@ shinyServer(function(input, output, session) {
   })
 
   observeEvent(input$outputFolder,{
-    saveFolder$folder <- choose.dir()
-  })
+    saveFolder$folder <- tryCatch(
+                         choose.dir()
+                         , error=function(e){
+                         svDialogs::dlgDir()$res
+                         })
+    })
 
   output$outputFolderOut <- renderUI({
 
-      if(is.null(saveFolder$folder)){
+      if(is.null(saveFolder$folder) | length(saveFolder$folder)==0){
         style=""
         value = NA
       } else if(is.na(saveFolder$folder)){
@@ -187,6 +190,11 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
                          if(!is.null(levelOptions())){
                          lapply(1:length(levelOptions()), function(i) {
+
+                           #Preserve values of input :)
+                           # if(!is.null(input[[paste0("contrast ",i,"_",x)]])){value <- input[[paste0("contrast ",i,"_",x)]]
+                           # } else{value <- 0}
+
                          numericInput(paste0("contrast ",i,"_",x), levelOptions()[i], value=0, min = NA, max = NA, step = NA, width = NULL)
                          })
                          }
@@ -217,6 +225,9 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
   #Maybe with progress bar...
 
   observe({
+
+    #Observe input$filter so that when going immediately to tab 3, select load model and then go to tab 2 leads also to disabled input$filter field.
+    input$filter
 
     # Change on selection of tab?
     # input$Input
@@ -274,7 +285,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
   outputlist <- eventReactive(input$go, {
 
     #Check if saveFolder is correctly specified!
-    if(is.null(saveFolder$folder)){stop("No output folder selected!")
+    if(is.null(saveFolder$folder) | length(saveFolder$folder)==0){stop("No output folder selected!")
     } else if(is.na(saveFolder$folder)){
       stop("No output folder selected!")
     } else if(!dir.exists(saveFolder$folder)){
@@ -288,16 +299,8 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
     if(input$save==2){
 
-      progressSave <- NULL
-      # Create a Progress object
-      progressSave <- shiny::Progress$new()
-
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progressSave$close())
-      progressSave$set(message = "Step 1: loading models", value = 0)
-
       #Load models: levelOptions and plot2DependentVars are loaded in their respective reactives!
-      RData <- try(loads_MSqRob(file=modelDatapath(), variables=c("proteins","models","random")), silent=TRUE)
+      RData <- try(loads_MSqRob(file=modelDatapath(), variables=c("proteins","random","models"), printProgress=TRUE, shiny=TRUE, message="Loading models..."), silent=TRUE)
       if(class(RData)=="try-error"){stop("Loading of model file failed. Please provide a valid RDatas model file.")}
       outputlist$RData$proteins <- RData$proteins
       outputlist$RData$models <- RData$models
@@ -311,14 +314,14 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       fs_type <- NULL
 
       processedvals = processInput(input)
-      peptides = read_MaxQuant(peptidesDatapath(), pattern="Intensity.", shiny=TRUE, message="Step 1/6: importing data...")
+      peptides = read_MaxQuant(peptidesDatapath(), pattern="Intensity.", shiny=TRUE, message="Importing data...")
 
       useful_properties = unique(c(processedvals[["proteins"]],processedvals[["annotations"]],input$fixed,input$random)[c(processedvals[["proteins"]],processedvals[["annotations"]],input$fixed,input$random) %in% colnames(Biobase::fData(peptides))])
-      peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Step 2/6: preprocessing data...")
+      peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
       Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2))
-      proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Step 3/6: converting data...")
+      proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Converting data...")
 
-      models <- fit.model(protdata=proteins, response="quant_value", fixed=input$fixed, random=input$random, printProgress=TRUE, shiny=TRUE, message="Step 4/6: fitting models...")
+      models <- fit.model(protdata=proteins, response="quant_value", fixed=input$fixed, random=input$random, printProgress=TRUE, shiny=TRUE, message="Fitting models...")
 
       outputlist$RData$proteins <- proteins
       outputlist$RData$models <- models
@@ -345,15 +348,15 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
     #If standard
     if(input$analysis_type=="standard"){
-    RidgeSqM <- test.contrast_adjust(models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message="Step 5/6: calculating contrasts...")
+    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
 
     #If stagewise
     } else if(input$analysis_type=="stagewise"){
-    RidgeSqM <- test.contrast_stagewise(models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message="Step 5/6: calculating contrasts...")
+    RidgeSqM <- test.contrast_stagewise(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_extractS1="Calculating contrasts stage 1...", message_testS1="Testing contrasts stage 1...", message_extractS2="Calculating contrasts stage 2...", message_testS2="Testing contrasts stage 1...")
 
     #If ANOVA
     } else if(input$analysis_type=="ANOVA"){
-    RidgeSqM <- test.contrast_adjust(models, L, simplify=FALSE, par_squeeze=par_squeeze, anova=TRUE, anova.na.ignore=FALSE, printProgress=TRUE, shiny=TRUE, message="Step 5/6: calculating contrasts...")
+    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, anova=TRUE, anova.na.ignore=FALSE, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
     names(RidgeSqM) <- "ANOVA"
     }
 
@@ -368,7 +371,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
     # Make sure it closes when we exit this reactive, even if there's an error
     on.exit(progressSave$close())
-    progressSave$set(message = "Step 6/6: saving output", value = 0)
+    progressSave$set(message = "Saving output", value = 0)
 
     proteins <- outputlist$RData$proteins
     models <- outputlist$RData$models
@@ -386,7 +389,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     assign("RData", RData, RData_env)
     wd_old <- getwd()
     setwd(savepath)
-    saves_MSqRob(RData, envir=RData_env, file=paste0(input$project_name,"_","models.RDatas"))
+    saves_MSqRob(RData, envir=RData_env, file=paste0(input$project_name,"_","models.RDatas"), shiny=TRUE, printProgress=TRUE, message="Saving models.RDatas")
     setwd(wd_old)
 
     #save(RData, file=file.path(savepath, paste0(input$project_name,"_","models.RDatas")))
@@ -545,7 +548,7 @@ data <- reactive(
 {
   data <- clickInfo()
   oldnames <- c("se","df","Tval","pval","qval","signif","pvalS1","qvalS1","signifS1","AveExpr","df_num","df_den","Fval")
-data$signif=data$qval<input$alpha
+  data$signif=data$qval<input$alpha
 
   newnames <- c("standard error","degrees of freedom","T value","p value", "false discovery rate","significant","p value stage 1","false discovery rate stage 1","significant stage 1","average expression","degrees of freedom numerator","degrees of freedom denominator","F value")
   for(i in 1:length(oldnames)){
@@ -624,6 +627,18 @@ plot2OtherVars <- reactive({
     c("none",plot2DependentVars())
 })
 
+plot2MainVars <- reactive({
+  if(length(data())==1){
+    names(data())
+  } else{
+    list()
+  }
+})
+
+output$selectMainPlot2 <- renderUI({
+  selectInput("selMainPlot2", "Select title variable", plot2MainVars())
+})
+
 output$selectPlot2 <- renderUI({
     selectInput("selPlot2", "Select independent variable", plot2DependentVars())
 })
@@ -684,6 +699,13 @@ output$plot2 <- renderPlot({
     #color_var <- color_var_plot2()
 
     if(length(accessions)==1){
+
+      #Needed for "main"
+      # s = input$table_rows_selected
+      # subdataset <- data()[s, , drop = FALSE]
+      # main <- subdataset[,input$selMainPlot2]
+      #
+
       if (is.factor(getData(proteins[accessions])[[input$selPlot2]])){
       boxplot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]], outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="log2(peptide intensity)", xlab="", main=getAccessions(proteins[accessions]), las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) #, cex.main=2, cex.lab=2, cex.axis=2, cex=2
       points(jitter((as.numeric(getData(proteins[accessions])[[input$selPlot2]])), factor=2),getData(proteins[accessions])$quant_value, col=colorsPlot2(), pch=pchPlot2()) #,cex=2, lwd=2, col=c(1,2,3,4,"cyan2",6)

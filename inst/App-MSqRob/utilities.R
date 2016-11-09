@@ -197,8 +197,19 @@ fileInput <- function (inputId, label, multiple = FALSE, accept = NULL, width = 
 
 #'@export
 saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite = FALSE,
-          ultra.fast = FALSE)
+          ultra.fast = FALSE, shiny=FALSE, printProgress=FALSE, message=NULL)
 {
+
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
+
   names <- as.character(substitute(list(...)))[-1L]
   list <- c(list, names)
   if (ultra.fast == TRUE) {
@@ -237,8 +248,14 @@ saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite
     tmp <- tempfile("saves.dir-")
     dir.create(tmp)
     e <- as.environment(data)
-    lapply(names(data), function(x) save(list = x, file = paste(tmp,
-                                                                "/", x, ".RData", sep = ""), envir = e))
+
+    count <- 0
+    lapply(names(data), function(x) {
+      count <<- count+1
+      updateProgress(progress=progress, detail=paste0("Saving ",x,"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
+      save(list = x, file = paste(tmp,"/", x, ".RData", sep = ""), envir = e)
+    })
+
     w <- getwd()
     setwd(tmp)
     tar(paste(w, "/", file[i], sep = ""), ".", compression = "none")
@@ -252,11 +269,23 @@ saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite
 
 #'@export
 loads_MSqRob <- function (file = NULL, variables = NULL,
-          ultra.fast = FALSE)
+          ultra.fast = FALSE, printProgress=FALSE, shiny=FALSE, message=NULL)
 {
+
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
+
   data <- list()
   if (ultra.fast == TRUE) {
     for (i in 1:length(variables)) {
+      updateProgress(progress=progress, detail=paste0("Loading object ", i," of ",length(variables),": ",variables[i],"."), n=length(variables), shiny=shiny, print=isTRUE(printProgress))
       f <- paste(file, "/", variables[i], ".RData", sep = "")
       data[[paste(variables[i])]] <- local(get(load(f)))
     }
