@@ -9,17 +9,22 @@
 #' @param squeezeVar A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.
 #' @param min_df A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance.
 #' @param robust_var A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Defaults to \code{TRUE}.
+#' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message_thetas Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_squeeze Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_update Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
 #' @return An updated protLM object with squeezed variances and/or squeezed parameters (or the input \code{\link[=protLM-class]{protLM}} object if \code{par_squeeze=NULL} and \code{squeezeVar=FALSE}).
 #' @examples ....
 #' @references ....
 #' @include protLM.R
 #' @include squeezeVarRob.R
 #' @export
-squeezePars <- function(protLM, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE,...){
+squeezePars <- function(protLM, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, printProgress=FALSE, shiny=FALSE, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...){
 
   if(!is.null(par_squeeze) || isTRUE(squeezeVar)){
   #Get variances on the parameters you want to squeeze and their df
-  thetaVars <- getThetaVars(protLM, par_names=par_squeeze)
+  thetaVars <- getThetaVars(protLM, par_names=par_squeeze, printProgress=printProgress, shiny=shiny, message=message_thetas)
 
   thetas <- thetaVars$thetas
   df_thetas <- thetaVars$df_thetas
@@ -27,13 +32,13 @@ squeezePars <- function(protLM, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, rob
   df_vars <- thetaVars$df_vars
 
   #Squeeze variances and extract new thetas
-  thetasVarsDf_post <- squeezeThetas(thetas, df_thetas, vars, df_vars, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var)
+  thetasVarsDf_post <- squeezeThetas(thetas, df_thetas, vars, df_vars, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var, printProgress=printProgress, shiny=shiny, message=message_squeeze)
   thetas_new <- thetasVarsDf_post$thetas_post
 
   #update protLM with new thetas, new sigmas and new df_sigmas
 
   #!!Check volgorde van squeezen!!!
-  protLM <- update_protLM(protLM,thetas_new,sigmas=sqrt(thetasVarsDf_post$vars_post),df_sigmas=thetasVarsDf_post$df_vars_post,...)
+  protLM <- update_protLM(protLM,thetas_new,sigmas=sqrt(thetasVarsDf_post$vars_post),df_sigmas=thetasVarsDf_post$df_vars_post, robust_var=robust_var, printProgress=printProgress, shiny=shiny, message=message_update,...)
 
   }
 
@@ -46,12 +51,26 @@ squeezePars <- function(protLM, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, rob
 #' @description This function extracts the estimated variances of specified random effects and shrunken fixed effects as well as their associated degrees of freedom (based on the trace of the Hat matrix). It also always returns the residual variance and the residual degrees of freedom.
 #' @param protLM A \code{\link[=protLM-class]{protLM}} object of which residual variances and/or model parameters need to be returned.
 #' @param par_names Character vector indicating of which model parameters the variance needs to be returned. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want to return their variance as well, provide the names of the shrinkage groups that need to be squeezed. If \code{par_names=NULL}, \code{NA} will be returned in the \code{thetas} and \code{df_thetas} slots of the output.
+#' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extracting of the variances and degrees of freedom, or \code{NULL} to hide the current message (if any).
 #' @return A named list with 4 slots. The first slot \code{thetas} contains a matrix with in each column the estimated variances for an effect specified in the \code{par_names} argument, each row corresponds to a different accession in the \code{\link[=protLM-class]{protLM}} object.
 #' The second slot \code{df_thetas} contains a matrix of similar structure to \code{thetas} but containing the degrees of freedom corresponding to the estimated variances. The third slot \code{vars} contains a vector of residual variances for each accession and the fourth slot \code{df_vars} contains a vector of residual degrees of freedom.
 #' @examples ....
 #' @references ....
 #' @export
-getThetaVars <- function(protLM, par_names){
+getThetaVars <- function(protLM, par_names, printProgress=FALSE, shiny=FALSE, message=NULL){
+
+  #Progress bar for extracting thetas
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
 
   df_thetas <- matrix(NA, nrow=length(protLM), ncol=length(par_names), dimnames=list(NULL,par_names))
   thetas <- matrix(NA, nrow=length(protLM), ncol=length(par_names), dimnames=list(NULL,par_names))
@@ -59,6 +78,9 @@ getThetaVars <- function(protLM, par_names){
   vars <- rep(NA,length(protLM))
 
 for(i in 1:length(protLM)){
+
+  updateProgress(progress=progress, detail=paste0("Extracting variance for model ",i," of ",length(protLM),"."), n=length(protLM), shiny=shiny, print=isTRUE(printProgress))
+
 lmerMod <- getModels(protLM[i])
 
 if(is.null(lmerMod@frame$"(weights)")){gew <- rep(1,nobs(lmerMod))} else{
@@ -108,13 +130,27 @@ df_vars[i] <- sum((resid(lmerMod)*gew)^2)/vars[i]
 #' @param squeezeVar A logical indicating whether the residual variances as given by the argument \code{vars} should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, \code{vars} will not be squeezed and the \code{vars_post} slot will contain the same values as the \code{vars} input argument.
 #' @param min_df A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance.
 #' @param robust_var A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Defaults to \code{TRUE}.
+#' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances and degrees of freedom, or \code{NULL} to hide the current message (if any).
 #' @return A named list with 4 slots. The first slot \code{thetas_post} contains a matrix with in each column the squeezed variances corresponding to the \code{thetas} input argument.
 #' The second slot \code{df_thetas_post} contains a matrix of similar structure to \code{thetas_post} but containing the posterior degrees of freedom corresponding to the \code{df_thetas} input argument. If \code{squeezeVar=TRUE}, the third slot \code{vars_post} contains a vector of posterior residual variances for each accession. If \code{squeezeVar=FALSE}, it contains the residual variances given in the \code{vars} input argument.
 #' If \code{squeezeVar=TRUE}, the fourth slot \code{df_vars_post} contains a vector of posterior residual degrees of freedom. If \code{squeezeVar=FALSE}, it contains the residual degrees of freedom given in the \code{df_vars} input argument.
 #' @examples ....
 #' @references ....
 #' @export
-squeezeThetas <- function(thetas, df_thetas, vars, df_vars, squeezeVar=TRUE, min_df=1, robust_var=TRUE, ...){
+squeezeThetas <- function(thetas, df_thetas, vars, df_vars, squeezeVar=TRUE, min_df=1, robust_var=TRUE, printProgress=FALSE, shiny=FALSE, message=NULL, ...){
+
+  #Progress bar for extracting thetas
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
 
   df_thetas_post <- matrix(NA, nrow=nrow(df_thetas), ncol=ncol(df_thetas), dimnames=dimnames(df_thetas))
   thetas_post <- matrix(NA, nrow=nrow(thetas), ncol=ncol(thetas), dimnames=dimnames(thetas))
@@ -133,6 +169,9 @@ squeezeThetas <- function(thetas, df_thetas, vars, df_vars, squeezeVar=TRUE, min
 
   if(ncol(thetas)!=0){
     for(j in 1:ncol(thetas)){
+
+      updateProgress(progress=progress, detail=paste0("Squeezing variances for model ",j," of ",ncol(thetas),"."), n=ncol(thetas), shiny=shiny, print=isTRUE(printProgress))
+
       sqVarObj <- tryCatch(
       squeezeVarRob(thetas[,j]*vars, df=df_thetas[,j], min_df=min_df, robust=robust_var)
       , error=function(e){
@@ -220,17 +259,33 @@ update.lmerMod <- function(object, theta,...) {
 #' @param theta A numeric matrix wherein each column contains parameter variances (theta values) that will replace the theta values in all \code{\link[=lmerMod-class]{lmerMod}} objects present in the \code{model} slot of the \code{\link[=protLM-class]{protLM}} object. Column names should be corresponding to random effects and/or ridge groups (e.g. "ridgeGroup.1") present in the model.
 #' @param sigmas A vector of length equal to the \code{\link[=protLM-class]{protLM}} object containing residual variances that should replace the existing residual variances in each object present in the \code{model} slot of the \code{\link[=protLM-class]{protLM}} object.
 #' @param df_sigmas A vector of length equal to the \code{\link[=protLM-class]{protLM}} object containing residual degrees of freedom that should replace the existing residual degrees of freedom in each object present in the \code{model} slot of the \code{\link[=protLM-class]{protLM}} object.
+#' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
 #' @param ... Other arguments to be passed to the \code{\link{update.default}} function if the \code{theta} input argument would be missing.
 #' @return A \code{\link[=lmerMod-class]{lmerMod}} object of which the parameter variances are replaced by the ones given in the \code{theta} input argument.
 #' @examples ....
 #' @references Bolker (2016). Wald errors of variances, https://rpubs.com/bbolker/waldvar
 #' @export
-update_protLM <- function(protLM, theta, sigmas=NULL, df_sigmas=NULL,...) {
+update_protLM <- function(protLM, theta, sigmas=NULL, df_sigmas=NULL, printProgress=FALSE, shiny=FALSE, message=NULL, ...) {
+
+  #Progress bar for extracting thetas
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message, value = 0)
+  }
 
   modellist <- getModels(protLM, simplify=FALSE)
   theta_names <- colnames(theta)
 
-  for(i in 1: length(protLM)){
+  for(i in 1:length(protLM)){
+
+    updateProgress(progress=progress, detail=paste0("Updating model ",i," of ",length(protLM),"."), n=length(protLM), shiny=shiny, print=isTRUE(printProgress))
 
     x <- modellist[[i]]
     if(class(x)=="lmerMod"){

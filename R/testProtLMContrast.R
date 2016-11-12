@@ -20,6 +20,9 @@
 #' @param gradMethod Only used when \code{satterthwaite=TRUE}. One of "Richardson", "simple", or "complex" indicating the method to use for the gradient calculation by numerical approximation during the calculation of the Satterthwaite approximation for the degrees of freedom. Defaults to "simple".
 #' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message_thetas Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_squeeze Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_update Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
 #' @param message_extract Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma, or \code{NULL} to hide the current message (if any).
 #' @param message_test Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts, or \code{NULL} to hide the current message (if any).
 #' @param ... Additional arguments to be passed to the squeezeVarRob function.
@@ -34,14 +37,14 @@
 #' @include testContrast.R
 #' @include squeezePars.R
 #' @export
-test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun=NULL, gradMethod="simple", printProgress=FALSE, shiny=FALSE, message_extract=NULL, message_test=NULL, ...)
+test.protLMcontrast <- function(protLM, L, add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun=NULL, gradMethod="simple", printProgress=FALSE, shiny=FALSE, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, message_extract=NULL, message_test=NULL, ...)
 {
 
   if(is.null(rownames(L))) stop("L should be a matrix with row names corresponding to model predictors.")
 
   #if(!all(rownames(L) %in% rownames(betaVcovDf$beta))) stop(paste0("\"",rownames(L)[!(rownames(L) %in% rownames(betaVcovDf$beta))],"\" does not correspond to any model predictor."))
 
-  protLM <- squeezePars(protLM, par_squeeze=par_squeeze, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var,...)
+  protLM <- squeezePars(protLM, par_squeeze=par_squeeze, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var, printProgress=printProgress, shiny=shiny, message_thetas=message_thetas, message_squeeze=message_squeeze, message_update=message_update, ...)
 
   betaVcovDfList <- getBetaVcovDfList(protLM, exp_unit=exp_unit, pars_df=pars_df, printProgress=printProgress, shiny=shiny, message=message_extract)
 
