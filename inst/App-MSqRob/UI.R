@@ -147,6 +147,7 @@ shinyUI(fluidPage(
 	mainPanel(
 	verbatimTextOutput("nText"),
 	htmlOutput("plot_contrast"),
+	verbatimTextOutput("contrastL"),
 
 	#Volcano plot
        	fluidRow(

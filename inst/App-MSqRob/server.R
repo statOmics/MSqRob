@@ -192,10 +192,12 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
                          lapply(1:length(levelOptions()), function(i) {
 
                            #Preserve values of input :)
-                           # if(!is.null(input[[paste0("contrast ",i,"_",x)]])){value <- input[[paste0("contrast ",i,"_",x)]]
-                           # } else{value <- 0}
+                           isolate(
+                           if(!is.null(input[[paste0("contrast ",i,"_",x)]])){value <- input[[paste0("contrast ",i,"_",x)]]
+                           } else{value <- 0}
+                           )
 
-                         numericInput(paste0("contrast ",i,"_",x), levelOptions()[i], value=0, min = NA, max = NA, step = NA, width = NULL)
+                         numericInput(paste0("contrast ",i,"_",x), levelOptions()[i], value=value, min = NA, max = NA, step = NA, width = NULL)
                          })
                          }
 
@@ -341,6 +343,8 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
                   }
     }
 
+    outputlist$L <- L
+
     par_squeeze <- NULL
 
     if(isTRUE(input$borrowRandom)){par_squeeze <- c(par_squeeze,random)}
@@ -348,15 +352,15 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
     #If standard
     if(input$analysis_type=="standard"){
-    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
+    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...", message_extract="Calculating contrasts...", message_test="Testing contrasts...")
 
     #If stagewise
     } else if(input$analysis_type=="stagewise"){
-    RidgeSqM <- test.contrast_stagewise(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_extractS1="Calculating contrasts stage 1...", message_testS1="Testing contrasts stage 1...", message_extractS2="Calculating contrasts stage 2...", message_testS2="Testing contrasts stage 1...")
+    RidgeSqM <- test.contrast_stagewise(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...", message_extractS1="Calculating contrasts stage 1...", message_testS1="Testing contrasts stage 1...", message_extractS2="Calculating contrasts stage 2...", message_testS2="Testing contrasts stage 1...")
 
     #If ANOVA
     } else if(input$analysis_type=="ANOVA"){
-    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, anova=TRUE, anova.na.ignore=FALSE, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
+    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, anova=TRUE, anova.na.ignore=FALSE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...", printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
     names(RidgeSqM) <- "ANOVA"
     }
 
@@ -365,13 +369,6 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
     ###Save output (unless no save: input$save==3)###
     if(input$save!=3){
-    progressSave <- NULL
-      # Create a Progress object
-    progressSave <- shiny::Progress$new()
-
-    # Make sure it closes when we exit this reactive, even if there's an error
-    on.exit(progressSave$close())
-    progressSave$set(message = "Saving output", value = 0)
 
     proteins <- outputlist$RData$proteins
     models <- outputlist$RData$models
@@ -389,11 +386,22 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
     assign("RData", RData, RData_env)
     wd_old <- getwd()
     setwd(savepath)
-    saves_MSqRob(RData, envir=RData_env, file=paste0(input$project_name,"_","models.RDatas"), shiny=TRUE, printProgress=TRUE, message="Saving models.RDatas")
+    saves_MSqRob(RData, envir=RData_env, file=paste0(input$project_name,"_","models.RDatas"), shiny=TRUE, printProgress=TRUE, message="Saving models")
     setwd(wd_old)
+
+    progressSaveExcel <- NULL
+    # Create a Progress object
+    progressSaveExcel <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progressSaveExcel$close())
+    progressSaveExcel$set(message = "Saving results...", value = 0)
 
     #save(RData, file=file.path(savepath, paste0(input$project_name,"_","models.RDatas")))
     openxlsx::write.xlsx(results, file = file.path(savepath, paste0(input$project_name,"_","results.xlsx")), colNames = TRUE, rowNames = TRUE)
+
+    updateProgress(progress=progressSaveExcel, detail="Saving to Excel file", n=1, shiny=TRUE, print=TRUE)
+
     # #Bold header in Excel file:
     # headerStyle <- openxlsx::createStyle(textDecoration = "bold")
     # openxlsx::addStyle(wb, sheet = 1:length(results), headerStyle, rows = 1, cols = 1:ncol(results[[1]])) #, gridExpand = TRUE
@@ -445,7 +453,12 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
   #                                        contentType = "application/zip"
   # )
 
-
+output$contrastL <- renderPrint({
+  #The contrast corresponding to the selected contrast
+  L <- outputlist()$L[,input$plot_contrast,drop=FALSE]
+  L <- L[L!=0,,drop=FALSE]
+  return(L)
+})
 
 
 ###########################################
@@ -467,6 +480,7 @@ output$plot_contrast <- renderUI({
 
 ###Generation of all data for output###
   dataset <- reactive({
+    if(!is.null(outputlist())){
     if(input$analysis_type %in% c("standard","stagewise")){
       dataset <- outputlist()$results[[input$plot_contrast]]
     } else if(input$analysis_type=="ANOVA"){
@@ -476,6 +490,7 @@ output$plot_contrast <- renderUI({
     dataset$minus_log10_p <- -log10(as.numeric(dataset$pval)) #Necessary to select data in table according to the zoom in the plot
     dataset <- data.frame(Accessions=rownames(dataset), dataset)
     rownames(dataset) <- NULL
+    } else{dataset <- NULL}
     return(dataset)
   })
 
@@ -627,16 +642,16 @@ plot2OtherVars <- reactive({
     c("none",plot2DependentVars())
 })
 
-plot2MainVars <- reactive({
-  if(length(data())==1){
-    names(data())
-  } else{
-    list()
-  }
+plot2MainVars <- reactiveValues(
+  values=NULL
+)
+
+observeEvent(input$go, {
+  plot2MainVars$values <- names(data())
 })
 
 output$selectMainPlot2 <- renderUI({
-  selectInput("selMainPlot2", "Select title variable", plot2MainVars())
+  selectInput("selMainPlot2", "Select title variable", plot2MainVars$values)
 })
 
 output$selectPlot2 <- renderUI({
@@ -701,13 +716,12 @@ output$plot2 <- renderPlot({
     if(length(accessions)==1){
 
       #Needed for "main"
-      # s = input$table_rows_selected
-      # subdataset <- data()[s, , drop = FALSE]
-      # main <- subdataset[,input$selMainPlot2]
-      #
+      s = input$table_rows_selected
+      subdataset <- data()[s, , drop = FALSE]
+      main <- subdataset[,input$selMainPlot2]
 
       if (is.factor(getData(proteins[accessions])[[input$selPlot2]])){
-      boxplot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]], outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="log2(peptide intensity)", xlab="", main=getAccessions(proteins[accessions]), las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) #, cex.main=2, cex.lab=2, cex.axis=2, cex=2
+      boxplot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]], outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="log2(peptide intensity)", xlab="", main=main, las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) #, cex.main=2, cex.lab=2, cex.axis=2, cex=2, getAccessions(proteins[accessions])
       points(jitter((as.numeric(getData(proteins[accessions])[[input$selPlot2]])), factor=2),getData(proteins[accessions])$quant_value, col=colorsPlot2(), pch=pchPlot2()) #,cex=2, lwd=2, col=c(1,2,3,4,"cyan2",6)
       # title(ylab="Log2(Intensity)", line=5, cex.lab=2, family="Calibri Light")
     } else plot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]],ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="log2(peptide intensity)", xlab="", main=getAccessions(proteins[accessions]), las=2, bty="n")
