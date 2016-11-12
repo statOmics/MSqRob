@@ -4,12 +4,19 @@
 \alias{getThetaVars}
 \title{Get variances and degrees of freedom of model parameters}
 \usage{
-getThetaVars(protLM, par_names)
+getThetaVars(protLM, par_names, printProgress = FALSE, shiny = FALSE,
+  message = NULL)
 }
 \arguments{
 \item{protLM}{A \code{\link[=protLM-class]{protLM}} object of which residual variances and/or model parameters need to be returned.}
 
 \item{par_names}{Character vector indicating of which model parameters the variance needs to be returned. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want to return their variance as well, provide the names of the shrinkage groups that need to be squeezed. If \code{par_names=NULL}, \code{NA} will be returned in the \code{thetas} and \code{df_thetas} slots of the output.}
+
+\item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
+
+\item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extracting of the variances and degrees of freedom, or \code{NULL} to hide the current message (if any).}
 }
 \value{
 A named list with 4 slots. The first slot \code{thetas} contains a matrix with in each column the estimated variances for an effect specified in the \code{par_names} argument, each row corresponds to a different accession in the \code{\link[=protLM-class]{protLM}} object.

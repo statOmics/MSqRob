@@ -10,6 +10,7 @@ test.contrast_adjust(protLM, L, level = 0.05, method = "fdr",
   lfc = 0, anova = FALSE, anova.na.ignore = TRUE, exp_unit = NULL,
   pars_df = NULL, satterthwaite = FALSE, lmerModFun = NULL,
   gradMethod = "simple", printProgress = FALSE, shiny = FALSE,
+  message_thetas = NULL, message_squeeze = NULL, message_update = NULL,
   message_extract = NULL, message_test = NULL, ...)
 }
 \arguments{
@@ -53,6 +54,12 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 \item{printProgress}{A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.}
 
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message_thetas}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).}
+
+\item{message_squeeze}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).}
+
+\item{message_update}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).}
 
 \item{message_extract}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma, or \code{NULL} to hide the current message (if any).}
 

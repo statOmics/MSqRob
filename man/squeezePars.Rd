@@ -5,7 +5,9 @@
 \title{Squeeze variances and other parameters}
 \usage{
 squeezePars(protLM, par_squeeze = NULL, squeezeVar = TRUE, min_df = 1,
-  robust_var = TRUE, ...)
+  robust_var = TRUE, printProgress = FALSE, shiny = FALSE,
+  message_thetas = NULL, message_squeeze = NULL, message_update = NULL,
+  ...)
 }
 \arguments{
 \item{protLM}{A \code{\link[=protLM-class]{protLM}} object of which residual standard deviations and/or model parameters need to be squeezed.}
@@ -17,6 +19,16 @@ squeezePars(protLM, par_squeeze = NULL, squeezeVar = TRUE, min_df = 1,
 \item{min_df}{A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance.}
 
 \item{robust_var}{A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Defaults to \code{TRUE}.}
+
+\item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
+
+\item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message_thetas}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).}
+
+\item{message_squeeze}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).}
+
+\item{message_update}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).}
 }
 \value{
 An updated protLM object with squeezed variances and/or squeezed parameters (or the input \code{\link[=protLM-class]{protLM}} object if \code{par_squeeze=NULL} and \code{squeezeVar=FALSE}).

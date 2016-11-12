@@ -5,7 +5,8 @@
 \title{Squeeze variances and other parameters}
 \usage{
 squeezeThetas(thetas, df_thetas, vars, df_vars, squeezeVar = TRUE,
-  min_df = 1, robust_var = TRUE, ...)
+  min_df = 1, robust_var = TRUE, printProgress = FALSE, shiny = FALSE,
+  message = NULL, ...)
 }
 \arguments{
 \item{thetas}{A numeric matrix wherein each column contains variances for a different parameter.}
@@ -21,6 +22,12 @@ squeezeThetas(thetas, df_thetas, vars, df_vars, squeezeVar = TRUE,
 \item{min_df}{A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance.}
 
 \item{robust_var}{A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Defaults to \code{TRUE}.}
+
+\item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
+
+\item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
+
+\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances and degrees of freedom, or \code{NULL} to hide the current message (if any).}
 }
 \value{
 A named list with 4 slots. The first slot \code{thetas_post} contains a matrix with in each column the squeezed variances corresponding to the \code{thetas} input argument.
