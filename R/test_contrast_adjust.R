@@ -6,10 +6,6 @@
 #' @param level	The significance level at which the q-value needs to be controlled. Defaults to 5\%.
 #' @param method Correction method. Can be abbreviated. Defaults to "fdr". To get all available methods, type \code{p.adjust.methods}. For more information on these methods, see the \code{\link{p.adjust}} function.
 #' @param add.annotations A logical indicating whether the \code{annotations} slot of the \code{\link[=protLM-class]{protLM}} object should be added as extra columns to each matrix in the returned list of matrices. Defaults to \code{TRUE}.
-#' @param squeezeVar A logical indicating whether residual standard deviations should be squeezed together by computing empirical Bayes posterior means. For more information, see limma's \code{\link{squeezeVar}} function. Defaults to \code{TRUE}.
-#' @param par_squeeze Character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.
-#' @param min_df A numeric value indicating the minimal number of residual degrees of freedom that is required for a protein to be taken into account for the squeezing of the variances. Only used when \code{squeezeVar} is set to \code{TRUE}. Defaults to \code{1}.
-#' @param robust_var A logical indicating wheter the squeezing of the variances should be robust to the presence of outlier sample variances. Defaults to \code{TRUE}.
 #' @param simplify A logical indicating wheter, if there is only one contrast, a matrix should be returned instead of a list containing one matrix. Defaults to \code{TRUE}.
 #' @param lfc The minimum (log2) fold-change that is considered scientifically meaningful. Defaults to \code{0}. Ignored when \code{anova = TRUE}.
 #' @param anova A logical indicating whether the contrasts should be tested simultaneously in one F-test (\code{anova = TRUE}) or as separate t-tests (\code{anova = FALSE}). Defaults to \code{FALSE}.
@@ -22,12 +18,8 @@
 #' @param gradMethod Only used when \code{satterthwaite=TRUE}. One of "Richardson", "simple", or "complex" indicating the method to use for the gradient calculation by numerical approximation during the calculation of the Satterthwaite approximation for the degrees of freedom. Defaults to "simple".
 #' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
-#' @param message_thetas Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).
-#' @param message_squeeze Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).
-#' @param message_update Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
 #' @param message_extract Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma, or \code{NULL} to hide the current message (if any).
 #' @param message_test Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts, or \code{NULL} to hide the current message (if any).
-#' @param ... Additional arguments to be passed to the squeezeVarRob function internally.
 #' @return A list of matrices, with each matrix in the list corresponding to a contrast in L. Each row of the matrix corresponds to an accession in the \code{\link[=protLM-class]{protLM}} object.
 #' The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast, the \code{pval} column holds the p-value corresponding to the contrast and the \code{qval} column holds the corrected p-values.
 #' Each matrix is sorted from smalles to largest \code{pval} with \code{NA} values at the bottom of the matrices.
@@ -37,9 +29,9 @@
 #' @include prot_p_adjust.R
 #' @include prot_signif.R
 #' @export
-test.contrast_adjust <- function(protLM, L, level=0.05, method="fdr", add.annotations=TRUE, squeezeVar=TRUE, par_squeeze=NULL, min_df=1, custom_dfs=NULL, robust_var=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun = NULL, gradMethod = "simple", printProgress=FALSE, shiny=FALSE, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, message_extract=NULL, message_test=NULL, ...)
+test.contrast_adjust <- function(protLM, L, level=0.05, method="fdr", add.annotations=TRUE, custom_dfs=NULL, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, exp_unit=NULL, pars_df=NULL, satterthwaite=FALSE, lmerModFun = NULL, gradMethod = "simple", printProgress=FALSE, shiny=FALSE, message_extract=NULL, message_test=NULL)
 {
-  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, squeezeVar=squeezeVar, par_squeeze=par_squeeze, min_df=min_df, custom_dfs=custom_dfs, robust_var=robust_var, simplify=simplify, lfc=lfc, anova=anova, anova.na.ignore=anova.na.ignore, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, lmerModFun = lmerModFun, gradMethod = gradMethod, printProgress=printProgress, shiny=shiny, message_thetas=message_thetas, message_squeeze=message_squeeze, message_update=message_update, message_extract=message_extract, message_test=message_test, ...)
+  contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, custom_dfs=custom_dfs, simplify=simplify, lfc=lfc, anova=anova, anova.na.ignore=anova.na.ignore, exp_unit=exp_unit, pars_df=pars_df, satterthwaite=satterthwaite, lmerModFun = lmerModFun, gradMethod = gradMethod, printProgress=printProgress, shiny=shiny, message_extract=message_extract, message_test=message_test)
   contrasts <- prot.p.adjust(contrasts, method=method)
   contrasts <- prot.signif(contrasts, level=level)
   return(contrasts)

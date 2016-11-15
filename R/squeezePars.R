@@ -1,5 +1,3 @@
-#Check of het ook nog werkt als lme4 niet geladen is
-
 #' Squeeze variances and other parameters
 #'
 #' @description Squeeze the standard deviations of the models towards a common value using empirical Bayes moderation similar to the \code{\link[=limma]{limma}} package.
@@ -14,6 +12,7 @@
 #' @param message_thetas Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).
 #' @param message_squeeze Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).
 #' @param message_update Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
+#' @param ... Other arguments to be passed to the \code{update_protLM} function internally.
 #' @return An updated protLM object with squeezed variances and/or squeezed parameters (or the input \code{\link[=protLM-class]{protLM}} object if \code{par_squeeze=NULL} and \code{squeezeVar=FALSE}).
 #' @examples ....
 #' @references ....
@@ -38,7 +37,7 @@ squeezePars <- function(protLM, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, rob
   #update protLM with new thetas, new sigmas and new df_sigmas
 
   #!!Check volgorde van squeezen!!!
-  protLM <- update_protLM(protLM,thetas_new,sigmas=sqrt(thetasVarsDf_post$vars_post),df_sigmas=thetasVarsDf_post$df_vars_post, robust_var=robust_var, printProgress=printProgress, shiny=shiny, message=message_update,...)
+  protLM <- update_protLM(protLM,thetas_new,sigmas=sqrt(thetasVarsDf_post$vars_post),df_sigmas=thetasVarsDf_post$df_vars_post, robust_var=robust_var, printProgress=printProgress, shiny=shiny, message=message_update, ...)
 
   }
 
@@ -133,6 +132,7 @@ df_vars[i] <- sum((resid(lmerMod)*gew)^2)/vars[i]
 #' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances and degrees of freedom, or \code{NULL} to hide the current message (if any).
+#' @param ... Other arguments to be passed to the \code{squeezeVarRob} function internally.
 #' @return A named list with 4 slots. The first slot \code{thetas_post} contains a matrix with in each column the squeezed variances corresponding to the \code{thetas} input argument.
 #' The second slot \code{df_thetas_post} contains a matrix of similar structure to \code{thetas_post} but containing the posterior degrees of freedom corresponding to the \code{df_thetas} input argument. If \code{squeezeVar=TRUE}, the third slot \code{vars_post} contains a vector of posterior residual variances for each accession. If \code{squeezeVar=FALSE}, it contains the residual variances given in the \code{vars} input argument.
 #' If \code{squeezeVar=TRUE}, the fourth slot \code{df_vars_post} contains a vector of posterior residual degrees of freedom. If \code{squeezeVar=FALSE}, it contains the residual degrees of freedom given in the \code{df_vars} input argument.
@@ -159,7 +159,7 @@ squeezeThetas <- function(thetas, df_thetas, vars, df_vars, squeezeVar=TRUE, min
   df_thetas[is.na(df_thetas)] <- NA
 
   if(isTRUE(squeezeVar)){
-    sqVarObj <- squeezeVarRob(vars, df=df_vars, min_df=min_df, robust=robust_var,...)
+    sqVarObj <- squeezeVarRob(vars, df=df_vars, min_df=min_df, robust=robust_var, ...)
     df_vars_post <- df_vars+sqVarObj$df.prior
     vars_post <- sqVarObj$var.post
   } else{
@@ -173,7 +173,7 @@ squeezeThetas <- function(thetas, df_thetas, vars, df_vars, squeezeVar=TRUE, min
       updateProgress(progress=progress, detail=paste0("Squeezing variances for model ",j," of ",ncol(thetas),"."), n=ncol(thetas), shiny=shiny, print=isTRUE(printProgress))
 
       sqVarObj <- tryCatch(
-      squeezeVarRob(thetas[,j]*vars, df=df_thetas[,j], min_df=min_df, robust=robust_var)
+      squeezeVarRob(thetas[,j]*vars, df=df_thetas[,j], min_df=min_df, robust=robust_var, ...)
       , error=function(e){
         sqVarObj <- data.frame(var.post=thetas[,j]*vars, df.prior=0)
 
@@ -208,8 +208,8 @@ squeezeThetas <- function(thetas, df_thetas, vars, df_vars, squeezeVar=TRUE, min
 #' @examples ....
 #' @references Bolker (2016). Wald errors of variances, https://rpubs.com/bbolker/waldvar
 #' @export
-update.lmerMod <- function(object, theta,...) {
-  if (missing(theta)) return(update.default(object,...))
+update.lmerMod <- function(object, theta, ...) {
+  if (missing(theta)) return(update.default(object, ...))
 
   #If all thetas are NA => don't waste any time -> leads only to errors (e.g. in dd)
   if(all(is.na(theta))){
@@ -262,7 +262,7 @@ update.lmerMod <- function(object, theta,...) {
 #' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
-#' @param ... Other arguments to be passed to the \code{\link{update.default}} function if the \code{theta} input argument would be missing.
+#' @param ... Other arguments to be passed to the \code{\link{update.lmerMod}} function.
 #' @return A \code{\link[=lmerMod-class]{lmerMod}} object of which the parameter variances are replaced by the ones given in the \code{theta} input argument.
 #' @examples ....
 #' @references Bolker (2016). Wald errors of variances, https://rpubs.com/bbolker/waldvar
