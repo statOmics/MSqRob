@@ -24,7 +24,7 @@ This vignette will guide you through the main features of the MSqRob package. We
 
 ##Installing the package
 
-On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows
+On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows. Errors in MSqRob on Windows related to unable to zip the results Excel file might be related to errors in configuring RTools.
 
 First, we need to install the package devtools:
 ```{r eval=FALSE}
@@ -215,13 +215,18 @@ You will be able to load the processed proteins data directly from the future Ms
 #data(proteinsFranc, package="MsqRobData")
 ```
 
-###4. Fit the model
+###4. Fit the model and squeeze residual the variances
 
 Fit the robust ridge models for each protein. The `fit.model` function will fit a model to each protein in the `protdata` object "proteinsFranc". The default setting `reg="ridge"` indicates that ridge regression should be used. The default setting `weights="Huber"` indicates that an M estimation algorithm should be used that assigns Huber weights to each peptide observation based on their residuals.
 
 Caution: fitting the models takes some time (less than 15 minutes for the *Francisella tularensis* dataset on our system). The `system.time` function was again only added to output the duration of the model fitting.
 ```{r eval=FALSE}
 system.time(protLMFranc <- fit.model(proteinsFranc, response="quant_value", fixed=c("pheno"),  random=c("biorep","run","Sequence"), add.intercept=TRUE, weights="Huber"))
+```
+
+Then, we squeeze the residual variances of our model.
+```{r eval=FALSE}
+protLMFranc <- squeezePars(protLMFranc)
 ```
 
 You will be able to load the resulting `protLM` object "protLMFranc" from the future MsqRobData package.
@@ -667,13 +672,11 @@ You will be able to load the data from the future MsqRobData package for compari
 
 Caution: model fitting takes some time with large datasets! On our computer, fitting the robust ridge model took about 13 minutes.
 
+**Note:** in order to do an objective comparison between different approaches, we chose here not to include the "run" effect, because this leads to massive overfitting in the ordinary least squares approaches. This effect will mostly be equal to zero anyways because each repeat in the CPTAC dataset is in fact a technical repeat and therefore the variability in peptide intensities between samples will be very small. When doing a standard robust ridge analysis on true biological data, we advise however to include the "run" effect as a random effect.
+
 Fit the robust ridge model
 ```{r eval=FALSE}
 system.time(modelRRCPTAC <- fit.model(protdata=proteinsCPTAC, response="quant_value", fixed="conc", random=c("Sequence","instrlab"), add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE))
-
-###OF:
-
-system.time(modelRRCPTAC <- fit.model(protdata=proteinsCPTAC, response="quant_value", fixed=c("conc","instrlab"), random=c("Sequence","run"), add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE))
 ```
 
 Fit a ridge model without M estimation with Huber weights.
@@ -749,42 +752,48 @@ L <- makeContrast(c("conc6B-conc6A","conc6C-conc6A","conc6D-conc6A","conc6E-conc
 
 Make the DA rankings for the ordinary least squares model (no ridge, no squeezed variances, no M estimation).
 ```{r eval=FALSE}
-lm_normal <- test.protLMcontrast(modelLmCPTAC, L, squeezeVar=FALSE, min_df=1, robust_var=TRUE, simplify=TRUE)
+modelLmCPTAC <- squeezePars(modelLmCPTAC, squeezeVar=FALSE, robust_var=TRUE)
+lm_normal <- test.protLMcontrast(modelLmCPTAC, L, min_df=1, simplify=TRUE)
 lm_normal <- prot.p.adjust(lm_normal)
 lm_normal <- prot.signif(lm_normal)
 ```
 
 Make the DA rankings for the ordinary least squares model with squeezed variances (no ridge, no M estimation).
 ```{r eval=FALSE}
-lm_Sq <- test.protLMcontrast(modelLmCPTAC, L, squeezeVar=TRUE, min_df=1, robust_var=TRUE, simplify=TRUE)
+modelLmCPTAC <- squeezePars(modelLmCPTAC, squeezeVar=TRUE, robust_var=TRUE)
+lm_Sq <- test.protLMcontrast(modelLmCPTAC, L, min_df=1, simplify=TRUE)
 lm_Sq <- prot.p.adjust(lm_Sq)
 lm_Sq <- prot.signif(lm_Sq)
 ```
 
 Make the DA rankings for the ordinary least squares model with squeezed variances and M estimation (no ridge).
 ```{r eval=FALSE}
-lm_SqM <- test.protLMcontrast(modelLmMCPTAC, L, squeezeVar=TRUE, min_df=1, robust_var=TRUE, simplify=TRUE)
+modelLmMCPTAC <- squeezePars(modelLmMCPTAC, squeezeVar=TRUE, robust_var=TRUE)
+lm_SqM <- test.protLMcontrast(modelLmMCPTAC, L, min_df=1, simplify=TRUE)
 lm_SqM <- prot.p.adjust(lm_SqM)
 lm_SqM <- prot.signif(lm_SqM)
 ```
 
 Make the DA rankings for the ridge regression model (no squeezed variances, no M estimation).
 ```{r eval=FALSE}
-ridge <- test.protLMcontrast(modelRidgeCPTAC, L, squeezeVar=FALSE, min_df=1, robust_var=TRUE, simplify=TRUE)
+modelRidgeCPTAC <- squeezePars(modelRidgeCPTAC, squeezeVar=FALSE, robust_var=TRUE)
+ridge <- test.protLMcontrast(modelRidgeCPTAC, L, min_df=1, simplify=TRUE)
 ridge <- prot.p.adjust(ridge)
 ridge <- prot.signif(ridge)
 ```
 
 Make the DA rankings for the ridge regression model with squeezed variances (no M estimation).
 ```{r eval=FALSE}
-ridgeSq <- test.protLMcontrast(modelRidgeCPTAC, L, squeezeVar=TRUE, min_df=1, robust_var=TRUE, simplify=TRUE)
+modelRidgeCPTAC <- squeezePars(modelRidgeCPTAC, squeezeVar=TRUE, robust_var=TRUE)
+ridgeSq <- test.protLMcontrast(modelRidgeCPTAC, L, min_df=1, simplify=TRUE)
 ridgeSq <- prot.p.adjust(ridgeSq)
 ridgeSq <- prot.signif(ridgeSq)
 ```
 
 Make the DA rankings for the ridge regression model with squeezed variances and M estimation. This is our robust ridge (RR) approach.
 ```{r eval=FALSE}
-ridgeSqM <- test.protLMcontrast(modelRRCPTAC, L, squeezeVar=TRUE, min_df=1, robust_var=TRUE, simplify=TRUE)
+modelRRCPTAC <- squeezePars(modelRRCPTAC, squeezeVar=TRUE, robust_var=TRUE)
+ridgeSqM <- test.protLMcontrast(modelRRCPTAC, L, min_df=1, simplify=TRUE)
 ridgeSqM <- prot.p.adjust(ridgeSqM)
 ridgeSqM <- prot.signif(ridgeSqM)
 ```
