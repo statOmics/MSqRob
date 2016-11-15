@@ -259,6 +259,9 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       shinyjs::enable("plotMDSPoints")
       shinyjs::enable("plotMDSLabels")
 
+      shinyjs::enable("borrowFixed")
+      shinyjs::enable("borrowRandom")
+
     } else if(input$save==2){
       shinyjs::disable("peptides")
       shinyjs::disable("peptides_label")
@@ -281,6 +284,9 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       shinyjs::disable("selColPlotNorm1")
       shinyjs::disable("plotMDSPoints")
       shinyjs::disable("plotMDSLabels")
+
+      shinyjs::disable("borrowFixed")
+      shinyjs::disable("borrowRandom")
     }
   })
 
@@ -325,6 +331,14 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
       models <- fit.model(protdata=proteins, response="quant_value", fixed=input$fixed, random=input$random, printProgress=TRUE, shiny=TRUE, message="Fitting models...")
 
+      par_squeeze <- NULL
+
+      if(isTRUE(input$borrowRandom)){par_squeeze <- c(par_squeeze,random)}
+      if(isTRUE(input$borrowFixed)){par_squeeze <- c(par_squeeze,"ridgeGroup.1")}
+
+      #We save the squeezed models!
+      models <- squeezePars(models, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...")
+
       outputlist$RData$proteins <- proteins
       outputlist$RData$models <- models
 
@@ -345,22 +359,17 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
 
     outputlist$L <- L
 
-    par_squeeze <- NULL
-
-    if(isTRUE(input$borrowRandom)){par_squeeze <- c(par_squeeze,random)}
-    if(isTRUE(input$borrowFixed)){par_squeeze <- c(par_squeeze,"ridgeGroup.1")}
-
     #If standard
     if(input$analysis_type=="standard"){
-    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...", message_extract="Calculating contrasts...", message_test="Testing contrasts...")
+    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
 
     #If stagewise
     } else if(input$analysis_type=="stagewise"){
-    RidgeSqM <- test.contrast_stagewise(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...", message_extractS1="Calculating contrasts stage 1...", message_testS1="Testing contrasts stage 1...", message_extractS2="Calculating contrasts stage 2...", message_testS2="Testing contrasts stage 1...")
+    RidgeSqM <- test.contrast_stagewise(outputlist$RData$models, L, simplify=FALSE, printProgress=TRUE, shiny=TRUE, message_extractS1="Calculating contrasts stage 1...", message_testS1="Testing contrasts stage 1...", message_extractS2="Calculating contrasts stage 2...", message_testS2="Testing contrasts stage 1...")
 
     #If ANOVA
     } else if(input$analysis_type=="ANOVA"){
-    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, par_squeeze=par_squeeze, anova=TRUE, anova.na.ignore=FALSE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...", printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
+    RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, anova=TRUE, anova.na.ignore=FALSE, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
     names(RidgeSqM) <- "ANOVA"
     }
 

@@ -118,6 +118,8 @@ shinyUI(fluidPage(
 	htmlOutput("selectAnnotations"),
 	htmlOutput("selectFixed"),
 	htmlOutput("selectRandom"),
+	checkboxInput("borrowFixed", "Borrow information across fixed effects", value = FALSE, width = NULL),
+	checkboxInput("borrowRandom", "Borrow information across random effects", value = FALSE, width = NULL),
 	radioButtons("save", "Save/load options:",
                    c("Save the models" = 1,  #Conditioneel stukje toevoegen bij downloadHandler dat hij ook model.RData downloadt
                      "Load existing models" = 2,
@@ -128,8 +130,6 @@ shinyUI(fluidPage(
         	condition = "input.save == 2",
         	fileInput(inputId="load_model", label="Specify the location of your saved model file", multiple = FALSE, accept = NULL, width = NULL)
       	),
-	checkboxInput("borrowFixed", "Borrow information across fixed effects", value = FALSE, width = NULL),
-	checkboxInput("borrowRandom", "Borrow information across random effects", value = TRUE, width = NULL),
 	#Type of analysis
      	#selectInput("analysis_type", "Select the type of analysis", c("standard", "stagewise", "ANOVA")),
 	selectInput("analysis_type", "Select the type of analysis", c("standard")),
