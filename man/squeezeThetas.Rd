@@ -28,6 +28,8 @@ squeezeThetas(thetas, df_thetas, vars, df_vars, squeezeVar = TRUE,
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
 
 \item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances and degrees of freedom, or \code{NULL} to hide the current message (if any).}
+
+\item{...}{Other arguments to be passed to the \code{squeezeVarRob} function internally.}
 }
 \value{
 A named list with 4 slots. The first slot \code{thetas_post} contains a matrix with in each column the squeezed variances corresponding to the \code{thetas} input argument.

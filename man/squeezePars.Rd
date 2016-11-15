@@ -29,6 +29,8 @@ squeezePars(protLM, par_squeeze = NULL, squeezeVar = TRUE, min_df = 1,
 \item{message_squeeze}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).}
 
 \item{message_update}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).}
+
+\item{...}{Other arguments to be passed to the \code{update_protLM} function internally.}
 }
 \value{
 An updated protLM object with squeezed variances and/or squeezed parameters (or the input \code{\link[=protLM-class]{protLM}} object if \code{par_squeeze=NULL} and \code{squeezeVar=FALSE}).

@@ -20,7 +20,7 @@ update_protLM(protLM, theta, sigmas = NULL, df_sigmas = NULL,
 
 \item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).}
 
-\item{...}{Other arguments to be passed to the \code{\link{update.default}} function if the \code{theta} input argument would be missing.}
+\item{...}{Other arguments to be passed to the \code{\link{update.lmerMod}} function.}
 
 \item{object}{A \code{\link[=protLM-class]{protLM}} object of which the  all of its \code{\link[=lmerMod-class]{lmerMod}} object in the \code{model} slot should have one or more parameter parameter variances \code{theta} replaced by given theta values. Optionally residual variances can also be updated.}
 }

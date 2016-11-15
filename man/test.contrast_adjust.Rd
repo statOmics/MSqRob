@@ -5,13 +5,11 @@
 \title{Test a contrast and perform FDR correction}
 \usage{
 test.contrast_adjust(protLM, L, level = 0.05, method = "fdr",
-  add.annotations = TRUE, squeezeVar = TRUE, par_squeeze = NULL,
-  min_df = 1, custom_dfs = NULL, robust_var = TRUE, simplify = TRUE,
-  lfc = 0, anova = FALSE, anova.na.ignore = TRUE, exp_unit = NULL,
+  add.annotations = TRUE, custom_dfs = NULL, simplify = TRUE, lfc = 0,
+  anova = FALSE, anova.na.ignore = TRUE, exp_unit = NULL,
   pars_df = NULL, satterthwaite = FALSE, lmerModFun = NULL,
   gradMethod = "simple", printProgress = FALSE, shiny = FALSE,
-  message_thetas = NULL, message_squeeze = NULL, message_update = NULL,
-  message_extract = NULL, message_test = NULL, ...)
+  message_extract = NULL, message_test = NULL)
 }
 \arguments{
 \item{protLM}{An object of class \code{\link[=protLM-class]{protLM}}.}
@@ -23,14 +21,6 @@ test.contrast_adjust(protLM, L, level = 0.05, method = "fdr",
 \item{method}{Correction method. Can be abbreviated. Defaults to "fdr". To get all available methods, type \code{p.adjust.methods}. For more information on these methods, see the \code{\link{p.adjust}} function.}
 
 \item{add.annotations}{A logical indicating whether the \code{annotations} slot of the \code{\link[=protLM-class]{protLM}} object should be added as extra columns to each matrix in the returned list of matrices. Defaults to \code{TRUE}.}
-
-\item{squeezeVar}{A logical indicating whether residual standard deviations should be squeezed together by computing empirical Bayes posterior means. For more information, see limma's \code{\link{squeezeVar}} function. Defaults to \code{TRUE}.}
-
-\item{par_squeeze}{Character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.}
-
-\item{min_df}{A numeric value indicating the minimal number of residual degrees of freedom that is required for a protein to be taken into account for the squeezing of the variances. Only used when \code{squeezeVar} is set to \code{TRUE}. Defaults to \code{1}.}
-
-\item{robust_var}{A logical indicating wheter the squeezing of the variances should be robust to the presence of outlier sample variances. Defaults to \code{TRUE}.}
 
 \item{simplify}{A logical indicating wheter, if there is only one contrast, a matrix should be returned instead of a list containing one matrix. Defaults to \code{TRUE}.}
 
@@ -55,17 +45,9 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
 
-\item{message_thetas}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).}
-
-\item{message_squeeze}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).}
-
-\item{message_update}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).}
-
 \item{message_extract}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma, or \code{NULL} to hide the current message (if any).}
 
 \item{message_test}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts, or \code{NULL} to hide the current message (if any).}
-
-\item{...}{Additional arguments to be passed to the squeezeVarRob function internally.}
 }
 \value{
 A list of matrices, with each matrix in the list corresponding to a contrast in L. Each row of the matrix corresponds to an accession in the \code{\link[=protLM-class]{protLM}} object.

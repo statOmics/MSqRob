@@ -5,15 +5,10 @@
 \title{Perform stage-wise contrast testing}
 \usage{
 test.contrast_stagewise(protLM, L, add.annotations = TRUE, level = 0.05,
-  method_stage1 = "fdr", squeezeVar = TRUE, par_squeeze = NULL,
-  min_df = 1, custom_dfs = NULL, robust_var = TRUE, simplify = TRUE,
-  lfc = 0, exp_unit = NULL, pars_df = NULL, satterthwaite = FALSE,
-  printProgress = FALSE, shiny = FALSE, message_thetasS1 = NULL,
-  message_squeezeS1 = NULL, message_updateS1 = NULL,
-  message_extractS1 = NULL, message_testS1 = NULL,
-  message_thetasS2 = NULL, message_squeezeS2 = NULL,
-  message_updateS2 = NULL, message_extractS2 = NULL,
-  message_testS2 = NULL, ...)
+  method_stage1 = "fdr", custom_dfs = NULL, simplify = TRUE, lfc = 0,
+  exp_unit = NULL, pars_df = NULL, satterthwaite = FALSE,
+  printProgress = FALSE, shiny = FALSE, message_extractS1 = NULL,
+  message_testS1 = NULL, message_extractS2 = NULL, message_testS2 = NULL)
 }
 \arguments{
 \item{protLM}{An object of class \code{\link[=protLM-class]{protLM}}.}
@@ -25,14 +20,6 @@ test.contrast_stagewise(protLM, L, add.annotations = TRUE, level = 0.05,
 \item{level}{The significance level at which the q-value needs to be controlled. Defaults to 5\%.}
 
 \item{method_stage1}{Correction method to be used in the first stage ANOVA. Can be abbreviated. Defaults to "fdr". To get all available methods, type \code{p.adjust.methods}. For more information on these methods, see the \code{\link{p.adjust}} function.}
-
-\item{squeezeVar}{A logical indicating whether residual standard deviations should be squeezed together by computing empirical Bayes posterior means. For more information, see limma's \code{\link{squeezeVar}} function. Defaults to \code{TRUE}.}
-
-\item{par_squeeze}{Character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.}
-
-\item{min_df}{A numeric value indicating the minimal number of residual degrees of freedom that is required for a protein to be taken into account for the squeezing of the variances. Only used when \code{squeezeVar} is set to \code{TRUE}. Defaults to \code{1}.}
-
-\item{robust_var}{A logical indicating wheter the squeezing of the variances should be robust to the presence of outlier sample variances. Defaults to \code{TRUE}.}
 
 \item{simplify}{A logical indicating wheter, if there is only one contrast, a matrix should be returned instead of a list containing one matrix. Defaults to \code{TRUE}.}
 
@@ -49,27 +36,13 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
 
-\item{message_thetasS1}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances during stage 1, or \code{NULL} to hide the current message (if any).}
-
-\item{message_squeezeS1}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances during stage 1, or \code{NULL} to hide the current message (if any).}
-
-\item{message_updateS1}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models during stage 1, or \code{NULL} to hide the current message (if any).}
-
 \item{message_extractS1}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta, vcov, df and sigma during stage 1, or \code{NULL} to hide the current message (if any).}
 
 \item{message_testS1}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts during stage 1, or \code{NULL} to hide the current message (if any).}
 
-\item{message_thetasS2}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances during stage 2, or \code{NULL} to hide the current message (if any).}
-
-\item{message_squeezeS2}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances during stage 2, or \code{NULL} to hide the current message (if any).}
-
-\item{message_updateS2}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models during stage 2, or \code{NULL} to hide the current message (if any).}
-
 \item{message_extractS2}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of beta during stage 2, vcov, df and sigma, or \code{NULL} to hide the current message (if any).}
 
 \item{message_testS2}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts during stage 2, or \code{NULL} to hide the current message (if any).}
-
-\item{...}{Additional arguments to be passed to the squeezeVarRob function internally.}
 }
 \value{
 A list of matrices, with each matrix in the list corresponding to a contrast in L. Each row of the matrix corresponds to a protein in the \code{\link[=protLM-class]{protLM}} object.
