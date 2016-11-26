@@ -76,7 +76,6 @@ Collate:
     'getBetaVcovDf.R'
     'squeezeVarRob.R'
     'getBetaVcovDfList.R'
-    'importDIAData.R'
     'makeContrast.R'
     'preprocess_long.R'
     'preprocess_wide.R'
