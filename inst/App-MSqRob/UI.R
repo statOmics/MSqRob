@@ -65,11 +65,11 @@ shinyUI(fluidPage(
       	h4("Filtering"),
       	#Filter on peptides only modified by site
         checkboxInput("onlysite", "Remove proteins that are only identified by modified peptides", value=TRUE),
-      	checkboxInput("smallestUniqueGroups", "Remove protein groups for which any of its member proteins is present in a smaller protein group", value=TRUE),
       	conditionalPanel(
         	condition = "input.onlysite == true",
         	fileInput(inputId="proteingroups", label="Specify the location of your proteinGroups.txt file", multiple = FALSE, accept = NULL, width = NULL)
       	),
+      	checkboxInput("smallestUniqueGroups", "Remove protein groups for which any of its member proteins is present in a smaller protein group", value=TRUE),
       	#Filter on peptides number of occurances
       	numericInput("minIdentified", "Minimal number of times a peptide sequence should be identified", value=2, min = 1, max = NA, step = 1, width = NULL),
       htmlOutput("selectFilters"),
