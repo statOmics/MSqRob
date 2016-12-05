@@ -26,7 +26,7 @@ shinyUI(fluidPage(
 ############################################################################
 #Navigation bar with 3 panel:Input, preprocessing, quantification
 ############################################################################
-   navbarPage("MSqRob for MaxQuant data",
+   navbarPage("MSqRob for MaxQuant data v 0.6.0",
 
 
     ####################################
