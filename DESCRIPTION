@@ -8,7 +8,7 @@ Authors@R: c(
     "lieven.clement@UGent.be"),
     person("Lieven", "Clement", role = c("aut", "cre"), email =
     "lieven.clement@UGent.be"))
-Version: 0.6.0
+Version: 0.6.1
 Date: 2015-07-07
 Author: Ludger Goeminne [aut],
     Kris Gevaert [ctb],
