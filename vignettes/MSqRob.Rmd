@@ -119,7 +119,7 @@ colnames(exprs(peptidesFranc))
 Add a factor for the genetic knock out, which we will call "phenotype" (i.e. wild type (1WT) or knock out (3D8)).
 ```{r eval=FALSE}
 #Extract the relevant part of the mass spec run names that points to the phenotype.
-pheno <- factor(substr(runs, 1,3))
+phenotype <- factor(substr(runs, 1,3))
 ```
 
 Add a factor for each of the 6 biological replicates (i.e. 3 biological repeats for each phenotype).
@@ -133,7 +133,7 @@ Each of the 18 technical repeats are here represented by the 18 mass spec runs.
 
 Create an experiment annotation data frame.
 ```{r eval=FALSE}
-exp_annotation <- data.frame(run=runs, pheno=pheno, biorep=biorep)
+exp_annotation <- data.frame(run=runs, phenotype=phenotype, biorep=biorep)
 exp_annotation
 ```
 
@@ -231,7 +231,7 @@ Fit the robust ridge models for each protein. The `fit.model` function will fit 
 
 Caution: fitting the models takes some time (less than 15 minutes for the *Francisella tularensis* dataset on our system). The `system.time` function was again only added to output the duration of the model fitting.
 ```{r eval=FALSE}
-system.time(protLMFranc <- fit.model(proteinsFranc, response="quant_value", fixed=c("pheno"),  random=c("biorep","run","Sequence"), add.intercept=TRUE, weights="Huber"))
+system.time(protLMFranc <- fit.model(proteinsFranc, response="quant_value", fixed=c("phenotype"),  random=c("biorep","run","Sequence"), add.intercept=TRUE, weights="Huber"))
 ```
 
 Then, we squeeze the residual variances of our model.
@@ -326,22 +326,22 @@ We are interested in which proteins differ significantly in abundance between Ar
 attr(modelWP_003040227,"MSqRob_levels")
 ```
 
-Here, we notice that the mutant is encoded as "pheno3D8" and the wild type as "pheno1WT". We construct a contrast matrix L for inferring on the fold change of interest. We are interested in the log2 fold change between mutant and wild type. As all intensities are log2-transformed, we should take the difference between "pheno3D8" and "pheno1WT" (because of the following property of logarithms: log2(a/b)=log2(a)-log2(b)).
+Here, we notice that the mutant is encoded as "phenotype3D8" and the wild type as "phenotype1WT". We construct a contrast matrix L for inferring on the fold change of interest. We are interested in the log2 fold change between mutant and wild type. As all intensities are log2-transformed, we should take the difference between "phenotype3D8" and "phenotype1WT" (because of the following property of logarithms: log2(a/b)=log2(a)-log2(b)).
 ```{r eval=FALSE}
-L <- makeContrast(contrasts=c("pheno3D8-pheno1WT"),
-                  levels=c("pheno1WT","pheno3D8"))
+L <- makeContrast(contrasts=c("phenotype3D8-phenotype1WT"),
+                  levels=c("phenotype1WT","phenotype3D8"))
 L
 ```
 
 Imagine we would want to test the average log2 protein intensity between mutant and wild type, then L would be constructed as follows:
 ```{r eval=FALSE}
 #Keep eval=FALSE
-L <- makeContrast(contrasts=c("pheno3D8/2+pheno1WT/2"),
-                  levels=c("pheno1WT","pheno3D8"))
+L <- makeContrast(contrasts=c("phenotype3D8/2+phenotype1WT/2"),
+                  levels=c("phenotype1WT","phenotype3D8"))
 L
 ```
 
-**Important notification:** do not use the estimated parameters beta to determine the factor levels! You will notice for example that the level "pheno1WT" is missing in the column names of the betas. This is because "pheno1WT" is the reference class, giving the parameter corresponding to "pheno3D8" the interpretation of the effect of "pheno3D8" relative to "pheno1WT". It is important however to include "pheno1WT" in the contrast matrix because for proteins where factor levels are missing, these parameters can get different interpretations. The `makeContrast` function takes this into account and will return `NA` when a contrast cannot be properly estimated.
+**Important notification:** do not use the estimated parameters beta to determine the factor levels! You will notice for example that the level "phenotype1WT" is missing in the column names of the betas. This is because "phenotype1WT" is the reference class, giving the parameter corresponding to "phenotype3D8" the interpretation of the effect of "phenotype3D8" relative to "phenotype1WT". It is important however to include "phenotype1WT" in the contrast matrix because for proteins where factor levels are missing, these parameters can get different interpretations. The `makeContrast` function takes this into account and will return `NA` when a contrast cannot be properly estimated.
 
 ```{r eval=FALSE}
 betaBVcovDf$beta
