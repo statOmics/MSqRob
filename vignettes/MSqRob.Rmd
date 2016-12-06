@@ -137,6 +137,21 @@ exp_annotation <- data.frame(run=runs, pheno=pheno, biorep=biorep)
 exp_annotation
 ```
 
+Note that you can also import the experimental annotation from a tab-delimited or Excel file. As an example, we show you here how you can import data from an experimental annotation file delivered with our package. First, provide the path to where the data is saved.
+```{r eval=FALSE}
+file_exp_annotation <- system.file("extdata/Francisella", "label-free_Francisella_annotation.xlsx", package = "MSqRob")
+file_exp_annotation
+```
+
+Then, import the data using the `read.xlsx` function fromt the `openxlsx` package and convert the columns of the data frame to factors.
+```{r eval=FALSE}
+#Import Excel file
+exp_annotation2 <- openxlsx::read.xlsx(file_exp_annotation)
+#Convert columns of data frame to factors
+exp_annotation2 <- as.data.frame(unclass(exp_annotation2))
+exp_annotation2
+```
+
 ###2.2. Preprocess the data using the preprocess_MaxQuant function.
 
 The identification of peptides that carry one or more chemical modifications is often not as reliable as the identification of unmodified peptides. Therefore, a common step during the preprocessing of proteomics data consists of removing the proteins of which all identified peptides have one or more modification sites. If we want to remove these proteins that are only identified by modified peptides from the dataset, we also need the proteinGroups.txt file. This file can be found in the same location as the peptides.txt file ("path_to_raw_files/combined/txt/proteinGroups.txt"). Here, we make use of the proteinGroups.txt file that is delivered with the package.
