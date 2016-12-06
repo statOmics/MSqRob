@@ -70,11 +70,6 @@ Import the data using the `read_MaxQuant` function.
 peptidesFranc <- read_MaxQuant(file_peptides_txt, pattern="Intensity.", remove_pattern=TRUE)
 ```
 
-**Exceptional:** the dataset contains more data than we need. Normally, it is not good practise to just remove data from your experiment. Even if you don't want to use a certain part of your data, it might still be a good idea to keep it into your model (because more data often means better variance estimates). However, in this tutorial, we remove this data in order to speed things up.
-```{r eval=FALSE}
-peptidesFranc <- peptidesFranc[,c(1:9,19:27)]
-```
-
 `read_MaxQuant` creates an `MSnSet` object with 3 slots:
 
 - `exprs`: contains a matrix of peptide intensities of which the rows correspond to the peptides present in the dataset and the columns correspond to the different mass spec runs.
