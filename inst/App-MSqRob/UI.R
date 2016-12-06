@@ -26,7 +26,7 @@ shinyUI(fluidPage(
 ############################################################################
 #Navigation bar with 3 panel:Input, preprocessing, quantification
 ############################################################################
-   navbarPage("MSqRob for MaxQuant data v 0.6.1",
+   navbarPage("MSqRob for MaxQuant data v 0.6.2",
 
 
     ####################################
@@ -62,6 +62,16 @@ shinyUI(fluidPage(
     sidebarLayout(
 	#Sidebar with input
         sidebarPanel(
+        h4("Transformation"),
+          checkboxInput("logtransform", "Log-transform data", value=TRUE),
+          conditionalPanel(
+            condition = "input.logtransform == true",
+            numericInput("log_base", "Base", value=2, min = 1, max = NA, step = NA, width = NULL)
+          ),
+
+        h4("Normalization"),
+        selectInput("normalisation", "Normalization", c("quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none")),
+
       	h4("Filtering"),
       	#Filter on peptides only modified by site
         checkboxInput("onlysite", "Remove proteins that are only identified by modified peptides", value=TRUE),
@@ -72,26 +82,19 @@ shinyUI(fluidPage(
       	checkboxInput("smallestUniqueGroups", "Remove protein groups for which any of its member proteins is present in a smaller protein group", value=TRUE),
       	#Filter on peptides number of occurances
       	numericInput("minIdentified", "Minimal number of times a peptide sequence should be identified", value=2, min = 1, max = NA, step = 1, width = NULL),
-      htmlOutput("selectFilters"),
-
-	h4("Normalization"),
- 	checkboxInput("logtransform", "Log-transform data", value=TRUE),
-	conditionalPanel(
-        	condition = "input.logtransform == true",
-        	numericInput("log_base", "Base", value=2, min = 0, max = NA, step = NA, width = NULL)
-      		),
-  selectInput("normalisation", "Normalisation", c("quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none"))
+      htmlOutput("selectFilters")
 	),
 	#Main panel with number of output and plots
         mainPanel(width = 5,
- 	      checkboxInput("evalnorm", "Evaluate Normalization", value=FALSE),
-        strong('Number of peptides before normalization:'),textOutput('npeptidesRaw',container = span),div(),
+ 	      checkboxInput("evalnorm", "Evaluate preprocessing", value=FALSE),
+        strong('Number of peptides before preprocessing:'),textOutput('npeptidesRaw',container = span),div(),
         strong('Number of peptides after preprocessing:'),textOutput('npeptidesNormalized',container = span),div(),
+        htmlOutput("selectColPlotNorm1"),
+        h4("Intensities after transformation"),
         plotOutput('plotRaw'),
- 	      htmlOutput("selectColPlotNorm1"),
-        h4("Normalized intensities"),
+        h4("Intensities after full preprocessing"),
         plotOutput('plotNorm1'),
-        h4("MDS-plot after normalization"),
+        h4("MDS plot after full preprocessing"),
         checkboxInput("plotMDSPoints", "Plot MDS points", value=FALSE),
         checkboxInput("plotMDSLabels", "Plot MDS labels", value=TRUE),
         plotOutput('plotMDS',
