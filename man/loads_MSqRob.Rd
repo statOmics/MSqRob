@@ -10,7 +10,7 @@ loads_MSqRob(file = NULL, variables = NULL, ultra.fast = FALSE,
 \arguments{
 \item{file}{character string: the (RDatas) filename from which to load the variables. If using \code{ultra.fast = TRUE} option, specify the directory holding the uncompressed R objects (saved via \code{MSqRob_saves(..., ultra.fast = TRUE))}.}
 
-\item{variables}{A character vector containing the variable names to load.}
+\item{variables}{Optional: a character vector containing the variable names to load. If not specified, all variables will be loaded.}
 
 \item{ultra.fast}{boolean: if \code{TRUE}, ultra fast (...) processing is done without any check to parameters or file existence/permissions. Be sure if using this setting as no debugging is done! Only recommended for servers dealing with lot of R objects' saves and loads in a monitored environment. Also, for performance gain, it is advised not to convert the list to data frame (\code{to.data.frame = FALSE}).}
 

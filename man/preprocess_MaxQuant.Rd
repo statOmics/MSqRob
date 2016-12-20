@@ -27,7 +27,7 @@ preprocess_MaxQuant(MSnSet, accession = "Proteins", exp_annotation = NULL,
 
 \item{normalisation}{A character vector of length one that describes how to normalise the \code{\link[=MSnSet-class]{MSnSet}} object. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.}
 
-\item{smallestUniqueGroups}{A logical indicating whether proteins groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.}
+\item{smallestUniqueGroups}{A logical indicating whether protein groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.}
 
 \item{useful_properties}{The columns of the \code{\link{featureData}} slot that are useful in the further analysis and/or inspection of the data and should be retained. Defaults to \code{c("Proteins","Sequence","PEP")}.}
 
