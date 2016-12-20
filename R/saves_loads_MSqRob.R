@@ -21,7 +21,7 @@
 #'
 #' ## End(Not run)
 #' @references Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
-#'@export
+#' @export
 saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite = FALSE,
                           ultra.fast = FALSE, shiny=FALSE, printProgress=FALSE, message=NULL)
 {
@@ -95,7 +95,7 @@ saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite
 #'
 #' @description \code{loads_MSqRob} is almost a pure copy of the \code{loads} function from the \code{saves} package by Daróczi (2013) with some minor code tweaks to make it work for MSqRob. It loads data from a special binary file format (RDatas) made up by the \code{\link{MSqRob_saves}} function. This special, uncompressed tar archive inlcudes several separate RData files (saved by \code{\link{MSqRob_saves}} function) as being columns/variables of a data frame.
 #' @param file character string: the (RDatas) filename from which to load the variables. If using \code{ultra.fast = TRUE} option, specify the directory holding the uncompressed R objects (saved via \code{MSqRob_saves(..., ultra.fast = TRUE))}.
-#' @param variables A character vector containing the variable names to load.
+#' @param variables Optional: a character vector containing the variable names to load. If not specified, all variables will be loaded.
 #' @param to.data.frame boolean: the default behavior of loads is to concatenate the variables to a list. This could be overriden with \code{TRUE} argument specified at to.data.frame parameter, which will return a dataframe instead of list. Only do this if all your variables have the same number of cases!
 #' @param ultra.fast boolean: if \code{TRUE}, ultra fast (...) processing is done without any check to parameters or file existence/permissions. Be sure if using this setting as no debugging is done! Only recommended for servers dealing with lot of R objects' saves and loads in a monitored environment. Also, for performance gain, it is advised not to convert the list to data frame (\code{to.data.frame = FALSE}).
 #' @details The purpose of this function is to be able only a few variables of a data.frame really fast. It is done by reading and writing datas in binary format without any transformations, and combining the speed of only reading the needed part of an archive.
@@ -114,7 +114,7 @@ saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite
 #'
 #' ## End(Not run)
 #' @references Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
-#'@export
+#' @export
 loads_MSqRob <- function (file = NULL, variables = NULL,
                           ultra.fast = FALSE, printProgress=FALSE, shiny=FALSE, message=NULL)
 {
@@ -129,6 +129,11 @@ loads_MSqRob <- function (file = NULL, variables = NULL,
     progress$set(message = message, value = 0)
   }
 
+  tmp <- tempfile("saves.dir-")
+  dir.create(tmp)
+  untar(file, exdir = tmp)
+  if(is.null(variables)){variables <- gsub(".RData","",dir(tmp))}
+
   data <- list()
   if (ultra.fast == TRUE) {
     for (i in 1:length(variables)) {
@@ -139,16 +144,15 @@ loads_MSqRob <- function (file = NULL, variables = NULL,
     names(data) <- variables
     return(data)
   }
-  if (is.null(variables) | is.null(file)) {
-    stop("Arguments missing! Specify a filename and variable names also to load.")
+  if (is.null(file)) {
+    stop("Argument missing! Specify a filename to load.")
   }
   if (!file.exists(file)) {
     stop("Archive not found!")
   }
-  tmp <- tempfile("saves.dir-")
-  dir.create(tmp)
-  untar(file, exdir = tmp)
+
   for (i in 1:length(variables)) {
+    updateProgress(progress=progress, detail=paste0("Loading object ", i," of ",length(variables),": ",variables[i],"."), n=length(variables), shiny=shiny, print=isTRUE(printProgress))
     f <- paste(tmp, "/", variables[i], ".RData", sep = "")
     if (!file.exists(f)) {
       stop(paste("Variable: <<", variables[i], ">> not found!"))
@@ -159,3 +163,21 @@ loads_MSqRob <- function (file = NULL, variables = NULL,
   unlink(tmp, recursive = TRUE)
   return(data)
 }
+
+#'Inspect the variables present in a data.frame from binary file
+#'
+#' @description \code{inspect_loads_MSqRob} returns the names of the variables present in a .RDatas file, some or all of which can be used in the \code{variables} argument of the \code{\link{loads_MSqRob}} function if one prefers to load only some variables.
+#' @param file character string: the (RDatas) filename from which to inspect the variable names.
+#' @return The variable names present in the .RDatas file.
+#' @export
+inspect_loads_MSqRob <- function (file = NULL)
+{
+  tmp <- tempfile("saves.dir-")
+  dir.create(tmp)
+  untar(file, exdir = tmp)
+  variables <- gsub(".RData","",dir(tmp))
+  unlink(tmp, recursive = TRUE)
+  return(variables)
+}
+
+
