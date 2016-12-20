@@ -82,6 +82,7 @@ Collate:
     'prot_p_adjust.R'
     'prot_p_adjust_protwise.R'
     'prot_signif.R'
+    'saves_loads_MSqRob.R'
     'sechol.R'
     'sigma.R'
     'smallestUniqueGroups.R'
