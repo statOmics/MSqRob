@@ -30,12 +30,23 @@ shinyServer(function(input, output, session) {
   })
 
   observeEvent(input$outputFolder,{
-    saveFolder$folder <- tryCatch(
-                         choose.dir()
-                         , error=function(e){
-                         svDialogs::dlgDir()$res
-                         })
-    })
+
+    if(Sys.info()['sysname']=="Darwin"){
+      saveFolder$folder <- tryCatch(
+        choose.dir2()
+        , error=function(e){
+          library(svDialogs)
+          svDialogs::dlgDir()$res
+        })
+    } else{
+      saveFolder$folder <- tryCatch(
+        choose.dir()
+        , error=function(e){
+          library(svDialogs)
+          svDialogs::dlgDir()$res
+        })
+    }
+  })
 
   output$outputFolderOut <- renderUI({
 
@@ -325,7 +336,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       peptides = read_MaxQuant(peptidesDatapath(), pattern="Intensity.", shiny=TRUE, message="Importing data...")
 
       useful_properties = unique(c(processedvals[["proteins"]],processedvals[["annotations"]],input$fixed,input$random)[c(processedvals[["proteins"]],processedvals[["annotations"]],input$fixed,input$random) %in% colnames(Biobase::fData(peptides))])
-      peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
       Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2))
       proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Converting data...")
 
@@ -633,6 +644,10 @@ proxy = dataTableProxy('table')
     proxy %>% DT::selectRows(new_rows)
   })
 
+  observeEvent(input$remove_all_selection, {
+        proxy %>% DT::selectRows(NULL)
+  })
+
 
 ###Detail Plot###
 #Drop down menu for plot 2
@@ -730,10 +745,10 @@ output$plot2 <- renderPlot({
       main <- subdataset[,input$selMainPlot2]
 
       if (is.factor(getData(proteins[accessions])[[input$selPlot2]])){
-      boxplot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]], outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="log2(peptide intensity)", xlab="", main=main, las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) #, cex.main=2, cex.lab=2, cex.axis=2, cex=2, getAccessions(proteins[accessions])
+      boxplot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]], outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=main, las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) #, cex.main=2, cex.lab=2, cex.axis=2, cex=2, getAccessions(proteins[accessions])
       points(jitter((as.numeric(getData(proteins[accessions])[[input$selPlot2]])), factor=2),getData(proteins[accessions])$quant_value, col=colorsPlot2(), pch=pchPlot2()) #,cex=2, lwd=2, col=c(1,2,3,4,"cyan2",6)
       # title(ylab="Log2(Intensity)", line=5, cex.lab=2, family="Calibri Light")
-    } else plot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]],ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="log2(peptide intensity)", xlab="", main=getAccessions(proteins[accessions]), las=2, bty="n")
+    } else plot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]],ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=getAccessions(proteins[accessions]), las=2, bty="n")
     } else{NULL}
   })
 
@@ -784,7 +799,7 @@ output$plot2 <- renderPlot({
 
     if(!is.null(peps()) & isTRUE(input$evalnorm)){
     #If remove only identified by site==TRUE and fileProteinGroups is NULL, this also throws an error
-    pepsN <- preprocess_MaxQuant(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, filter=gsub(" ",".",input$filter), remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+    pepsN <- preprocess_MaxQuant(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=gsub(" ",".",input$filter), remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
     esetN <- exprs(pepsN)
     }
 
@@ -871,7 +886,7 @@ output$plot2 <- renderPlot({
 #
 #           filter <- gsub(" ",".",input$filter)
 #
-#           pepsN=preprocess_MaxQuant(peps, logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, filter=filter, remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+#           pepsN=preprocess_MaxQuant(peps, logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=filter, remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
 #
 #           esetN=exprs(pepsN)
 #

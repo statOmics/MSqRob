@@ -1,4 +1,50 @@
 
+#A function to prompt a folder chooser under Mac OS X,
+#normal choose.dir sometimes gives just NA because system has no access to finder
+choose.dir2 <- function(default = NA, caption = NA) {
+  command = 'osascript'
+
+  #Dit was het:
+  #args = "-e 'tell application \"Finder\"' -e 'activate' -e 'POSIX path of (choose folder{{prompt}}{{default}})' -e 'end tell'"
+  #'-e "POSIX path of (choose folder{{prompt}}{{default}})"'
+
+  #osascript -e 'tell application "Terminal" to return POSIX path of (choose file)'
+
+  #Find App that is in front
+  args1 = "-e 'tell application \"System Events\"' -e 'set frontApp to name of first application process whose frontmost is true' -e 'end tell'"
+  suppressWarnings({
+    frontApp = system2(command, args = args1, stderr = TRUE)
+  })
+
+  #The application that is in front should open the  file choose window
+  args = paste0("-e 'tell application \"",frontApp,"\" to return POSIX path of (choose folder{{prompt}}{{default}})'")
+
+  #system2('osascript', args = "-e 'tell application \"Finder\"' -e 'POSIX path of (choose folder{{prompt}}{{default}})' -e 'end tell'", stderr = TRUE)
+
+  if (!is.null(caption) && !is.na(caption) && nzchar(caption)) {
+    prompt = sprintf(' with prompt \\"%s\\"', caption)
+  } else {
+    prompt = ''
+  }
+  args = sub('{{prompt}}', prompt, args, fixed = T)
+
+  if (!is.null(default) && !is.na(default) && nzchar(default)) {
+    default = sprintf(' default location \\"%s\\"', path.expand(default))
+  } else {
+    default = ''
+  }
+  args = sub('{{default}}', default, args, fixed = T)
+
+  suppressWarnings({
+    path = system2(command, args = args, stderr = TRUE)
+  })
+  if (!is.null(attr(path, 'status')) && attr(path, 'status')) {
+    # user canceled
+    path = NA
+  }
+
+  return(path)
+}
 
 
 #Function to convert data paths if on windows
@@ -192,123 +238,4 @@ fileInput <- function (inputId, label, multiple = FALSE, accept = NULL, width = 
     tags$div(id = paste(inputId, "_progress", sep = ""),
              class = "progress progress-striped active shiny-file-input-progress",
              tags$div(class = "progress-bar")))
-}
-
-
-#'@export
-saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite = FALSE,
-          ultra.fast = FALSE, shiny=FALSE, printProgress=FALSE, message=NULL)
-{
-
-  progress <- NULL
-  if(isTRUE(shiny)){
-    # Create a Progress object
-    progress <- shiny::Progress$new()
-
-    # Make sure it closes when we exit this reactive, even if there's an error
-    on.exit(progress$close())
-    progress$set(message = message, value = 0)
-  }
-
-  names <- as.character(substitute(list(...)))[-1L]
-  list <- c(list, names)
-  if (ultra.fast == TRUE) {
-    df <- list[1]
-    data <- get(df, envir=envir)
-    dir.create(df)
-    e <- as.environment(data)
-    for (i in 1:length(data)) {
-      save(list = names(data)[i], file = paste(df, "/",
-                                               names(data)[i], ".RData", sep = ""), compress = FALSE,
-           precheck = FALSE, envir = e)
-    }
-    return(invisible(df))
-  }
-  if (is.null(file))
-    file <- paste(list, ".RDatas", sep = "")
-  if (length(list) != length(file))
-    stop("Bad number of files given!")
-  for (i in 1:length(list)) {
-    if (inherits(try(data <- get(list[i], envir=envir), silent = TRUE),
-                 "try-error"))
-      stop(paste("No dataframe/list given or `", list[i],
-                 "` is not a dataframe/list!"))
-    if (file.exists(file[i])) {
-      if (overwrite == TRUE) {
-        file.remove(file[i])
-      }
-      else {
-        stop(paste("Destination filename `", file[i],
-                   "` already exists! Use other filename or use paramater `overwrite` set to TRUE."))
-      }
-    }
-    if (!is.data.frame(data) & !is.list(data))
-      stop(paste("No dataframe/list given or `", list[i],
-                 "` is not a dataframe/list!"))
-    tmp <- tempfile("saves.dir-")
-    dir.create(tmp)
-    e <- as.environment(data)
-
-    count <- 0
-    lapply(names(data), function(x) {
-      count <<- count+1
-      updateProgress(progress=progress, detail=paste0("Saving ",x,"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
-      save(list = x, file = paste(tmp,"/", x, ".RData", sep = ""), envir = e)
-    })
-
-    w <- getwd()
-    setwd(tmp)
-    tar(paste(w, "/", file[i], sep = ""), ".", compression = "none")
-    setwd(w)
-    unlink(tmp, recursive = TRUE)
-  }
-  invisible(file)
-}
-
-
-
-#'@export
-loads_MSqRob <- function (file = NULL, variables = NULL,
-          ultra.fast = FALSE, printProgress=FALSE, shiny=FALSE, message=NULL)
-{
-
-  progress <- NULL
-  if(isTRUE(shiny)){
-    # Create a Progress object
-    progress <- shiny::Progress$new()
-
-    # Make sure it closes when we exit this reactive, even if there's an error
-    on.exit(progress$close())
-    progress$set(message = message, value = 0)
-  }
-
-  data <- list()
-  if (ultra.fast == TRUE) {
-    for (i in 1:length(variables)) {
-      updateProgress(progress=progress, detail=paste0("Loading object ", i," of ",length(variables),": ",variables[i],"."), n=length(variables), shiny=shiny, print=isTRUE(printProgress))
-      f <- paste(file, "/", variables[i], ".RData", sep = "")
-      data[[paste(variables[i])]] <- local(get(load(f)))
-    }
-    names(data) <- variables
-    return(data)
-  }
-  if (is.null(variables) | is.null(file)) {
-    stop("Arguments missing! Specify a filename and variable names also to load.")
-  }
-  if (!file.exists(file)) {
-    stop("Archive not found!")
-  }
-  tmp <- tempfile("saves.dir-")
-  dir.create(tmp)
-  untar(file, exdir = tmp)
-  for (i in 1:length(variables)) {
-    f <- paste(tmp, "/", variables[i], ".RData", sep = "")
-    if (!file.exists(f)) {
-      stop(paste("Variable: <<", variables[i], ">> not found!"))
-    }
-    data[[paste(variables[i])]] <- local(get(load(f)))
-  }
-  #names(data) <- variables
-  unlink(tmp, recursive = TRUE)
-  return(data)
 }
