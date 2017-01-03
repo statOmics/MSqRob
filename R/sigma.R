@@ -97,7 +97,7 @@ setMethod("getDf", "lm", function(object){
   df <- attr(object,"MSqRob_df_sigma")
 
   if(is.null(df)){
-    object$df.residual
+    df <- object$df.residual
   }
   return(df)
 
