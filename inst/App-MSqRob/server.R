@@ -19,14 +19,19 @@ shinyServer(function(input, output, session) {
 ###########################################
 
   saveFolder <- reactiveValues(folder = NULL)
-  #
-  output$folderError <- renderText({
-  if(is.null(saveFolder$folder) | length(saveFolder$folder)==0){stop("No output folder selected!")
-  } else if(is.na(saveFolder$folder)){
-    stop("No output folder selected!")
-  } else if(!dir.exists(saveFolder$folder)){
-    stop("Output folder does not exist!")
+
+  #Function to check if save folder is set
+  check_save_folder <- function(save_folder){
+    if(is.null(save_folder) | length(save_folder)==0){stop("No output folder selected!")
+    } else if(is.na(save_folder)){
+      stop("No output folder selected!")
+    } else if(!dir.exists(save_folder)){
+      stop("Output folder does not exist!")
     }
+  }
+
+  output$folderError <- renderText({
+    check_save_folder(saveFolder$folder)
   })
 
   observeEvent(input$outputFolder,{
@@ -65,6 +70,31 @@ shinyServer(function(input, output, session) {
       }
 
     folderInput(inputId="outputFolder", label="Specify the location where your output will be saved", value = value, multiple = FALSE, accept = NULL, width = NULL, style=style)
+  })
+
+  observe({
+
+    #If no save folder or no peptides.txt file specified, do not allow to try to create an annotation data frame.
+    res <- try(check_save_folder(saveFolder$folder),silent = TRUE)
+
+    if(is.null(input$peptides) | class(res) == "try-error"){
+      shinyjs::disable("create_annot")
+    } else{
+      shinyjs::enable("create_annot")
+    }
+  })
+
+  #Button to initialize experimental annotation file
+  newExpAnnText <- eventReactive(input$create_annot, {
+    #Check if save folder is set
+    check_save_folder(saveFolder$folder)
+    init_ann_MQ_Excel(file, savepath=saveFolder$folder, output_name=paste0(input$project_name,"_experimental_annotation"), col_name="run", pattern="Intensity.", remove_pattern=TRUE)
+    newExpAnnText <- paste0("Annotation file initialized. Check ",saveFolder$folder,"/",input$project_name,"_experimental_annotation.xlsx. \n Adjust this file according to your experimental settings and upload it as your experimental annotation file.")
+    return(newExpAnnText)
+    })
+
+  output$newExpAnnText <- renderText({
+    newExpAnnText()
   })
 
 ########################################################
@@ -304,12 +334,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
   outputlist <- eventReactive(input$go, {
 
     #Check if saveFolder is correctly specified!
-    if(is.null(saveFolder$folder) | length(saveFolder$folder)==0){stop("No output folder selected!")
-    } else if(is.na(saveFolder$folder)){
-      stop("No output folder selected!")
-    } else if(!dir.exists(saveFolder$folder)){
-      stop("Output folder does not exist!")
-    }
+    check_save_folder(saveFolder$folder)
 
     outputlist=list(RData=list(proteins=NULL,
                                models=NULL),

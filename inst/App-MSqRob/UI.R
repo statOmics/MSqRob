@@ -46,13 +46,21 @@ shinyUI(fluidPage(
 		#Peptides.txt file
 		fileInput(inputId="peptides", label="Specify the location of your peptides.txt file", multiple = FALSE, accept = NULL, width = NULL)
      	),
-     	#mainpanel
-     	mainPanel()
-     ),
 		#Main panel with number of output and plots
 		mainPanel(width = 5,
-		          htmlOutput("folderError")
-		          )
+		          htmlOutput("folderError"),
+		          h4("No annotation file yet?"),
+		          p("Click the button to initialize an Excel file with a \"run\" column based on the peptides.txt file.
+		            The annotation file will be saved in the output location. You still need to add other relevant columns (treatments, biological repeats, technical repeat, etc.) manually!"),
+		          actionButton("create_annot", "Create annotation file"),
+		          verbatimTextOutput("newExpAnnText")
+		)
+     )
+		# ,
+		# #Main panel with number of output and plots
+		# mainPanel(width = 5,
+		#           htmlOutput("folderError")
+		#           )
     )
 
     ############################
@@ -122,7 +130,7 @@ shinyUI(fluidPage(
 	htmlOutput("selectAnnotations"),
 	htmlOutput("selectFixed"),
 	htmlOutput("selectRandom"),
-	checkboxInput("borrowFixed", "Borrow information across fixed effects", value = FALSE, width = NULL),
+	#checkboxInput("borrowFixed", "Borrow information across fixed effects", value = FALSE, width = NULL),
 	checkboxInput("borrowRandom", "Borrow information across random effects", value = FALSE, width = NULL),
 	radioButtons("save", "Save/load options:",
                    c("Save the models" = 1,  #Conditioneel stukje toevoegen bij downloadHandler dat hij ook model.RData downloadt
@@ -170,8 +178,9 @@ Brush and double-click on the selected area to zoom in. Double click outside the
 Choose significance level to visualize features with an FDR level below alpha.
                   "),
 		actionButton("add_area_selection", "Add selected area to selection"),
-                actionButton("remove_area_selection", "Remove selected area from selection"),
-              	numericInput("alpha", "Significance level (alpha)", value=.05, min = 0, max = 1, step = 0.01, width = NULL)
+    actionButton("remove_area_selection", "Remove selected area from selection"),
+		actionButton("remove_all_selection", "Remove everything from selection"),
+    numericInput("alpha", "Significance level (alpha)", value=.05, min = 0, max = 1, step = 0.01, width = NULL)
 	),
         #Detail plot
 	column(width = 6, #6 out of 12 => half the screen!
