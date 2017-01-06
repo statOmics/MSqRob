@@ -8,7 +8,7 @@ preprocess_MaxQuant(MSnSet, accession = "Proteins", exp_annotation = NULL,
   type_annot = NULL, logtransform = TRUE, base = 2,
   normalisation = "quantiles", smallestUniqueGroups = TRUE,
   useful_properties = c("Proteins", "Sequence", "PEP"),
-  filter = c("Contaminant", "Reverse"), filter_symbol = "+",
+  filter = c("Potential.contaminant", "Reverse"), filter_symbol = "+",
   minIdentified = 2, remove_only_site = FALSE, file_proteinGroups = NULL,
   colClasses = NA, printProgress = FALSE, shiny = FALSE, message = NULL)
 }
