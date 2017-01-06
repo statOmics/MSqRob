@@ -1,6 +1,41 @@
+#' Initialize an annotation Excel file based on a MaxQuant peptides.txt file
+#'
+#' @description Creates an Excel file with one column containing the run names of an experiment based on the column names of a MaxQuant peptides.txt file. This function might be a start in constructing the first column of the annatation Excel file, other colunms need to be added manually.
+#' @param file The name of a MaxQuant peptides.txt file. For more details about how this argument can be specified, see \code{\link[utils]{read.table}}.
+#' @param savepath The file path to the directory where you want the output Excel annotation file to be saved. If set to \code{NULL} (the default), the Excel file will be saved in the working directory.
+#' @param output_name The name of the output Excel annotation file. Defaults to \code{"experimental_annotation"}.
+#' @param col_name The name of the only column created in the Excel file. Defaults to \code{"run"}.
+#' @param pattern A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values. Defaults to "Intensity.".
+#' @param remove_pattern A logical indicating whether the expression in "pattern" should be removed from the column names in the resulting Excel file. Defaults to \code{TRUE}.
+#' @return An Excel file with one column containing the different run names present in the MaxQuant peptides.txt file and column name \code{col_name}.
+#' @export
+init_ann_MQ_Excel <- function(file, savepath=NULL, output_name="experimental_annotation", col_name="run", pattern="Intensity.", remove_pattern=TRUE){
+
+  if(is.null(savepath)){savepath <- getwd()}
+
+  colInt <- MSnbase::grepEcols(file, pattern=pattern, split = "\t")
+  runs <- read.table(file, header=FALSE, nrow=1, sep = "\t", quote = "",
+                     stringsAsFactors = FALSE, comment.char = "")[colInt]
+  runs <- make.names(runs, unique = TRUE)
+
+  if(isTRUE(remove_pattern)){
+    #Remove pattern from colnames of exprs
+    runs <- gsub(pattern,"",runs)
+  }
+
+  run_column <- data.frame(run=runs)
+  colnames(run_column) <- col_name
+
+  #Remove potential extension in output_name to avoid double extension
+  output_name <- gsub(".xlsx","",output_name)
+
+  openxlsx::write.xlsx(run_column, file = file.path(savepath, paste0(output_name,".xlsx")), colNames = TRUE, rowNames = FALSE)
+
+}
+
 #' Create an annotation data frame
 #'
-#' @description Creates an annotation data frame based on either an existing annotation data frame or a path to a file which contains the experiment annotation.  Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}.  As an error protection measurement, leading and trailing spaces in each column are trimmed off.
+#' @description Creates an annotation data frame based on either an existing annotation data frame or a path to a file which contains the experiment annotation.  Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off.
 #' @param exp_annotation Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names.  Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}.
 #' @param type_annot If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.
 #' @param colClasses character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
@@ -30,13 +65,20 @@ makeAnnotation <- function(exp_annotation, type_annot=NULL, colClasses=NA){
     }
 
     #Default: everything to factor, gsub is to remove leading and trailing spaces
-    pData <- data.frame(lapply(pData, function(x){return(factor(gsub("^\\s+|\\s+$", "", x), levels=unique(gsub("^\\s+|\\s+$", "", x))))})) #levels are specified to give factor levels the order given in the annotation file
+    pData <- data.frame(lapply(pData, function(x){
+      #If it's the unique column, apply make.names so that its names are equal to the colnames of the exprs slot of the MSnSet object (read in via read.table)
+      if(length(unique(x))==nrow(pData)){x <- make.names(x, unique = TRUE)}
+      return(factor(gsub("^\\s+|\\s+$", "", x), levels=unique(gsub("^\\s+|\\s+$", "", x))))})) #levels are specified to give factor levels the order given in the annotation file
     #pData <- data.frame(lapply(pData, function(x){return(as.factor(x))}))
 
     pData <- addColClasses(pData, colClasses)
 
     #If exp_annotation is a data frame, just put the data frame in the pData slot (lapply and gsub are just to remove leading and trailing spaces)
-  } else{pData <- data.frame(lapply(exp_annotation, function (x) factor(gsub("^\\s+|\\s+$", "", x))))}
+  } else{pData <- data.frame(lapply(exp_annotation, function (x) {
+    #If it's the unique column, apply make.names so that its names are equal to the colnames of the exprs slot of the MSnSet object (read in via read.table)
+    if(length(unique(x))==nrow(pData)){x <- make.names(x, unique = TRUE)}
+    return(factor(gsub("^\\s+|\\s+$", "", x)))}
+                                    ))}
 
   return(pData)
 }

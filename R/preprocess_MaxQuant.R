@@ -68,7 +68,7 @@ read_MaxQuant <- function(file, pattern="Intensity.", remove_pattern=TRUE, shiny
 #' @include preprocess_hlpFunctions.R
 #' @include updateProgress.R
 #' @export
-preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("Proteins","Sequence","PEP"), filter=c("Contaminant","Reverse"), filter_symbol="+", minIdentified=2, remove_only_site=FALSE, file_proteinGroups=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL)
+preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("Proteins","Sequence","PEP"), filter=c("Potential.contaminant","Reverse"), filter_symbol="+", minIdentified=2, remove_only_site=FALSE, file_proteinGroups=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL)
 {
 
   progress <- NULL
@@ -82,6 +82,9 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
   }
 
 #Error control
+
+#Some older versions of MaxQuant use "Contaminant" instead of "Potential.contaminant"
+if(!("Potential.contaminant" %in% colnames(Biobase::fData(MSnSet)))){filter[filter=="Potential.contaminant"] <- "Contaminant"}
 if(!all(useful_properties %in% colnames(Biobase::fData(MSnSet)))){stop("Argument \"useful_properties\" must only contain column names of the featureData slot.")}
 if(!all(filter %in% colnames(Biobase::fData(MSnSet)))){stop("One or more elements in the \"filter\" argument are no column names of the featureData slot of the MSnSet object.")}
 
