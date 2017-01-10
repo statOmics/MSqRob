@@ -2,7 +2,11 @@
 
 Robust statistical inference for quantitative LC-MS proteomics.
 
-The MSqRob package allows a user to do quantitative protein-level statistical inference on LC-MS proteomics data. More specifically, our package makes use of peptide-level input data, thus correcting for unbalancedness and peptide-specific biases. As previously shown (Goeminne et al. (2015)), this approach is both more sensitive and specific than summarizing peptide-level input to protein-level values. Model estimates are stabilized by ridge regression, empirical Bayes variance estimation and downweighing of outliers. Currently, only label-free proteomics data types are supported. The authors kindly ask to make a reference to (Goeminne et al. (2016)) when making use of this package in any kind of publication or presentation.
+The MSqRob package allows a user to do quantitative protein-level statistical inference on LC-MS proteomics data. More specifically, our package makes use of peptide-level input data, thus correcting for unbalancedness and peptide-specific biases. As previously shown (Goeminne et al. (2015)), this approach is both more sensitive and specific than summarizing peptide-level input to protein-level values. Model estimates are stabilized by ridge regression, empirical Bayes variance estimation and downweighing of outliers. Currently, only label-free proteomics data types are supported.
+
+The MSqRob Shiny App allows for an easy-to-use graphical user interface that requires no programming skills. Interactive plots are outputted and results are automatically exported to Excel.
+
+The authors kindly ask to make a reference to (Goeminne et al. (2016)) when making use of this package in any kind of publication or presentation.
 
 ## Installation
 
@@ -29,6 +33,11 @@ Just enter the following command to run the `MSqRob` Shiny app:
 ~~~~
 shiny::runApp(system.file("App-MSqRob", package="MSqRob"))
 ~~~~
+
+## Contact
+
+We are happy to help you with any problems you might encounter when using MSqRob.
+For any issues or questions, please e-mail us at: ludger.goeminne@vib-ugent.be
 
 ## References
 
