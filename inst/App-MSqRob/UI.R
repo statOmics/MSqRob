@@ -131,7 +131,7 @@ shinyUI(fluidPage(
 	htmlOutput("selectFixed"),
 	htmlOutput("selectRandom"),
 	#checkboxInput("borrowFixed", "Borrow information across fixed effects", value = FALSE, width = NULL),
-	checkboxInput("borrowRandom", "Borrow information across random effects", value = FALSE, width = NULL),
+	#checkboxInput("borrowRandom", "Borrow information across random effects", value = FALSE, width = NULL),
 	radioButtons("save", "Save/load options:",
                    c("Save the models" = 1,  #Conditioneel stukje toevoegen bij downloadHandler dat hij ook model.RData downloadt
                      "Load existing models" = 2,
