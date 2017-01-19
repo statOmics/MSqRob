@@ -57,7 +57,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   formula_ran <- random_input[[2]]
 
   #Error control: fixed and random effects should be present as colnames in the data slot
-  possible_vars <- colnames(getData(protdata)[[1]])
+  possible_vars <- colnames(getData(protdata, simplify=FALSE)[[1]])
   if(!all(fixed %in% possible_vars)){
     not_present <- which(!(fixed %in% possible_vars))
     stop(paste0("The following fixed effects are no possible predictors: \"",paste0(fixed[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
