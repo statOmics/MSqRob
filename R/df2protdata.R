@@ -7,7 +7,7 @@
 #' @param quant_name A character string indicating the name that will be given to the column that will contain the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to \code{"quant_value"}.
 #' @param run_name If quant_cols contains more than one element (i.e. the data is in "wide" format), this should contain a freely chosen character string indicating the name that will be given to the column containing the mass spec run names. If no name is chosen (\code{run_name=NULL}), this will default to \code{"run"}.
 #' If quant_cols contains only one element (i.e. the data is in "long" format), \code{run_name} should contain the name of the column that contains the run names.
-#' @param annotations A vector of character strings or numeric indices indicating the columns in the data frame \code{df} that contain additional information on the accessions (typically protein names, gene names, gene ontologies,...) that should be retained. In case multiple values of the same annotation column would exist for a unique accession, these values are pasted together. Defaults to \code{NULL}, in which case no annotations will be added.
+#' @param annotations A vector of character strings or numeric indices indicating the columns in the data frame \code{df} that contain additional information on the accessions (typically protein names, gene names, gene ontologies,...) that should be added in a separate \code{annotation} slot. In case multiple values of the same annotation column would exist for a unique accession, these values are pasted together. Defaults to \code{NULL}, in which case no annotations will be added.
 #' @return A \code{\link[=protdata-class]{protdata}} object.
 #' @examples #This example will convert df object peptides into a protdata object proteins.
 #' #Import the data as a df object
@@ -47,7 +47,18 @@ df2protdata <- function(df, acc_col, quant_cols, quant_name="quant_value", run_n
 
   #Automatically determine the column name in the pData that corresponds to run_name in the df
 
-  run_names <- unique(df[,run_col])
+  if(length(quant_cols)==1){
+  run_names <- unique(df[,run_name])
+  } else{
+    run_names <- colnames(df[,quant_cols])
+    #If there are no column names, we make them ourselves:
+    if(is.null(run_names)){run_names <- paste0("run_",1:length(quant_cols))}
+  }
+
+  #If pData is NULL, turn it into a data frame with one a column for run
+  if(is.null(pData)){pData <- data.frame(run=run_names)
+  colnames(pData) <- run_name}
+
   #Check which column of the given exp_annotation (pData) contains exactly the same elements as the mass spec run names in the data
   run_col_annot <- getAnnotationRun(pData=pData, run_names=run_names)
 
@@ -57,9 +68,9 @@ df2protdata <- function(df, acc_col, quant_cols, quant_name="quant_value", run_n
   for(i in 1:length(proteins)){
 
     #Select the rows that correspond to protein i
-    sel <- df[,acc_col] == proteins[i]
+    sel <- df[, acc_col] == proteins[i]
     #Select the intensities based on the user input
-    intensities <- df[sel,quant_cols, drop=FALSE]
+    intensities <- df[sel, quant_cols, drop=FALSE]
     #All that is not intensities nor proteins is properties
     properties <- df[sel,, drop=FALSE]
     annotation_matrix[i,] <- apply(properties[,annotations, drop=FALSE], 2, function(x){paste0(unique(x))})

@@ -8,7 +8,7 @@
 #' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
 #' @return An object of class \code{\link[=MSnSet-class]{MSnSet}}.
 #' @export
-read_MaxQuant <- function(file, pattern="Intensity.", remove_pattern=TRUE, shiny=FALSE, message=NULL)
+read_MaxQuant <- function(file, pattern="Intensity ", remove_pattern=TRUE, shiny=FALSE, message=NULL)
 {
 
   progress <- NULL
@@ -24,12 +24,15 @@ read_MaxQuant <- function(file, pattern="Intensity.", remove_pattern=TRUE, shiny
   colInt <- MSnbase::grepEcols(file, pattern=pattern, split = "\t")
   peptides <- MSnbase::readMSnSet2(file, ecol = colInt, sep = "\t")
 
+  #Only now call make.names
+  pattern <- make.names(pattern, unique = TRUE)
+
   if(isTRUE(remove_pattern)){
     #Remove pattern from colnames of exprs
     exprs <- Biobase::exprs(peptides)
     pData <- Biobase::pData(peptides)
-    colnames(exprs) <- gsub(pattern,"",colnames(exprs))
-    rownames(pData) <- gsub(pattern,"",rownames(pData))
+    colnames(exprs) <- make.names(gsub(pattern,"",colnames(exprs)), unique = TRUE)
+    rownames(pData) <- make.names(gsub(pattern,"",rownames(pData)), unique = TRUE)
     Biobase::sampleNames(Biobase::protocolData(peptides)) <- rownames(pData)
     Biobase::pData(peptides) <- pData
     Biobase::exprs(peptides) <- exprs
@@ -82,6 +85,8 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
   }
 
 #Error control
+
+useful_properties <- make.names(useful_properties, unique = TRUE)
 
 #Some older versions of MaxQuant use "Contaminant" instead of "Potential.contaminant"
 if(!("Potential.contaminant" %in% colnames(Biobase::fData(MSnSet)))){filter[filter=="Potential.contaminant"] <- "Contaminant"}
