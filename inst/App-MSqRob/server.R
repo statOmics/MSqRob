@@ -88,7 +88,7 @@ shinyServer(function(input, output, session) {
   newExpAnnText <- eventReactive(input$create_annot, {
     #Check if save folder is set
     check_save_folder(saveFolder$folder)
-    init_ann_MQ_Excel(file, savepath=saveFolder$folder, output_name=paste0(input$project_name,"_experimental_annotation"), col_name="run", pattern="Intensity.", remove_pattern=TRUE)
+    init_ann_MQ_Excel(peptidesDatapath(), savepath=saveFolder$folder, output_name=paste0(input$project_name,"_experimental_annotation"), col_name="run", pattern="Intensity.", remove_pattern=TRUE)
     newExpAnnText <- paste0("Annotation file initialized. Check ",saveFolder$folder,"/",input$project_name,"_experimental_annotation.xlsx. \n Adjust this file according to your experimental settings and upload it as your experimental annotation file.")
     return(newExpAnnText)
     })
@@ -285,6 +285,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       shinyjs::enable("onlysite")
       shinyjs::enable("proteingroups")
       shinyjs::enable("proteingroups_label")
+      shinyjs::enable("smallestUniqueGroups")
       shinyjs::enable("minIdentified")
       shinyjs::enable("filter")
       shinyjs::enable("logtransform")
@@ -311,6 +312,7 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       shinyjs::disable("onlysite")
       shinyjs::disable("proteingroups")
       shinyjs::disable("proteingroups_label")
+      shinyjs::disable("smallestUniqueGroups")
       shinyjs::disable("minIdentified")
       shinyjs::disable("filter")
       shinyjs::disable("logtransform")
