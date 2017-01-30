@@ -103,11 +103,11 @@ Now, we are going to create a data frame that contains the experimental annotati
 
 **Note that the "experiment annotation" can also be given as an Excel file or a tab delimited file!** This file should have the column names as a header (i.e. the first row in the file) and the same structure as the `exp_annotation` data frame we create below. If you have your experiment annotation in a file, just provide the filepath to this annotation file in the preprocess_MaxQuant function.
 
-Also note that exactly one column in the experiment annotation should contain the names of the mass spec runs. These names should be equal to the "experiment names" you entered in MaxQuant (i.e. the column names of the `exprs` slot of the peptidesCPTAC `MSnSet` object). In our case, we will call this column "run" (see below). By default, MSqRob tries guesses this column by taking the only column of which its elements correspond to the column names of the `exprs` slot. If there is no such a column, or there are multiple such columns, MSqRob throws an error.
+Also note that exactly one column in the experiment annotation should contain the names of the mass spec runs. These names should be equal to the "experiment names" you entered in MaxQuant (i.e. the column names of the `exprs` slot of the peptidesFranc `MSnSet` object). In our case, we will call this column "run" (see below). By default, MSqRob tries guesses this column by taking the only column of which its elements correspond to the column names of the `exprs` slot. If there is no such a column, or there are multiple such columns, MSqRob throws an error.
 
 In this example, we create the experimental annotation data frame ourselves.
 
-Extract the names of the mass spec runs. The mass spec run names are equal to the column names of the exprs slot of the peptidesCPTAC `MSnSet` object. Other columns in the experimental annotation data frame will typically be derived from this column.
+Extract the names of the mass spec runs. The mass spec run names are equal to the column names of the exprs slot of the peptidesFranc `MSnSet` object. Other columns in the experimental annotation data frame will typically be derived from this column.
 
 ```{r eval=FALSE}
 library(Biobase)
@@ -116,10 +116,12 @@ runs
 colnames(exprs(peptidesFranc))
 ```
 
+Note that an "X" is prepended to the sample names because a syntactically valid name in R cannot start with a number.
+
 Add a factor for the genetic knock out, which we will call "phenotype" (i.e. wild type (1WT) or knock out (3D8)).
 ```{r eval=FALSE}
 #Extract the relevant part of the mass spec run names that points to the phenotype.
-phenotype <- factor(substr(runs, 1,3))
+phenotype <- factor(substr(runs, 1,4))
 ```
 
 Add a factor for each of the 6 biological replicates (i.e. 3 biological repeats for each phenotype).
@@ -137,13 +139,15 @@ exp_annotation <- data.frame(run=runs, phenotype=phenotype, biorep=biorep)
 exp_annotation
 ```
 
+Note that here, there is no "X" prepended. However, names will be changed automatically to syntactically valid names by MSqRob during preprocessing.
+
 Note that you can also import the experimental annotation from a tab-delimited or Excel file. As an example, we show you here how you can import data from an experimental annotation file delivered with our package. First, provide the path to where the data is saved.
 ```{r eval=FALSE}
 file_exp_annotation <- system.file("extdata/Francisella", "label-free_Francisella_annotation.xlsx", package = "MSqRob")
 file_exp_annotation
 ```
 
-Then, import the data using the `read.xlsx` function fromt the `openxlsx` package and convert the columns of the data frame to factors.
+Then, import the data using the `read.xlsx` function from the `openxlsx` package and convert the columns of the data frame to factors.
 ```{r eval=FALSE}
 #Import Excel file
 exp_annotation2 <- openxlsx::read.xlsx(file_exp_annotation)
@@ -163,10 +167,10 @@ Define the path to the proteinGroups.txt file.
 file_proteinGroups <- system.file("extdata/Francisella", "proteinGroups.txt", package = "MSqRob")
 ```
 
-Add to the `useful_properties` argument all column names of the `fData` slot of the peptidesCPTAC `MSnSet` object that you would like to keep (such as gene names, protein names, ontologies, etc.). Other columns will be removed for improved efficiency and memory usage.  Here, we would like to keep the GI number and the protein names. These 2 columns are present in our peptides.txt file, but note that you can use basic R manipulations to add other columns to the fData slot if you want to. We certainly want to keep the "Sequence" slot, as peptide-specific effects must be included in our model.
+Add to the `useful_properties` argument all column names of the `fData` slot of the peptidesFranc `MSnSet` object that you would like to keep (such as gene names, protein names, ontologies, etc.). Other columns will be removed for improved efficiency and memory usage.  Here, we would like to keep the GI number and the protein names. These 2 columns are present in our peptides.txt file, but note that you can use basic R manipulations to add other columns to the fData slot if you want to. We certainly want to keep the "Sequence" slot, as peptide-specific effects must be included in our model.
 
 ```{r eval=FALSE}
-peptidesFranc2 <- preprocess_MaxQuant(peptidesFranc, accession="Proteins", exp_annotation=exp_annotation, logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("GI_number","Protein.names","Sequence"), filter=c("Contaminant","Reverse"), remove_only_site=TRUE, file_proteinGroups=file_proteinGroups,  filter_symbol="+", minIdentified=2)
+peptidesFranc2 <- preprocess_MaxQuant(peptidesFranc, accession="Proteins", exp_annotation=exp_annotation, logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("GI number","Protein.names","Sequence"), filter=c("Contaminant","Reverse"), remove_only_site=TRUE, file_proteinGroups=file_proteinGroups,  filter_symbol="+", minIdentified=2)
 ```
 
 `preprocess_MaxQuant` internally executes the following preprocessing steps in this order:
@@ -181,7 +185,7 @@ peptidesFranc2 <- preprocess_MaxQuant(peptidesFranc, accession="Proteins", exp_a
 
 5. Remove all proteins that are only identified by peptides carrying a modification site (`remove_only_site=TRUE`, `file_proteinGroups=file_proteinGroups`).
 
-6. Remove all superfluous columns in the `fData` slot, except the "Proteins", "GI_number", "Protein.names" and "Sequence" columns (`useful_properties=c("GI_number","Protein.names","Sequence")`). Note that the "Proteins" column does not have to be provided: the `accession` column is always retained.
+6. Remove all superfluous columns in the `fData` slot, except the "Proteins", "GI.number", "Protein.names" and "Sequence" columns (`useful_properties=c("GI.number","Protein.names","Sequence")`). Note that the "Proteins" column does not have to be provided: the `accession` column is always retained.
 
 7. Remove all peptides that are only identified once in the dataset (`minIdentified=2`).
 
@@ -192,7 +196,7 @@ peptidesFranc2 <- preprocess_MaxQuant(peptidesFranc, accession="Proteins", exp_a
 **Caution:** this step might take some time! (almost 2 minutes on our system).
 The `accession` argument denotes by which column the individual peptide observations should be grouped. The `annotations` argument indicates which columns in peptidesFranc2 are annotations linked to the accessions (in our case: the GI number and the protein names). These annotations will be added to a separate `annotation` slot.
 ```{r eval=FALSE}
-system.time(proteinsFranc <- MSnSet2protdata(peptidesFranc2, accession="Proteins", annotations = c("GI_number", "Protein.names")))
+system.time(proteinsFranc <- MSnSet2protdata(peptidesFranc2, accession="Proteins", annotations = c("GI.number", "Protein.names")))
 proteinsFranc
 ```
 
@@ -200,7 +204,7 @@ The `system.time` function is only used here to print out how long the operation
 
 ```{r eval=FALSE}
 #Keep eval=FALSE
-proteinsFranc <- MSnSet2protdata(peptidesFranc2, accession="Proteins", annotations = c("GI_number", "Protein.names"))
+proteinsFranc <- MSnSet2protdata(peptidesFranc2, accession="Proteins", annotations = c("GI.number", "Protein.names"))
 ```
 
 You can also load the data from the data package for comparison.
@@ -326,22 +330,22 @@ We are interested in which proteins differ significantly in abundance between Ar
 attr(modelWP_003040227,"MSqRob_levels")
 ```
 
-Here, we notice that the mutant is encoded as "phenotype3D8" and the wild type as "phenotype1WT". We construct a contrast matrix L for inferring on the fold change of interest. We are interested in the log2 fold change between mutant and wild type. As all intensities are log2-transformed, we should take the difference between "phenotype3D8" and "phenotype1WT" (because of the following property of logarithms: log2(a/b)=log2(a)-log2(b)).
+Here, we notice that the mutant is encoded as "phenotypeX3D8" and the wild type as "phenotypeX1WT". We construct a contrast matrix L for inferring on the fold change of interest. We are interested in the log2 fold change between mutant and wild type. As all intensities are log2-transformed, we should take the difference between "phenotypeX3D8" and "phenotypeX1WT" (because of the following property of logarithms: log2(a/b)=log2(a)-log2(b)).
 ```{r eval=FALSE}
-L <- makeContrast(contrasts=c("phenotype3D8-phenotype1WT"),
-                  levels=c("phenotype1WT","phenotype3D8"))
+L <- makeContrast(contrasts=c("phenotypeX3D8-phenotypeX1WT"),
+                  levels=c("phenotypeX1WT","phenotypeX3D8"))
 L
 ```
 
 Imagine we would want to test the average log2 protein intensity between mutant and wild type, then L would be constructed as follows:
 ```{r eval=FALSE}
 #Keep eval=FALSE
-L <- makeContrast(contrasts=c("phenotype3D8/2+phenotype1WT/2"),
-                  levels=c("phenotype1WT","phenotype3D8"))
+L <- makeContrast(contrasts=c("phenotypeX3D8/2+phenotypeX1WT/2"),
+                  levels=c("phenotypeX1WT","phenotypeX3D8"))
 L
 ```
 
-**Important notification:** do not use the estimated parameters beta to determine the factor levels! You will notice for example that the level "phenotype1WT" is missing in the column names of the betas. This is because "phenotype1WT" is the reference class, giving the parameter corresponding to "phenotype3D8" the interpretation of the effect of "phenotype3D8" relative to "phenotype1WT". It is important however to include "phenotype1WT" in the contrast matrix because for proteins where factor levels are missing, these parameters can get different interpretations. The `makeContrast` function takes this into account and will return `NA` when a contrast cannot be properly estimated.
+**Important notification:** do not use the estimated parameters beta to determine the factor levels! You will notice for example that the level "phenotypeX1WT" is missing in the column names of the betas. This is because "phenotypeX1WT" is the reference class, giving the parameter corresponding to "phenotypeX3D8" the interpretation of the effect of "phenotypeX3D8" relative to "phenotypeX1WT". It is important however to include "phenotypeX1WT" in the contrast matrix because for proteins where factor levels are missing, these parameters can get different interpretations. The `makeContrast` function takes this into account and will return `NA` when a contrast cannot be properly estimated.
 
 ```{r eval=FALSE}
 betaBVcovDf$beta
@@ -349,7 +353,7 @@ betaBVcovDf$beta
 
 Build a data frame containing estimate, standard error, degrees of freedom, T-value and p-value for each protein in the `protLM` object protLMFranc, by using the `test.protLMcontrast` function.
 ```{r eval=FALSE}
-resultFranc <- test.protLMcontrast(protLMFranc, L, min_df=1)
+resultFranc <- test.protLMcontrast(protLMFranc, L)
 ```
 
 The `prot.p.adjust` function adds a new column "qval" to the data frame based on an existing "pval" column. The new column contains adjusted p-values using one of the methods in the `p.adjust.methods` vector.
@@ -441,7 +445,7 @@ exp_annotation2[,"run"] <- as.factor(paste0("Intensity.",as.character(exp_annota
 The `preprocess_wide` function allows for the same preprocessing as the `preprocess_MaxQuant` function on a regular data frame. If you inspect this function, you will notice that the same 8 preprocessing steps are executed. Remember that you can do any preprocessing you like using basic R data frame manipulations. This `split` argument indicates which character string is used to separate the accession groups. The `exp_annotation` argument, like before, contains the experimental annotation data frame or a character string indicating the filepath where the experimental annotation is saved as an Excel file or a tab-delimited file. The `quant_cols` argument contains a vector of names or a vector of numeric indices pointing to the columns containing the quantitative values of interest (mostly intensities or areas under the curve). If `quant_cols` contains only one character string, each column containing this pattern will be regarded as a column containing the quantitative values of interest. `aggr_by` indicates the column by which the data should be aggregated. Here, the data is already aggregated to the peptide level (i.e. over different charge states and modification statuses). We need no further aggregation, thus we provide the "Sequence" column (the level to which aggregation has already been done). `aggr_function` will be superfluous here, but if further aggregation would have been necessary, raw intensities would be summed up (`aggr_function="sum"`). The other parameters are similar to the `preprocess_MaxQuant` function.
 
 ```{r eval=FALSE} 
-pepFrancDf2 <- preprocess_wide(pepFrancDf, accession="Proteins", split=";", exp_annotation=exp_annotation2, quant_cols="Intensity.", aggr_by="Sequence", aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("GI_number","Protein.names","Sequence"), filter=c("Contaminant","Reverse","only_site"), filter_symbol="+", minIdentified=2)
+pepFrancDf2 <- preprocess_wide(pepFrancDf, accession="Proteins", split=";", exp_annotation=exp_annotation2, quant_cols="Intensity.", aggr_by="Sequence", aggr_function="sum", logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("GI.number","Protein.names","Sequence"), filter=c("Contaminant","Reverse","only_site"), filter_symbol="+", minIdentified=2)
 ```
 
 Note that the experimental annotation is now present as an attribute of the `pepFrancDf2` data frame.
@@ -452,7 +456,7 @@ attr(pepFrancDf2,"MSqRob_exp_annotation")
 
 After custom preprocessing, you can transform the data to a `protdata` object via the `df2protdata` function.
 
-The `acc_col` argument in the `df2protdata` function indicates the column index or column name of the accessions (i.e. the protein (group) identifiers). The `quant_cols` argument is a vector of indices pointing to all columns containing peptide intensities. In the example below, the column named "Proteins" will be added to the `accession` slot while all columns with indices in the `quant_cols` vector will be added as a matrix to the `intensities` slot. `quant_name` indicates the name that will be given to the column containing the (preprocessed) intensities and `run_name` indicates the name that will be given to the column containing the mass spec run names in the new `protdata` object. Like before, we keep "GI_number" and "Protein.names" as annotations.
+The `acc_col` argument in the `df2protdata` function indicates the column index or column name of the accessions (i.e. the protein (group) identifiers). The `quant_cols` argument is a vector of indices pointing to all columns containing peptide intensities. In the example below, the column named "Proteins" will be added to the `accession` slot while all columns with indices in the `quant_cols` vector will be added as a matrix to the `intensities` slot. `quant_name` indicates the name that will be given to the column containing the (preprocessed) intensities and `run_name` indicates the name that will be given to the column containing the mass spec run names in the new `protdata` object. Like before, we keep "GI.number" and "Protein.names" as annotations.
 
 ```{r eval=FALSE}
 #Select columns with intensities.
@@ -463,7 +467,7 @@ quant_cols
 
 ```{r eval=FALSE}
 #Call df2protdata function
-proteinsFrancDf <- df2protdata(pepFrancDf2, acc_col="Proteins", quant_cols=quant_cols, quant_name="quant_value", run_name="run", annotations=c("GI_number","Protein.names"))
+proteinsFrancDf <- df2protdata(pepFrancDf2, acc_col="Proteins", quant_cols=quant_cols, quant_name="quant_value", run_name="run", annotations=c("GI.number","Protein.names"))
 #Inspect proteinsFrancDf protdata object.
 proteinsFrancDf
 ```
@@ -765,7 +769,7 @@ L <- makeContrast(c("condition6B-condition6A","condition6C-condition6A","conditi
 Make the DA rankings for the ordinary least squares model (no ridge, no squeezed variances, no M estimation).
 ```{r eval=FALSE}
 modelLmCPTAC <- squeezePars(modelLmCPTAC, squeezeVar=FALSE, robust_var=TRUE)
-lm_normal <- test.protLMcontrast(modelLmCPTAC, L, min_df=1, simplify=TRUE)
+lm_normal <- test.protLMcontrast(modelLmCPTAC, L, simplify=TRUE)
 lm_normal <- prot.p.adjust(lm_normal)
 lm_normal <- prot.signif(lm_normal)
 ```
@@ -773,7 +777,7 @@ lm_normal <- prot.signif(lm_normal)
 Make the DA rankings for the ordinary least squares model with squeezed variances (no ridge, no M estimation).
 ```{r eval=FALSE}
 modelLmCPTAC <- squeezePars(modelLmCPTAC, squeezeVar=TRUE, robust_var=TRUE)
-lm_Sq <- test.protLMcontrast(modelLmCPTAC, L, min_df=1, simplify=TRUE)
+lm_Sq <- test.protLMcontrast(modelLmCPTAC, L, simplify=TRUE)
 lm_Sq <- prot.p.adjust(lm_Sq)
 lm_Sq <- prot.signif(lm_Sq)
 ```
@@ -781,7 +785,7 @@ lm_Sq <- prot.signif(lm_Sq)
 Make the DA rankings for the ordinary least squares model with squeezed variances and M estimation (no ridge).
 ```{r eval=FALSE}
 modelLmMCPTAC <- squeezePars(modelLmMCPTAC, squeezeVar=TRUE, robust_var=TRUE)
-lm_SqM <- test.protLMcontrast(modelLmMCPTAC, L, min_df=1, simplify=TRUE)
+lm_SqM <- test.protLMcontrast(modelLmMCPTAC, L, simplify=TRUE)
 lm_SqM <- prot.p.adjust(lm_SqM)
 lm_SqM <- prot.signif(lm_SqM)
 ```
@@ -789,7 +793,7 @@ lm_SqM <- prot.signif(lm_SqM)
 Make the DA rankings for the ridge regression model (no squeezed variances, no M estimation).
 ```{r eval=FALSE}
 modelRidgeCPTAC <- squeezePars(modelRidgeCPTAC, squeezeVar=FALSE, robust_var=TRUE)
-ridge <- test.protLMcontrast(modelRidgeCPTAC, L, min_df=1, simplify=TRUE)
+ridge <- test.protLMcontrast(modelRidgeCPTAC, L, simplify=TRUE)
 ridge <- prot.p.adjust(ridge)
 ridge <- prot.signif(ridge)
 ```
@@ -797,7 +801,7 @@ ridge <- prot.signif(ridge)
 Make the DA rankings for the ridge regression model with squeezed variances (no M estimation).
 ```{r eval=FALSE}
 modelRidgeCPTAC <- squeezePars(modelRidgeCPTAC, squeezeVar=TRUE, robust_var=TRUE)
-ridgeSq <- test.protLMcontrast(modelRidgeCPTAC, L, min_df=1, simplify=TRUE)
+ridgeSq <- test.protLMcontrast(modelRidgeCPTAC, L, simplify=TRUE)
 ridgeSq <- prot.p.adjust(ridgeSq)
 ridgeSq <- prot.signif(ridgeSq)
 ```
@@ -805,7 +809,7 @@ ridgeSq <- prot.signif(ridgeSq)
 Make the DA rankings for the ridge regression model with squeezed variances and M estimation. This is our robust ridge (RR) approach.
 ```{r eval=FALSE}
 modelRRCPTAC <- squeezePars(modelRRCPTAC, squeezeVar=TRUE, robust_var=TRUE)
-ridgeSqM <- test.protLMcontrast(modelRRCPTAC, L, min_df=1, simplify=TRUE)
+ridgeSqM <- test.protLMcontrast(modelRRCPTAC, L, simplify=TRUE)
 ridgeSqM <- prot.p.adjust(ridgeSqM)
 ridgeSqM <- prot.signif(ridgeSqM)
 ```
@@ -815,7 +819,7 @@ Our standard approach is to calculate the degrees of freedom via the trace of th
 custom_dfs <- sapply(data, function(x){return(length(unique(paste0(x$condition,x$lab)))-length(unique(x$condition))-length(unique(x$lab))+2-1)})
 custom_dfs
 
-ridgeSqM_custom <- test.protLMcontrast(modelRRCPTAC, L, squeezeVar=TRUE, min_df=1, robust_var=TRUE, simplify=TRUE, custom_dfs = custom_dfs)
+ridgeSqM_custom <- test.protLMcontrast(modelRRCPTAC, L, squeezeVar=TRUE, robust_var=TRUE, simplify=TRUE, custom_dfs = custom_dfs)
 ridgeSqM_custom <- prot.p.adjust(ridgeSqM_custom)
 ridgeSqM_custom <- prot.signif(ridgeSqM_custom)
 ```
