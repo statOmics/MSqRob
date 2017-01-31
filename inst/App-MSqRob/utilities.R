@@ -202,7 +202,7 @@ folderInput <- function(inputId, label, value = NA, multiple = FALSE, accept = N
       tags$div(
         id=paste(inputId, "_progress", sep=""),
         class="progress progress-striped active shiny-file-input-progress", style=style, #"visibility: visible;"
-        tags$div(class="progress-bar", style="width: 100%;","Upload complete")
+        tags$div(class="progress-bar", style="width: 100%;","Folder selected")
       )
   )
 }
