@@ -188,7 +188,7 @@ if(!is.null(exp_annotation)){
   # if(!all(colnames(exprs)==colnames(Biobase::exprs(MSnSet)))){stop("Biobase error, cannot change exprs slot...")}
   # Biobase::pData(MSnSet) <- pData
   # rm(MSnSet)
-  MSnSet <- MSnbase::MSnSet(exprs=exprs, fData=fData(MSnSet), pData=pData)
+  MSnSet <- MSnbase::MSnSet(exprs=exprs, fData=Biobase::fData(MSnSet), pData=pData)
 
 }
 
