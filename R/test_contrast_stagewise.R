@@ -7,6 +7,7 @@
 #' @param L A contrast matrix with the parameter levels as rows and a column for each contrast.
 #' @param level	The significance level at which the q-value needs to be controlled. Defaults to 5\%.
 #' @param method_stage1 Correction method to be used in the first stage ANOVA. Can be abbreviated. Defaults to "fdr". To get all available methods, type \code{p.adjust.methods}. For more information on these methods, see the \code{\link{p.adjust}} function.
+#' @param custom_dfs An optional vector of length equal to the number of models in \code{protLM} containing the degrees of freedom that should be used for each model in the \code{protLM} object. By default (\code{custom_dfs=NULL}), \code{MSqRob} uses the trace of the Hat matrix to determine the degrees of freedom or the Satterhtwiate approximation (if \code{satterthwaite=TRUE}). \code{custom_dfs} allows you to overrule this and use your own custom approximation for the degrees of freedom.
 #' @param add.annotations A logical indicating whether the \code{annotations} slot of the \code{\link[=protLM-class]{protLM}} object should be added as extra columns to each matrix in the returned list of matrices. Defaults to \code{TRUE}.
 #' @param simplify A logical indicating wheter, if there is only one contrast, a matrix should be returned instead of a list containing one matrix. Defaults to \code{TRUE}.
 #' @param lfc The minimum (log2) fold-change that is considered scientifically meaningful. Defaults to \code{0}. Ignored when \code{anova = TRUE}.
