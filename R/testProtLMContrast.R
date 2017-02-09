@@ -240,8 +240,14 @@ dfSatterthwaite=function(lmerModFun, model, vcov, sigma, L2, gradMethod){
 #return(outputFun)
 devFun=function(lmerMod)
 {
-  reTrmsHlp=list(Zt=lmerMod@pp$Zt,theta= lmerMod@pp$theta,Lambdat= lmerMod@pp$Lambdat, Lind=lmerMod@pp$Lind,Gp=lmerMod@Gp,lmerMod@lower,flist=lmerMod@flist, cnms=lmerMod@cnms)
-  return(lme4::mkLmerDevfun(lmerMod@frame, lmerMod@pp$X, reTrmsHlp, REML = TRUE, start = NULL))
+
+  ## IMPORTANT! Deep-copy the (only) reference-class slots! ...
+  lmerMod2 <- lmerMod
+  lmerMod2@pp <- lmerMod@pp$copy()
+  lmerMod2@resp <- lmerMod@resp$copy()
+
+  reTrmsHlp=list(Zt=lmerMod2@pp$Zt,theta= lmerMod2@pp$theta,Lambdat= lmerMod2@pp$Lambdat, Lind=lmerMod2@pp$Lind,Gp=lmerMod2@Gp,lmerMod2@lower,flist=lmerMod2@flist, cnms=lmerMod2@cnms)
+  return(lme4::mkLmerDevfun(lmerMod2@frame, lmerMod2@pp$X, reTrmsHlp, REML = TRUE, start = NULL))
 }
 
 
@@ -284,7 +290,18 @@ getVcovBetaBforGrad<-function(sigmaTheta,devFunUpdate,Ginvoffset = 1e-18, R_fix,
     #Ct_w[Zt_indices+p,] <- R_fix%*%Ct_w[Zt_indices+p,]
   }
 
-  return(chol2inv(sechol(as.matrix(vcovInv)))*sigma^2)
+  #Old:
+  #return(chol2inv(sechol(as.matrix(vcovInv)))*sigma^2)
+
+  #Estimated variance-covariance matrix vcov_sigma:
+  vcov_sigma <- tryCatch(as.matrix(Matrix::solve(vcovInv))*sigma^2, error=function(e){
+    return(vcovInv*NA)
+  })
+
+  rownames(vcov_sigma) <- colnames(vcovInv)
+  colnames(vcov_sigma) <- rownames(vcovInv)
+
+  return(vcov_sigma)
 }
 
 
