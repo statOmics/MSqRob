@@ -41,11 +41,11 @@ shinyUI(fluidPage(
   	#Folder where everything will be saved
   	htmlOutput("outputFolderOut"),
   	#folderInput(inputId="outputFolder", label="Specify the location where your output will be saved", placeholder = "No folder selected", multiple = FALSE, accept = NULL, width = NULL),
+  	#Peptides.txt file
+  	fileInput(inputId="peptides", label="Specify the location of your peptides.txt file", multiple = FALSE, accept = NULL, width = NULL),
   	#Annotation file
-		fileInput(inputId="annotation", label="Specify the location of your experimental annotation file", multiple = FALSE, accept = NULL, width = NULL),
-		#Peptides.txt file
-		fileInput(inputId="peptides", label="Specify the location of your peptides.txt file", multiple = FALSE, accept = NULL, width = NULL)
-     	),
+		fileInput(inputId="annotation", label="Specify the location of your experimental annotation file", multiple = FALSE, accept = NULL, width = NULL)
+  	),
 		#Main panel with number of output and plots
 		mainPanel(width = 5,
 		          htmlOutput("folderError"),
