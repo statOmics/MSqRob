@@ -55,7 +55,7 @@ test.ANOVA=function(beta, vcov, df, sigma, L, anova.na.ignore=TRUE)
   df_den <- df
 
   #p value
-  pval <- pf(Fval, df_num, df, lower.tail=FALSE)
+  pval <- pf(Fval, df_num, df_den, lower.tail=FALSE)
 
   returnmatrix <- cbind(AveExpr, df_num, df_den, Fval, pval)
 
