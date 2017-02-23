@@ -367,15 +367,14 @@ selectInput("filter", "Also filter based on these columns", filterOptions(), mul
       Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2))
       proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Converting data...")
 
-      models <- fit.model(protdata=proteins, response="quant_value", fixed=input$fixed, random=input$random, printProgress=TRUE, shiny=TRUE, message="Fitting models...")
-
       par_squeeze <- NULL
 
       if(isTRUE(input$borrowRandom)){par_squeeze <- c(par_squeeze,random)}
       if(isTRUE(input$borrowFixed)){par_squeeze <- c(par_squeeze,"ridgeGroup.1")}
 
+      models <- fit.model(protdata=proteins, response="quant_value", fixed=input$fixed, random=input$random, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_fitting="Fitting models...", message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...")
+
       #We save the squeezed models!
-      models <- squeezePars(models, par_squeeze=par_squeeze, printProgress=TRUE, shiny=TRUE, message_thetas="Extracting variances...", message_squeeze="Squeezing variances...", message_update="Updating models...")
 
       outputlist$RData$proteins <- proteins
       outputlist$RData$models <- models
