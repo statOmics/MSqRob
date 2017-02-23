@@ -2,7 +2,7 @@
 #'
 #' @description Fits a model to each protein of a \code{\link[=protdata-class]{protdata}} object and returns a corresponding \code{\link[=protLM-class]{protLM}} object.
 #' In its standard settings, the function returns a \code{\link[=protLM-class]{protLM}} object containing robust ridge models as described in Goeminne et al. (2015).
-#' However, the the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights.
+#' However, the the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
 #' @param protdata A \code{\link[=protdata-class]{protdata}} object to which peptide-based models must be fitted. Note that factors should be coded as factors and numeric variables as numeric in each data slot.
 #' @param response The name of the column in the data slot of the \code{\link[=protdata-class]{protdata}} object that contains the response variable for the model, mostly the column containing the log2 transformed intensity values.
 #' @param fixed Either a vector of names corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables, or a right-hand sided fixed effects formula without intercept, which should be indicated in the argument \code{add.intercept}. \code{NULL} (the default) indicates that no fixed effects other than a possible fixed intercept are present in the model.
@@ -11,11 +11,19 @@
 #' @param shrinkage.fixed A numeric vector containing only 0 and/or 1 of length equal to the number of fixed effects, potential intercept included. The nth element in the shrinkage.fixed vector indicates whether the nth fixed effect should be shrunken (value 1) or not (value 0). If \code{add.intercept=TRUE}, the first element of the vector indicates the intercept. \code{shrinkage.intercept = NULL} (default) indicates all fixed effects except the intercept should be shrunken.
 #' @param weights The type of weighing that should be performed. Supported weighing methods incluce \code{"Huber"} (the default) for M estimation with Huber weights and \code{NULL} when no weighing should be applied. One can also supply a list of weights with length equal to the number of proteins in the \code{\link[=protdata-class]{protdata}} object. Each element of the list should either contain \code{"Huber"} or \code{NULL} or a numeric vector containing weights with length equal to the number of observations for that protein.
 #' @param k The tuning constant for the Huber mean when weighing down outliers. The default (\code{k = 1.345}) produces 95 \% efficiency relative to the sample mean when the population is normal but provides substantial resistance to outliers when it is not.
+#' @param par_squeeze Character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.
+#' @param squeezeVar A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.
+#' @param min_df A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}.
+#' @param robust_var A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}. Defaults to \code{TRUE}.
 #' @param tolPwrss A numeric value indicating the maximally tolerated deviation on the penalized weighted residual sum of squares when iteratively estimating the weights by M estimation.
 #' @param verbose A logical value indicating whether the models should be printed out. Defaults to \code{FALSE}.
 #' @param printProgress A logical indicating whether the R should print a message before fitting each model. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
-#' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
+#' @param message_fitting Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the fitting of the models, or \code{NULL} to hide the current message (if any).
+#' @param message_thetas Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_squeeze Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_update Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
+#' @param ... Other parameters to be passed to the model fitting function internally.
 #' @return A \code{\link[=protLM-class]{protLM}} object containing the names of all proteins in the input \code{\link[=protdata-class]{protdata}} object and their corresponding fitted models.
 #' @examples data(proteinsCPTAC, package="MSqRob")
 #' #Fitting models for the first 10 proteins in the protdata object proteinsCPTAC using the robust ridge approach of Goeminne et al. (2015):
@@ -30,7 +38,7 @@
 #' @include dummyVars_MSqRob.R
 #' @include updateProgress.R
 #' @export
-fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message=NULL,...)
+fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting=NULL, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...)
 {
 
   progress <- NULL
@@ -40,7 +48,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
     # Make sure it closes when we exit this reactive, even if there's an error
     on.exit(progress$close())
-    progress$set(message = message, value = 0)
+    progress$set(message = message_fitting, value = 0)
   }
 
   #Control: fixed en random connot be NULL at the same time!
@@ -58,13 +66,18 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
   #Error control: fixed and random effects should be present as colnames in the data slot
   possible_vars <- colnames(getData(protdata, simplify=FALSE)[[1]])
-  if(!all(fixed %in% possible_vars)){
-    not_present <- which(!(fixed %in% possible_vars))
-    stop(paste0("The following fixed effects are no possible predictors: \"",paste0(fixed[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
+
+  #Correct for possible interactions (only used in error control that follows)
+  fixed_all <- unique(unlist(strsplit(fixed,":")))
+  random_all <- unique(unlist(strsplit(random,":")))
+
+  if(!all(fixed_all %in% possible_vars)){
+    not_present <- which(!(fixed_all %in% possible_vars))
+    stop(paste0("The following fixed effects are no possible predictors: \"",paste0(fixed_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
   }
-  if(!all(random %in% possible_vars)){
-    not_present <- which(!(random %in% possible_vars))
-    stop(paste0("The following random effects are no possible predictors: \"",paste0(random[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
+  if(!all(random_all %in% possible_vars)){
+    not_present <- which(!(random_all %in% possible_vars))
+    stop(paste0("The following random effects are no possible predictors: \"",paste0(random_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
   }
   if(length(response)!=1){stop("Please provide exactly one response variable.")}
   if(!(response %in% possible_vars)){
@@ -116,7 +129,11 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     modellist <- .createLmList(data,weights,formula,fixed,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,progress=progress,printProgress=printProgress,shiny=shiny,...)
 
   }
-  return(new("protLM", accession=protdata@accession, model=modellist, annotation=protdata@annotation))
+
+  protLM <- new("protLM", accession=protdata@accession, model=modellist, annotation=protdata@annotation)
+  protLM <- squeezePars(protLM, par_squeeze=par_squeeze, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var, printProgress=printProgress, shiny=shiny, message_thetas=message_thetas, message_squeeze=message_squeeze, message_update=message_update)
+
+  return(protLM)
 
 }
 
@@ -137,7 +154,8 @@ removeSingleLevels <- function(fixed, shrinkage.fixed, formula_fix, x, add.inter
 }
 
 getMoreLevels <- function(predictors, x){
-  return(unlist(lapply(predictors, function(y) length(levels(x[,y]))!=1)))
+  #return(unlist(lapply(predictors, function(y) length(levels(x[,y]))!=1)))
+  return(unlist(lapply(strsplit(predictors,":"), function(y) prod(unlist(lapply(x[,y,drop=FALSE], function(z) prod(length(unique(z))))))!=1)))
 }
 
 
