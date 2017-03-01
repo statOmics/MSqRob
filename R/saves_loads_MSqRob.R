@@ -7,7 +7,8 @@
 #' @param overwrite boolean: if TRUE, existing files will be deleted before saving. Default set to FALSE, which will report error on conflicting file names.
 #' @param ultra.fast boolean: if TRUE, ultra fast (...) processing is done without any check to parameters, also no archiving or compression is done. Be sure if using this setting, as many uncompressed files could be generated in the working directory's subdirectory named to df. Only recommended for servers dealing with lot of R objects' saves and loads in a monitored environment.
 #' @return The saved filename(s) (invisible).
-#' @family \code{\link{loads_MSqRob}} to load R objects from RDatas binary format
+#' @family \code{\link{loads_MSqRob}} to load R objects from RDatas binary format.
+#' @family \code{\link{inspect_loads_MSqRob}} to inspect the content of an RDatas binary object.
 #' @examples ## Not run:
 #' ## Saving the demo dataset to evs.2000.hun.RDatas in current working directory.
 #' data(evs.2000.hun)
@@ -22,7 +23,7 @@
 #' ## End(Not run)
 #' @references Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
 #' @export
-saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite = FALSE,
+saves_MSqRob <- function (..., envir = environment(), list = character(), file = NULL, overwrite = FALSE,
                           ultra.fast = FALSE, shiny=FALSE, printProgress=FALSE, message=NULL)
 {
 
@@ -83,8 +84,14 @@ saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite
     })
 
     w <- getwd()
+
+    #Added to make it possible to save to other directories
+    if(dirname(file[i])=="."){savedir <- w
+    } else{savedir <- dirname(file[i])}
+
     setwd(tmp)
-    tar(paste(w, "/", file[i], sep = ""), ".", compression = "none")
+    tar(paste(savedir, "/", basename(file[i]), sep = ""), ".", compression = "none")
+
     setwd(w)
     unlink(tmp, recursive = TRUE)
   }
@@ -105,6 +112,7 @@ saves_MSqRob <- function (..., envir, list = character(), file = NULL, overwrite
 #' The author of the \code{saves} package (Daróczi) emphasizes: this package could be useful only in few cases!
 #' @return Loaded data.frame.
 #' @family \code{\link{saves_MSqRob}} to save R objects to RDatas binary format
+#' @family \code{\link{inspect_loads_MSqRob}} to inspect the content of an RDatas binary object.
 #' @examples ## Not run:
 #' # Loading the 'v1' and 'v5' variables of the demo dataset.
 #' data(evs.2000.hun)
@@ -169,6 +177,8 @@ loads_MSqRob <- function (file = NULL, variables = NULL,
 #' @description \code{inspect_loads_MSqRob} returns the names of the variables present in a .RDatas file, some or all of which can be used in the \code{variables} argument of the \code{\link{loads_MSqRob}} function if one prefers to load only some variables.
 #' @param file character string: the (RDatas) filename from which to inspect the variable names.
 #' @return The variable names present in the .RDatas file.
+#' @family \code{\link{saves_MSqRob}} to save R objects to RDatas binary format
+#' @family \code{\link{loads_MSqRob}} to load R objects from RDatas binary format.
 #' @export
 inspect_loads_MSqRob <- function (file = NULL)
 {
