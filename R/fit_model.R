@@ -65,20 +65,16 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   formula_ran <- random_input[[2]]
 
   #Error control: fixed and random effects should be present as colnames in the data slot
+  #Random effects only checked if random is not NULL (see below)
   possible_vars <- colnames(getData(protdata, simplify=FALSE)[[1]])
 
   #Correct for possible interactions (only used in error control that follows)
   fixed_all <- unique(unlist(strsplit(fixed,":")))
-  random_all <- unique(unlist(strsplit(random,":")))
-
   if(!all(fixed_all %in% possible_vars)){
     not_present <- which(!(fixed_all %in% possible_vars))
     stop(paste0("The following fixed effects are no possible predictors: \"",paste0(fixed_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
   }
-  if(!all(random_all %in% possible_vars)){
-    not_present <- which(!(random_all %in% possible_vars))
-    stop(paste0("The following random effects are no possible predictors: \"",paste0(random_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
-  }
+
   if(length(response)!=1){stop("Please provide exactly one response variable.")}
   if(!(response %in% possible_vars)){
     stop(paste0("The response variable should be one of: \"",paste0(possible_vars, collapse="\", \""),"\"."))
@@ -105,6 +101,12 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   if(length(weights)!=length(protdata)){stop("The length of list \"weights\" should be equal to the number of proteins in the dataset.")}
 
   if(!is.null(random)){
+
+    random_all <- unique(unlist(strsplit(random,":")))
+    if(!all(random_all %in% possible_vars)){
+      not_present <- which(!(random_all %in% possible_vars))
+      stop(paste0("The following random effects are no possible predictors: \"",paste0(random_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
+    }
 
     #Initialize variables specifically for ridge models
     beta <- as.numeric(NA)
