@@ -18,4 +18,3 @@ A \code{\link[=protdata-class]{protdata}} object of which the \code{annotation} 
 \description{
 \code{setAnnotations} changes the \code{annotation} slot from a \code{\link[=protdata-class]{protdata}} object to a prespecified matrix.
 }
-

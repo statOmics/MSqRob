@@ -31,4 +31,3 @@ levels=c("conc6A","conc6B","conc6C","conc6D","conc6E"))
 L <- makeContrast(contrasts=c("conc6A-2*conc6B"),
 levels=c("conc6A","conc6B","conc6C","conc6D","conc6E"))
 }
-

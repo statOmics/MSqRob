@@ -2,9 +2,9 @@
 % Please edit documentation in R/addVarFromVar.R
 \name{addVarFromVar}
 \alias{addVarFromVar}
-\title{Add a variable based on an existing column}
+\title{Add a variable to a protdata object based on an existing column}
 \usage{
-addVarFromVar(protdata, basecol, name, vector, ...)
+addVarFromVar(protdata, basecol, name, vector)
 }
 \arguments{
 \item{protdata}{A \code{\link[=protdata-class]{protdata}} object of which the data slot needs to be expanded.}
@@ -37,4 +37,3 @@ proteinsCPTAC <- addVarFromVar(proteinsCPTAC,"run","rep",rep)
 instrlab <- factor((as.numeric(rep)-1)\%/\%3+1)
 proteinsCPTAC <- addVarFromVar(proteinsCPTAC,"run","instrlab",instrlab)
 }
-

@@ -18,4 +18,3 @@ A numeric vector containing either the original numeric values or the numeric va
 This function converts a vector of indices, which are a potential mixture of numeric values and accessions (characters or even factors)
 to a vector which retains the numeric indices, but converts accessions to their corresponding index in a provided \code{accessions} vector.
 }
-

@@ -16,4 +16,3 @@ A factor vector containing the accessions present in the \code{\link[=protLM-cla
 \description{
 \code{getAccessions} extracts the \code{accession} slot from a \code{\link[=protLM-class]{protLM}} object.
 }
-

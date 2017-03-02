@@ -24,7 +24,7 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 \item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
 }
 \value{
-A list with length equal to the \code{models} object containing list with four elements: (1) a named column matrix \code{beta} containing the parameter estimates, (2) a named square variance-covariance matrix \code{vcov}, (3) a numeric value \code{df} equal to the residual degrees of freedom and (4) a numeric value \code{sigma} equal to the residual standard deviation of the model.
+A list with length equal to the \code{models} object containing list with four elements: (1) a named column matrix \code{beta} containing the parameter estimates, (2) a named square variance-covariance matrix \code{vcov}, (3) a numeric value \code{df} equal to the residual degrees of freedom, (4) a numeric value \code{sigma} equal to the residual standard deviation of the model and (5) \code{NULL} if \code{exp_unit} is left to its default value \code{NULL}, else: a conservative estimate of the degrees of freedom based on the number of experimental units and the degrees of freedom lost due to between-treatment effects..
 }
 \description{
 This function returns a list with length equal to a \code{\link[=protLM-class]{protLM}} object supplied as input.
@@ -43,4 +43,3 @@ David Ruppert, M.P. Want and R.J. Carroll.
 Semiparametric Regression.
  Cambridge University Press, 2003.
 }
-

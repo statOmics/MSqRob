@@ -18,4 +18,3 @@ A \code{\link[=protLM-class]{protLM}} object of which the \code{accession} slot 
 \description{
 \code{setAccessions} changes the \code{accession} slot from a \code{\link[=protLM-class]{protLM}} object to a prespecified factor vector.
 }
-

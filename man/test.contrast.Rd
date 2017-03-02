@@ -37,4 +37,3 @@ David Ruppert, M.P. Want and R.J. Carroll.
 Semiparametric Regression.
  Cambridge University Press, 2003.
 }
-

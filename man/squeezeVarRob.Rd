@@ -31,4 +31,3 @@ A list with components:
 \description{
 This function squeezes a set of sample variances together by computing empirical Bayes posterior means in a way that is robust against the presence of very small non-integer degrees of freedom values.
 }
-

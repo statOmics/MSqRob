@@ -21,4 +21,3 @@ A data frame to which the annotations are left-joined.
 \description{
 This function adds extra columns to a data frame in "long" format (i.e. the data frame has one observation row per measurement (thus, multiple rows per subject)) based on either a path to an annotation file or an annotation data frame.
 }
-

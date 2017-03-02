@@ -29,4 +29,3 @@ peptidesCPTAC <- readMSnSet2(system.file("extdata/CPTAC", "peptides.txt", packag
 groups <- smallestUniqueGroups(fData(peptidesCPTAC)$Proteins)
 groups
 }
-

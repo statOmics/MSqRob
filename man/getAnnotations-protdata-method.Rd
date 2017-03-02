@@ -16,4 +16,3 @@ A character matrix containing the annotations present in the \code{\link[=protda
 \description{
 \code{getAnnotations} extracts the \code{annotation} slot from a \code{\link[=protdata-class]{protdata}} object.
 }
-

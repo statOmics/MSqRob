@@ -27,4 +27,3 @@ An Excel file with one column containing the different run names present in the 
 \description{
 Creates an Excel file with one column containing the run names of an experiment based on the column names of a MaxQuant peptides.txt file. This function might be a start in constructing the first column of the annatation Excel file, other colunms need to be added manually.
 }
-

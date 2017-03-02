@@ -6,8 +6,11 @@
 \usage{
 fit.model(protdata, response = NULL, fixed = NULL, random = NULL,
   add.intercept = TRUE, shrinkage.fixed = NULL, weights = "Huber",
-  k = 1.345, tolPwrss = 1e-10, verbose = FALSE, printProgress = FALSE,
-  shiny = FALSE, message = NULL, ...)
+  k = 1.345, par_squeeze = NULL, squeezeVar = TRUE, min_df = 1,
+  robust_var = TRUE, tolPwrss = 1e-10, verbose = FALSE,
+  printProgress = FALSE, shiny = FALSE, message_fitting = NULL,
+  message_thetas = NULL, message_squeeze = NULL, message_update = NULL,
+  ...)
 }
 \arguments{
 \item{protdata}{A \code{\link[=protdata-class]{protdata}} object to which peptide-based models must be fitted. Note that factors should be coded as factors and numeric variables as numeric in each data slot.}
@@ -26,6 +29,14 @@ fit.model(protdata, response = NULL, fixed = NULL, random = NULL,
 
 \item{k}{The tuning constant for the Huber mean when weighing down outliers. The default (\code{k = 1.345}) produces 95 \% efficiency relative to the sample mean when the population is normal but provides substantial resistance to outliers when it is not.}
 
+\item{par_squeeze}{Character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.}
+
+\item{squeezeVar}{A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.}
+
+\item{min_df}{A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}.}
+
+\item{robust_var}{A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}. Defaults to \code{TRUE}.}
+
 \item{tolPwrss}{A numeric value indicating the maximally tolerated deviation on the penalized weighted residual sum of squares when iteratively estimating the weights by M estimation.}
 
 \item{verbose}{A logical value indicating whether the models should be printed out. Defaults to \code{FALSE}.}
@@ -34,7 +45,15 @@ fit.model(protdata, response = NULL, fixed = NULL, random = NULL,
 
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
 
-\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
+\item{message_fitting}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the fitting of the models, or \code{NULL} to hide the current message (if any).}
+
+\item{message_thetas}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).}
+
+\item{message_squeeze}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).}
+
+\item{message_update}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).}
+
+\item{...}{Other parameters to be passed to the model fitting function internally.}
 }
 \value{
 A \code{\link[=protLM-class]{protLM}} object containing the names of all proteins in the input \code{\link[=protdata-class]{protdata}} object and their corresponding fitted models.
@@ -42,7 +61,7 @@ A \code{\link[=protLM-class]{protLM}} object containing the names of all protein
 \description{
 Fits a model to each protein of a \code{\link[=protdata-class]{protdata}} object and returns a corresponding \code{\link[=protLM-class]{protLM}} object.
 In its standard settings, the function returns a \code{\link[=protLM-class]{protLM}} object containing robust ridge models as described in Goeminne et al. (2015).
-However, the the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights.
+However, the the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
 }
 \examples{
 data(proteinsCPTAC, package="MSqRob")
@@ -56,4 +75,3 @@ Ludger Goeminne, Kris Gevaert and Lieven Clement.
 Peptide-level robust ridge regression improves estimation, sensitivity and specificity in data-dependent quantitative label-free shotgun proteomics.
  Molecular & Cellular Proteomics, 2016.
 }
-

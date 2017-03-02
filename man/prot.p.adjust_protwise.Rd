@@ -32,4 +32,3 @@ This function can also be used to calculate the corrected p-values in the second
 \examples{
 #....
 }
-

@@ -22,6 +22,8 @@ test.contrast_adjust(protLM, L, level = 0.05, method = "fdr",
 
 \item{add.annotations}{A logical indicating whether the \code{annotations} slot of the \code{\link[=protLM-class]{protLM}} object should be added as extra columns to each matrix in the returned list of matrices. Defaults to \code{TRUE}.}
 
+\item{custom_dfs}{An optional vector of length equal to the number of models in \code{protLM} containing the degrees of freedom that should be used for each model in the \code{protLM} object. By default (\code{custom_dfs=NULL}), \code{MSqRob} uses the trace of the Hat matrix to determine the degrees of freedom or the Satterhtwiate approximation (if \code{satterthwaite=TRUE}). \code{custom_dfs} allows you to overrule this and use your own custom approximation for the degrees of freedom.}
+
 \item{simplify}{A logical indicating wheter, if there is only one contrast, a matrix should be returned instead of a list containing one matrix. Defaults to \code{TRUE}.}
 
 \item{lfc}{The minimum (log2) fold-change that is considered scientifically meaningful. Defaults to \code{0}. Ignored when \code{anova = TRUE}.}
@@ -58,4 +60,3 @@ If \code{simplify=TRUE} and the \code{\link[=protLM-class]{protLM}} object conta
 \description{
 A shortcut version for contrast testing and multiple testing correction using the \code{\link{test.protLMcontrast}}, \code{\link{prot.p.adjust}} and \code{\link{prot.signif}} functions sequentially.
 }
-

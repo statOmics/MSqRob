@@ -19,7 +19,7 @@ df2protdata(df, acc_col, quant_cols, quant_name = "quant_value",
 \item{run_name}{If quant_cols contains more than one element (i.e. the data is in "wide" format), this should contain a freely chosen character string indicating the name that will be given to the column containing the mass spec run names. If no name is chosen (\code{run_name=NULL}), this will default to \code{"run"}.
 If quant_cols contains only one element (i.e. the data is in "long" format), \code{run_name} should contain the name of the column that contains the run names.}
 
-\item{annotations}{A vector of character strings or numeric indices indicating the columns in the data frame \code{df} that contain additional information on the accessions (typically protein names, gene names, gene ontologies,...) that should be retained. In case multiple values of the same annotation column would exist for a unique accession, these values are pasted together. Defaults to \code{NULL}, in which case no annotations will be added.}
+\item{annotations}{A vector of character strings or numeric indices indicating the columns in the data frame \code{df} that contain additional information on the accessions (typically protein names, gene names, gene ontologies,...) that should be added in a separate \code{annotation} slot. In case multiple values of the same annotation column would exist for a unique accession, these values are pasted together. Defaults to \code{NULL}, in which case no annotations will be added.}
 }
 \value{
 A \code{\link[=protdata-class]{protdata}} object.
@@ -48,4 +48,3 @@ pepdf <- pepdf[,c(quant_cols,"Proteins","Sequence","PEP")]
 acc_col <- "Proteins"
 proteins <- df2protdata(pepdf, acc_col, quant_cols)
 }
-

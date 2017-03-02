@@ -31,4 +31,3 @@ This function extracts the estimated variances of specified random effects and s
 \references{
 ....
 }
-

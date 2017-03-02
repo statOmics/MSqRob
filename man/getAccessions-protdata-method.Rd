@@ -16,4 +16,3 @@ A factor vector containing the accessions present in the \code{\link[=protdata-c
 \description{
 \code{getAccessions} extracts the \code{accession} slot from a \code{\link[=protdata-class]{protdata}} object.
 }
-

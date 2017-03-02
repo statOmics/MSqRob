@@ -18,4 +18,3 @@ A \code{\link[=protLM-class]{protLM}} object of which the \code{model} slot is r
 \description{
 \code{setModels} changes the \code{model} slot from a \code{\link[=protLM-class]{protLM}} object to a prespecified list of models.
 }
-

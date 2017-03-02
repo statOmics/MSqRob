@@ -16,7 +16,7 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 
 \item{pars_df}{Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).}
 
-\item{subset}{......}
+\item{subset}{...... !!!!Experimental feature not thoroughly tested!!!!}
 
 \item{Ginvoffset}{A numeric value indicating the offset added the the diagonal of the G matrix to prevent near-singularity. Defaults to \code{1e-18}.}
 }
@@ -39,4 +39,3 @@ David Ruppert, M.P. Want and R.J. Carroll.
 Semiparametric Regression.
  Cambridge University Press, 2003.
 }
-

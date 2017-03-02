@@ -18,4 +18,3 @@ A \code{\link[=protdata-class]{protdata}} object of which the \code{data} slot i
 \description{
 \code{setData} changes the \code{data} slot from a \code{\link[=protdata-class]{protdata}} object to a prespecified list of data frames.
 }
-

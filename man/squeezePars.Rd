@@ -45,4 +45,3 @@ Information is borrowed over all accessions in the \code{\link[=protLM-class]{pr
 \references{
 ....
 }
-

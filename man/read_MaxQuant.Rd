@@ -4,7 +4,7 @@
 \alias{read_MaxQuant}
 \title{Import a MaxQuant peptides.txt file}
 \usage{
-read_MaxQuant(file, pattern = "Intensity.", remove_pattern = TRUE,
+read_MaxQuant(file, pattern = "Intensity ", remove_pattern = TRUE,
   shiny = FALSE, message = NULL)
 }
 \arguments{
@@ -24,4 +24,3 @@ An object of class \code{\link[=MSnSet-class]{MSnSet}}.
 \description{
 Imports a MaxQuant peptides.txt file and converts it into an \code{\link[=MSnSet-class]{MSnSet}} object.
 }
-

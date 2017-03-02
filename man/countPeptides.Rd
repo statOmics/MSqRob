@@ -17,4 +17,3 @@ countPeptides(protdata, pData, predictor)
 Given a \code{\link[=protdata-class]{protdata}} object, a dataframe pData containing experiment information and a predictor of interest,
 returns a data frame giving the amount of peptides observed for each level of the predictor.
 }
-

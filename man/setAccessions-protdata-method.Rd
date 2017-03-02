@@ -18,4 +18,3 @@ A \code{\link[=protdata-class]{protdata}} object of which the \code{accession} s
 \description{
 \code{setAccessions} changes the \code{accession} slot from a \code{\link[=protdata-class]{protdata}} object to a prespecified factor vector.
 }
-

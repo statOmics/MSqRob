@@ -35,4 +35,3 @@ protvalues <- prot.p.adjust(protvalues)
 #Assess the significance of the q-values:
 protvalues <- prot.signif(protvalues)
 }
-

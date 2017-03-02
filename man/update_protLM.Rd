@@ -36,4 +36,3 @@ This function changes the parameter variances \code{theta} of all \code{\link[=l
 \references{
 Bolker (2016). Wald errors of variances, https://rpubs.com/bbolker/waldvar
 }
-

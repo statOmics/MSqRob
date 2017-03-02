@@ -18,4 +18,3 @@ The list of models corresponding to the accessions present in the \code{\link[=p
 \description{
 \code{getModels} extracts the \code{model} slot from a \code{\link[=protLM-class]{protLM}} object.
 }
-

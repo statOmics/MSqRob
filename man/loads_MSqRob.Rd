@@ -43,6 +43,7 @@ evs.filtered.df <- loads("evs.2000.hun.RDatas", c('v1', 'v5'), to.data.frame=TRU
 Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
 }
 \seealso{
-Other res: \code{\link{saves_MSqRob}}
-}
+Other \code{\link{saves_MSqRob}} to save R objects to RDatas binary format: \code{\link{inspect_loads_MSqRob}}
 
+Other \code{\link{inspect_loads_MSqRob}} to inspect the content of an RDatas binary object.: \code{\link{saves_MSqRob}}
+}

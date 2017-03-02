@@ -20,4 +20,3 @@ A reduced \code{\link[=protdata-class]{protdata}} object containing only the ele
 \description{
 Select certain elements from a \code{\link[=protdata-class]{protdata}} object based on one or more accession and/or numeric indices. If \code{keep==FALSE}, these indices are omitted instead of selected. Note that for selecting, one could also use the "[" method.
 }
-

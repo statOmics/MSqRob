@@ -16,4 +16,3 @@ A character matrix containing the annotations present in the \code{\link[=protLM
 \description{
 \code{getAnnotations} extracts the \code{annotation} slot from a \code{\link[=protLM-class]{protLM}} object.
 }
-

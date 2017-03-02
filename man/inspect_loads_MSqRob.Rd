@@ -15,4 +15,8 @@ The variable names present in the .RDatas file.
 \description{
 \code{inspect_loads_MSqRob} returns the names of the variables present in a .RDatas file, some or all of which can be used in the \code{variables} argument of the \code{\link{loads_MSqRob}} function if one prefers to load only some variables.
 }
+\seealso{
+Other \code{\link{saves_MSqRob}} to save R objects to RDatas binary format: \code{\link{loads_MSqRob}}
 
+Other \code{\link{loads_MSqRob}} to load R objects from RDatas binary format.: \code{\link{saves_MSqRob}}
+}

@@ -32,4 +32,3 @@ protvalues <- test.protLMcontrast(protmodel,L)
 #Adjust the p-values by Benjamini-Hochberg FDR:
 protvalues <- prot.p.adjust(protvalues)
 }
-

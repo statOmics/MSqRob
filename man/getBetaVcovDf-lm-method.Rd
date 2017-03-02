@@ -16,10 +16,10 @@ The default way (\code{exp_unit=NULL}) estimates the degrees of freedom by subst
 
 \item{pars_df}{Only used if \code{exp_unit} is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).}
 
-\item{subset}{......}
+\item{subset}{...... !!!!Experimental feature not thoroughly tested!!!!}
 }
 \value{
-A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom, (4) a numeric value equal to the residual standard deviation of the model (5) \code{NULL} if \code{exp_unit} is left to its default value \code{NULL}.
+A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom, (4) a numeric value equal to the residual standard deviation of the model and (5) \code{NULL} if \code{exp_unit} is left to its default value \code{NULL}, else: a conservative estimate of the degrees of freedom based on the number of experimental units and the degrees of freedom lost due to between-treatment effects.
 }
 \description{
 This function returns a list containing the parameter estimates \code{beta}, the variance-covariance matrix \code{vcov},
@@ -31,4 +31,3 @@ data(proteinsCPTAC, package="MSqRob")
 lmmodel <- lm(formula="value ~ 1 + conc + instrlab + Sequence",data=getData(proteinsCPTAC[2]))
 getBetaVcovDf(lmmodel)
 }
-

@@ -25,4 +25,3 @@ This function changes the \code{theta} parameter of a \code{\link[=lmerMod-class
 \references{
 Bolker (2016). Wald errors of variances, https://rpubs.com/bbolker/waldvar
 }
-

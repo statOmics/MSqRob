@@ -18,4 +18,3 @@ The list of data frames corresponding to the data present in the \code{\link[=pr
 \description{
 \code{getData} extracts the \code{data} slot from a \code{\link[=protdata-class]{protdata}} object.
 }
-

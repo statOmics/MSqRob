@@ -39,4 +39,3 @@ fData(peptides) <- fData(peptides)[,c("Proteins","Sequence","PEP")]
 #Do this only for the first 50 peptide to save execution time
 proteins <- MSnSet2protdata(peptides[1:50], "Proteins")
 }
-

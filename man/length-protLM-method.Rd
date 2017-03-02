@@ -16,4 +16,3 @@ An integer value indicating the number of elements in a \code{\link[=protLM-clas
 \description{
 The \code{length} method counts the number of elements in a \code{\link[=protLM-class]{protLM}} object.
 }
-

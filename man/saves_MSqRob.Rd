@@ -4,7 +4,7 @@
 \alias{saves_MSqRob}
 \title{Save the variables of a data.frame in distinct binary files}
 \usage{
-saves_MSqRob(..., envir, list = character(), file = NULL,
+saves_MSqRob(..., envir = environment(), list = character(), file = NULL,
   overwrite = FALSE, ultra.fast = FALSE, shiny = FALSE,
   printProgress = FALSE, message = NULL)
 }
@@ -43,6 +43,7 @@ saves_MSqRob(list=c('cars', 'mtcars'), overwrite = TRUE)
 Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
 }
 \seealso{
-Other res: \code{\link{loads_MSqRob}}
-}
+Other \code{\link{loads_MSqRob}} to load R objects from RDatas binary format.: \code{\link{inspect_loads_MSqRob}}
 
+Other \code{\link{inspect_loads_MSqRob}} to inspect the content of an RDatas binary object.: \code{\link{loads_MSqRob}}
+}

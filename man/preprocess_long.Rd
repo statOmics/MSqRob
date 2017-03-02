@@ -70,4 +70,3 @@ By default, data are aggregated by the \code{aggr_by} column (typically the pept
 which removes proteins groups for which any of its member proteins is present in a smaller protein group. Then, unwanted sequences (such as reverse sequences or unwanted sequences) are filtered out.
 Next, irrelevant columns are dropped. Then, peptide sequences that are identified only once in a single mass spec run are removed because with only 1 identification, the model will be perfectly confounded. Finally, potential experimental annotations are added to the data frame.
 }
-
