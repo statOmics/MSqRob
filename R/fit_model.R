@@ -144,12 +144,17 @@ removeSingleLevels <- function(fixed, shrinkage.fixed, formula_fix, x, add.inter
   morelvls <- getMoreLevels(fixed, x)
   fixed <- fixed[morelvls]
 
-  #If add.intercept==TRUE, add an intercept
-  if(isTRUE(add.intercept)){terms <- c(1,fixed)
+  if(isTRUE(add.intercept)){
+    #If add.intercept==TRUE, add an intercept
+    terms <- c(1,fixed)
+    #Keep the shrinkage term for the intercept, add the other terms
+    shrinkage.fixed <- c(shrinkage.fixed[1],(shrinkage.fixed[-1])[morelvls])
   #If add.intercept==FALSE, no intercept
-  }    else{terms <- c(-1,fixed)}
+  }    else{
+    terms <- c(-1,fixed)
+    shrinkage.fixed <- shrinkage.fixed[morelvls]
+    }
 
-  shrinkage.fixed <- shrinkage.fixed[morelvls]
   formula_fix <- paste0(c("~",rep("",length(terms)-1)),terms, collapse="+")
 
   return(list(fixed, shrinkage.fixed, as.formula(formula_fix)))
@@ -157,7 +162,10 @@ removeSingleLevels <- function(fixed, shrinkage.fixed, formula_fix, x, add.inter
 
 getMoreLevels <- function(predictors, x){
   #return(unlist(lapply(predictors, function(y) length(levels(x[,y]))!=1)))
+  if(is.null(predictors)){return(FALSE)
+    }else{
   return(unlist(lapply(strsplit(predictors,":"), function(y) prod(unlist(lapply(x[,y,drop=FALSE], function(z) prod(length(unique(z))))))!=1)))
+    }
 }
 
 
@@ -373,10 +381,12 @@ makeFormulaPredictors <- function(input, intercept, effect){
   #Default: shrink all fixed effects together except the intercept
   if(!is.null(fixed) && is.null(shrinkage.fixed)){
     shrinkage.fixed <- rep(1, length(fixed))
+    if(isTRUE(add.intercept)){ #If shrinkage.fixed is NULL AND there is an intercept!!!
+    shrinkage.fixed <- c(0,shrinkage.fixed)
+    }
   }
 
   fixed2 <- fixed
-  shrinkage.fixed2 <- c(0,shrinkage.fixed)
 
   if(isTRUE(add.intercept)){
     fixed2 <- c(1,fixed)
@@ -384,12 +394,12 @@ makeFormulaPredictors <- function(input, intercept, effect){
   } else{fixed2 <- c(0,fixed)}
 
   #If there are no shrunken fixed effects
-  if(all(shrinkage.fixed2==0) || isTRUE(error)){
+  if(all(shrinkage.fixed==0) || isTRUE(error)){
     ridgeGroupsForm <- NULL
     fixedUnshrForm <- paste0(fixed2, collapse="+")
 
   #If there is at least one shrunken fixed effect
-  } else if(any(shrinkage.fixed2!=0)){
+  } else if(any(shrinkage.fixed!=0)){
 
   #Make fixed design model matrix MM, this step is only because we need its attributes
   MM <- model.matrix(formula_fix, data=x)
@@ -401,8 +411,8 @@ makeFormulaPredictors <- function(input, intercept, effect){
   pred_assigned <- attr(MM, "assign")
   pred_names <- attr(MM, "dimnames")[[2]]
 
-  groups <- unique(shrinkage.fixed2[shrinkage.fixed2!=0]) #select the groups that should get shrinkage
-  indices <- which(shrinkage.fixed2 %in% groups)
+  groups <- unique(shrinkage.fixed[shrinkage.fixed!=0]) #select the groups that should get shrinkage
+  indices <- which(shrinkage.fixed %in% groups)
   shrink <- pred_assigned %in% unique(pred_assigned)[indices]
 
   #Decompose fixed design matrix that needs shrinkage
@@ -425,7 +435,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   if(length(groups)!=0){
   ridgeGroups <- vector()
   for(i in 1:length(groups)){
-    index <- which(shrinkage.fixed2==groups[i])
+    index <- which(shrinkage.fixed==groups[i])
     fixed.names <- pred_names[pred_assigned %in% unique(pred_assigned)[index]]
     x[,paste0("ridgeGroup.", i)] <- factor(rep(fixed.names,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
     ridgeGroups[i] <- paste0("ridgeGroup.", i)
@@ -438,7 +448,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   #position of unshrunken effects in Q_fix:
   fixedUnshrForm <- NULL
 
-  if(any(shrinkage.fixed2==0)){
+  if(any(shrinkage.fixed==0)){
   unshr_pos <- which(!shrink)
   fixedUnshrGroups <- vector()
 
@@ -471,7 +481,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
                               return(parsedFormula)
                             }))
 
-  if(any(shrinkage.fixed2!=0)  && !isTRUE(error)){
+  if(any(shrinkage.fixed!=0)  && !isTRUE(error)){
   num_indices <- as.list(which(names(parsedFormula$reTrms$cnms) %in% ridgeGroups))
   Zt_indices <- unlist(lapply(as.list(num_indices), function(z){return((parsedFormula$reTrms$Gp+1)[z]:parsedFormula$reTrms$Gp[z+1])}))
 
@@ -516,7 +526,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   cnms <- parsedFormula$reTrms$cnms
   for(i in 1: length(groups)){
 
-    index <- which(shrinkage.fixed2==groups[i])
+    index <- which(shrinkage.fixed==groups[i])
 
     target <- which(names(cnms)==paste0("ridgeGroup.", i))
 
@@ -578,7 +588,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   if(!is.null(fixed) & !isTRUE(error)){
     #Unshrunken fixed effects
 
-    fixed_X <- fixed2[shrinkage.fixed2==0]
+    fixed_X <- fixed2[shrinkage.fixed==0]
     fixed_X[fixed_X=="1"] <- "(Intercept)"
 
     #X_assigned is about everything in X
