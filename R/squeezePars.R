@@ -80,10 +80,10 @@ for(i in 1:length(protLM)){
 
   updateProgress(progress=progress, detail=paste0("Extracting variance for model ",i," of ",length(protLM),"."), n=length(protLM), shiny=shiny, print=isTRUE(printProgress))
 
-lmerMod <- getModels(protLM[i])
+lmerMod <- getModels(protLM[i], simplify=TRUE)
 
-if(is.null(lmerMod@frame$"(weights)")){gew <- rep(1,nobs(lmerMod))} else{
-  gew <- sqrt(lmerMod@frame$"(weights)")}
+#Squeezing of random effects only for lmerMod, not for normal linear models
+if(class(lmerMod)=="lmerMod"){
 
 theta_names <- names(lmerMod@flist)
 
@@ -105,12 +105,13 @@ df_thetas[i,] <- vapply(par_names,function(x) {
 
   return(y)
   },0)
+}
 
 #residual variances
-vars[i] <- sigma(lmerMod)^2
+vars[i] <- getSigma(lmerMod)^2
 
 #df residual variances
-df_vars[i] <- sum((resid(lmerMod)*gew)^2)/vars[i]
+df_vars[i] <- getDf(lmerMod)
 }
   #df_thetas[is.na(df_thetas)] <- NA
   thetavars <- list(thetas=thetas, df_thetas=df_thetas, vars=vars, df_vars=df_vars)
