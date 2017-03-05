@@ -34,6 +34,41 @@ Just enter the following command to run the `MSqRob` Shiny app:
 shiny::runApp(system.file("App-MSqRob", package="MSqRob"))
 ~~~~
 
+## Getting started with MSqRob in R
+
+To get started with MSqRob, we suggest to take a look at the MSqRob vignette at https://github.com/statOmics/MSqRob/blob/master/vignettes/MSqRob.Rmd
+
+If you want to try a clean, simple analysis, make sure to check out our two examples at:
+https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd
+and
+https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd
+
+These files can be easily adjusted to cope with the analysis of your own experiment.
+
+## Run MSqRob on the terminal on a Linux system
+
+In order to run the first example in the terminal on a Linux system, it is first needed to tell the system where to find the Pandoc installation. This folder can easily be found by typing the following command in RStudio:
+
+~~~~
+Sys.getenv("RSTUDIO_PANDOC")
+~~~~
+
+In our case, this folder is "/Applications/RStudio.app/Contents/MacOS/pandoc".
+We thus execute the following in the Terminal:
+~~~~
+export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc
+~~~~
+
+Then we knit out Rmarkdown file (which we saved at "/Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/analysis_CPTAC.Rmd") by running the following command in the Terminal:
+
+~~~~
+Rscript -e "require( 'rmarkdown' ); render('/Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/analysis_CPTAC.Rmd', 'html_document')"
+~~~~
+
+## Run MSqRob via a bash script
+
+An example bash script can be found at:
+
 ## Contact
 
 We are happy to help you with any problems you might encounter when using MSqRob.
