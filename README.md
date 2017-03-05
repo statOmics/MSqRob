@@ -71,7 +71,7 @@ An example bash script can be found at:
 
 https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/bash_CPTAC.sh
 
-Note that in this script, the path `/Applications/RStudio.app/Contents/MacOS/pandoc` might need to be changed to the path where your Pandoc installation is saved (see previous paragraph). Likewise `/Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/analysis_CPTAC.Rmd` needs to be changed to the folder where your Rmarkdown file is saved. To execute the script, the following two lines need to be passed to the Terminal (where `/Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/bash_CPTAC.sh` needs to be the file path to where your bash script is saved).
+Note that in this script, the path `/Applications/RStudio.app/Contents/MacOS/pandoc` might need to be changed to the path where your Pandoc installation is saved (see previous paragraph). Likewise `/Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/analysis_CPTAC.Rmd` needs to be changed to the folder where your Rmarkdown file is saved. To execute the script, the following two lines need to be passed to the Terminal (where `/Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/bash_CPTAC.sh` needs to be the file path to where your bash script is saved). The first line of code makes the script executable, the second line executes the script.
 
 ~~~~
 chmod +x /Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/bash_CPTAC.sh
