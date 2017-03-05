@@ -26,9 +26,9 @@ devtools::install_github("ludgergoeminne/MSqRob")
 library(MSqRob)
 ~~~~
 
-## Run the Shiny App
+## Run the MSqRob Shiny App (graphical user interface)
 
-Just enter the following command to run the `MSqRob` Shiny app:
+Just enter the following command in RStudio to run the `MSqRob` Shiny app:
 
 ~~~~
 shiny::runApp(system.file("App-MSqRob", package="MSqRob"))
