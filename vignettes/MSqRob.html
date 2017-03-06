@@ -12,7 +12,7 @@
 
 <meta name="author" content="Ludger Goeminne, Kris Gevaert and Lieven Clement" />
 
-<meta name="date" content="2017-03-03" />
+<meta name="date" content="2017-03-06" />
 
 <title>MSqRob Vignette</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">MSqRob Vignette</h1>
 <h4 class="author"><em>Ludger Goeminne, Kris Gevaert and Lieven Clement</em></h4>
-<h4 class="date"><em>2017-03-03</em></h4>
+<h4 class="date"><em>2017-03-06</em></h4>
 
 
 
@@ -79,7 +79,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The MSqRob package is designed for the analysis of differential abundance in label-free mass spectrometry-based shotgun proteomics experiments. These experiments typically output large spectral files (e.g. “.mzML” files) that need to be searched for identifications by specialized peak detection and peptide identification software such as Andromeda (used in the MaxQuant software package) and Mascot Distiller. These algorithms output lists of putative peptides accompanied by their corresponding overall intensity estimates.</p>
 <p>Often, researchers further summarize these peptide intensities to protein intensities. However, as we have shown before, this summarization-based approaches tend to perform suboptimal compared to peptide-based models, wherein the peptide intensities are directly provided as input to the statistical model used for differential quantification (Goeminne et al., 2015). Nonetheless, most of these models still suffer from overfitting issues.</p>
 <p>This package implements the robust ridge approach that prevents overfitting in sparse data but also accurately fits highly abundant proteins as described in Goeminne et al. (2016).</p>
-<p>This vignette will guide you through the main features of the MSqRob package. We will highlight two examples in order to help you familiarize with its main features. MSqRob is completely free and open source, but please make a reference to Goeminne et al. (2016) when using our package in any kind of publication.</p>
+<p>This vignette will guide you through the main features of the MSqRob package. We will highlight two examples in order to help you familiarize with its main features. As we go into quite some detail, this vignette might be a bit overwhelming for a first-time user. You might want to skim through this vignette and then take a look at the same two examples stripped to their essential analyses. These can be found at <a href="https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd" class="uri">https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd</a> and <a href="https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd" class="uri">https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd</a> for the <em>Francisella</em> and CPTAC example respectively.</p>
+<p>MSqRob is completely free and open source, but please make a reference to Goeminne et al. (2016) when using our package in any kind of publication.</p>
 </div>
 <div id="downloading-installing-and-loading-msqrob" class="section level2">
 <h2>Downloading, installing and loading MSqRob</h2>
@@ -512,7 +513,7 @@ file_proteinGroups</code></pre></div>
 <p><strong>Caution:</strong> this step might take some time! (almost 2 minutes on our system). The <code>accession</code> argument denotes by which column the individual peptide observations should be grouped. The <code>annotations</code> argument indicates which columns in peptidesFranc2 are annotations linked to the accessions (in our case: the GI number and the protein names). These annotations will be added to a separate <code>annotation</code> slot.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(proteinsFranc &lt;-<span class="st"> </span><span class="kw">MSnSet2protdata</span>(peptidesFranc2, <span class="dt">accession=</span><span class="st">&quot;Proteins&quot;</span>, <span class="dt">annotations =</span> <span class="kw">c</span>(<span class="st">&quot;GI.number&quot;</span>, <span class="st">&quot;Protein.names&quot;</span>)))</code></pre></div>
 <pre><code>##    user  system elapsed 
-## 124.075   4.173 145.849</code></pre>
+## 102.692   2.977 106.569</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">proteinsFranc</code></pre></div>
 <pre><code>## @accession 
 ## 
@@ -836,8 +837,8 @@ proteinsFranc2</code></pre></div>
 <p>Fit the robust ridge models for each protein. The <code>fit.model</code> function will fit a model to each protein in the <code>protdata</code> object <code>proteinsFranc</code>. The default setting <code>reg=&quot;ridge&quot;</code> indicates that ridge regression should be used. The default setting <code>weights=&quot;Huber&quot;</code> indicates that an M estimation algorithm should be used that assigns Huber weights to each peptide observation based on their residuals.</p>
 <p>Caution: fitting the models takes some time (less than 15 minutes for the <em>Francisella tularensis</em> dataset on our system). The <code>system.time</code> function was again only added to output the duration of the model fitting.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(protLMFranc &lt;-<span class="st"> </span><span class="kw">fit.model</span>(proteinsFranc, <span class="dt">response=</span><span class="st">&quot;quant_value&quot;</span>, <span class="dt">fixed=</span><span class="kw">c</span>(<span class="st">&quot;genotype&quot;</span>),  <span class="dt">random=</span><span class="kw">c</span>(<span class="st">&quot;biorep&quot;</span>,<span class="st">&quot;run&quot;</span>,<span class="st">&quot;Sequence&quot;</span>), <span class="dt">add.intercept=</span><span class="ot">TRUE</span>, <span class="dt">weights=</span><span class="st">&quot;Huber&quot;</span>))</code></pre></div>
-<pre><code>##     user   system  elapsed 
-##  914.079   11.033 1005.321</code></pre>
+<pre><code>##    user  system elapsed 
+## 821.396   5.443 845.481</code></pre>
 </div>
 <div id="inspect-the-model" class="section level3">
 <h3>4.1. Inspect the model</h3>
@@ -2821,7 +2822,7 @@ peptidesCPTAC3 &lt;-<span class="st"> </span>peptidesCPTAC3[keepers]
 <p><strong>Caution:</strong> this step might take some time! (5 - 10 minutes on our system). The accession element denotes by which column the individual peptide observations should be grouped.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(proteinsCPTAC &lt;-<span class="st"> </span><span class="kw">MSnSet2protdata</span>(peptidesCPTAC2, <span class="dt">accession=</span><span class="st">&quot;Proteins&quot;</span>))</code></pre></div>
 <pre><code>##    user  system elapsed 
-## 323.422  11.840 336.164</code></pre>
+## 309.413  11.179 320.777</code></pre>
 </div>
 <div id="main-analysis" class="section level3">
 <h3>4. Main Analysis</h3>
@@ -2830,8 +2831,8 @@ peptidesCPTAC3 &lt;-<span class="st"> </span>peptidesCPTAC3[keepers]
 <h3>4.1. Fit the model</h3>
 <p>When your goal is to analyze the CPTAC data in the recommended way (i.e. a robust ridge model with variance shrinkage and M estimation), your model should be constructed look as follows:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(modelCPTAC_RR &lt;-<span class="st"> </span><span class="kw">fit.model</span>(<span class="dt">protdata=</span>proteinsCPTAC, <span class="dt">response=</span><span class="st">&quot;quant_value&quot;</span>, <span class="dt">fixed=</span><span class="kw">c</span>(<span class="st">&quot;condition&quot;</span>,<span class="st">&quot;lab&quot;</span>), <span class="dt">random=</span><span class="kw">c</span>(<span class="st">&quot;Sequence&quot;</span>,<span class="st">&quot;run&quot;</span>), <span class="dt">shrinkage.fixed=</span><span class="ot">NULL</span>, <span class="dt">weights=</span><span class="st">&quot;Huber&quot;</span>, <span class="dt">squeezeVar=</span><span class="ot">TRUE</span>))</code></pre></div>
-<pre><code>##     user   system  elapsed 
-## 1122.451    4.687 1563.430</code></pre>
+<pre><code>##      user    system   elapsed 
+##  1193.224     2.083 33182.961</code></pre>
 <p>Caution: model fitting takes some time with large datasets! On our computer, fitting the robust ridge model took about 13 minutes.</p>
 </div>
 <div id="save-your-results-1" class="section level3">
@@ -2845,15 +2846,15 @@ peptidesCPTAC3 &lt;-<span class="st"> </span>peptidesCPTAC3[keepers]
 <p>Fit an OLS model (<code>shrinkage.fixed=c(0,0,0,0)</code>) without M estimation (<code>weights=NULL</code>).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(modelCPTAC_Lm &lt;-<span class="st"> </span><span class="kw">fit.model</span>(<span class="dt">protdata=</span>proteinsCPTAC, <span class="dt">response=</span><span class="st">&quot;quant_value&quot;</span>, <span class="dt">fixed=</span><span class="kw">c</span>(<span class="st">&quot;condition&quot;</span>,<span class="st">&quot;Sequence&quot;</span>,<span class="st">&quot;lab&quot;</span>), <span class="dt">random=</span><span class="ot">NULL</span>, <span class="dt">shrinkage.fixed=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>), <span class="dt">weights=</span><span class="ot">NULL</span>, <span class="dt">squeezeVar=</span><span class="ot">FALSE</span>))</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   4.404   0.090   4.529</code></pre>
+##   4.287   0.078   4.381</code></pre>
 <p>Fit an OLS model (<code>shrinkage.fixed=c(0,0,0,0)</code>) with M estimation (<code>weights=Huber</code>).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(modelCPTAC_Lm_M &lt;-<span class="st"> </span><span class="kw">fit.model</span>(<span class="dt">protdata=</span>proteinsCPTAC, <span class="dt">response=</span><span class="st">&quot;quant_value&quot;</span>, <span class="dt">fixed=</span><span class="kw">c</span>(<span class="st">&quot;condition&quot;</span>,<span class="st">&quot;Sequence&quot;</span>,<span class="st">&quot;lab&quot;</span>), <span class="dt">random=</span><span class="ot">NULL</span>, <span class="dt">shrinkage.fixed=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>), <span class="dt">weights=</span><span class="st">&quot;Huber&quot;</span>, <span class="dt">squeezeVar=</span><span class="ot">FALSE</span>))</code></pre></div>
 <pre><code>##    user  system elapsed 
-##  13.234   0.224  13.681</code></pre>
+##  13.731   0.280  15.140</code></pre>
 <p>Fit a ridge model (<code>shrinkage.fixed=c(0,1)</code>) without M estimation (<code>weights=NULL</code>).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(modelCPTAC_Ridge &lt;-<span class="st"> </span><span class="kw">fit.model</span>(<span class="dt">protdata=</span>proteinsCPTAC, <span class="dt">response=</span><span class="st">&quot;quant_value&quot;</span>, <span class="dt">fixed=</span><span class="st">&quot;condition&quot;</span>, <span class="dt">random=</span><span class="kw">c</span>(<span class="st">&quot;Sequence&quot;</span>,<span class="st">&quot;lab&quot;</span>), <span class="dt">shrinkage.fixed=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="dt">weights=</span><span class="ot">NULL</span>, <span class="dt">squeezeVar=</span><span class="ot">FALSE</span>))</code></pre></div>
 <pre><code>##    user  system elapsed 
-## 101.706   0.834 104.035</code></pre>
+## 107.687   1.158 113.001</code></pre>
 <p>Fit a ridge model (<code>shrinkage.fixed=c(0,1)</code>) with M estimation (<code>weights=Huber</code>).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(modelCPTAC_Ridge_M &lt;-<span class="st"> </span><span class="kw">fit.model</span>(<span class="dt">protdata=</span>proteinsCPTAC, <span class="dt">response=</span><span class="st">&quot;quant_value&quot;</span>, <span class="dt">fixed=</span><span class="st">&quot;condition&quot;</span>, <span class="dt">random=</span><span class="kw">c</span>(<span class="st">&quot;Sequence&quot;</span>,<span class="st">&quot;lab&quot;</span>), <span class="dt">shrinkage.fixed=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="dt">weights=</span><span class="st">&quot;Huber&quot;</span>, <span class="dt">squeezeVar=</span><span class="ot">FALSE</span>))</code></pre></div>
 <pre><code>## Warning in optwrap(optimizer, devfun, getStart(start, rho$lower, rho$pp), :
@@ -2920,7 +2921,7 @@ peptidesCPTAC3 &lt;-<span class="st"> </span>peptidesCPTAC3[keepers]
 ## convergence code 3 from bobyqa: bobyqa -- a trust region step failed to
 ## reduce q</code></pre>
 <pre><code>##     user   system  elapsed 
-## 1927.854    8.751 1954.455</code></pre>
+## 1895.193   12.929 2300.272</code></pre>
 <p>As you noticed, an OLS model can be fit by setting <code>shrinkage.fixed=c(0,0,0,0)</code>. This indicates that neither the intercept and none of our three fixed effects should be shrunken. The ridge model is here specified by setting <code>shrinkage.fixed=c(0,1)</code>. This indicates that the intercept should not be shrunken, but the fixed effect <code>&quot;condition&quot;</code> should be shrunken. Alternatively, one could also set <code>shrinkage.fixed=NULL</code> as the shrinkage of all fixed effects except for the intercept is the default behaviour of MSqRob.</p>
 </div>
 <div id="inspect-the-models" class="section level3">
@@ -3165,8 +3166,8 @@ data &lt;-<span class="st"> </span>data[-na_indices]</code></pre></div>
 <div id="statistical-inference-1" class="section level3">
 <h3>5. Statistical inference</h3>
 <p>Construct the contrast matrix L for inferring on the fold changes of interest.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">L &lt;-<span class="st"> </span><span class="kw">makeContrast</span>(<span class="kw">c</span>(<span class="st">&quot;condition6B-condition6A&quot;</span>,<span class="st">&quot;condition6C-condition6A&quot;</span>,<span class="st">&quot;condition6D-condition6A&quot;</span>,<span class="st">&quot;condition6E-condition6A&quot;</span>,<span class="st">&quot;condition6C-condition6B&quot;</span>,<span class="st">&quot;condition6D-condition6B&quot;</span>,<span class="st">&quot;condition6E-condition6B&quot;</span>,<span class="st">&quot;condition6D-condition6C&quot;</span>,<span class="st">&quot;condition6E-condition6C&quot;</span>,<span class="st">&quot;condition6E-condition6D&quot;</span>),
-                  <span class="kw">c</span>(<span class="st">&quot;condition6A&quot;</span>,<span class="st">&quot;condition6B&quot;</span>,<span class="st">&quot;condition6C&quot;</span>,<span class="st">&quot;condition6D&quot;</span>,<span class="st">&quot;condition6E&quot;</span>))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">L &lt;-<span class="st"> </span><span class="kw">makeContrast</span>(<span class="dt">contrasts=</span><span class="kw">c</span>(<span class="st">&quot;condition6B-condition6A&quot;</span>,<span class="st">&quot;condition6C-condition6A&quot;</span>,<span class="st">&quot;condition6D-condition6A&quot;</span>,<span class="st">&quot;condition6E-condition6A&quot;</span>,<span class="st">&quot;condition6C-condition6B&quot;</span>,<span class="st">&quot;condition6D-condition6B&quot;</span>,<span class="st">&quot;condition6E-condition6B&quot;</span>,<span class="st">&quot;condition6D-condition6C&quot;</span>,<span class="st">&quot;condition6E-condition6C&quot;</span>,<span class="st">&quot;condition6E-condition6D&quot;</span>),
+                  <span class="dt">levels=</span><span class="kw">c</span>(<span class="st">&quot;condition6A&quot;</span>,<span class="st">&quot;condition6B&quot;</span>,<span class="st">&quot;condition6C&quot;</span>,<span class="st">&quot;condition6D&quot;</span>,<span class="st">&quot;condition6E&quot;</span>))</code></pre></div>
 <p>Make the DA rankings for the ordinary least squares model (no ridge, no squeezed variances, no M estimation).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#modelCPTAC_Lm &lt;- squeezePars(modelCPTAC_Lm, squeezeVar=FALSE)</span>
 lm_normal &lt;-<span class="st"> </span><span class="kw">test.protLMcontrast</span>(modelCPTAC_Lm, L)
