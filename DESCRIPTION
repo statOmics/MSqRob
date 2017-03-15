@@ -41,38 +41,22 @@ Suggests:
     zoo,
     knitr
 biocViews: label-free proteomics, relative quantification, tandem mass spectrometry, peptide-based linear model
-Description: The MSqRob package allows a user to do quantitative protein-level
-    statistical inference on LC-MS proteomics data. More specifically, our package
-    makes use of peptide-level input data, thus correcting for unbalancedness
-    and peptide-specific biases. As previously shown (Goeminne et al. (2015)),
-    this approach is both more sensitive and specific than summarizing peptide-
-    level input to protein-level values. Model estimates are stabilized by ridge
-    regression, empirical Bayes variance estimation and downweighing of outliers.
-    Currently, only label-free proteomics data types are supported. The MSqRob
-    Shiny App allows for an easy-to-use graphical user interface that requires
-    no programming skills. Interactive plots are outputted and results are
-    automatically exported to Excel. The authors kindly ask to make a reference
-    to (Goeminne et al. (2016)) when making use of this package in any kind of
-    publication or presentation. Ludger Goeminne, Andrea Argentini, Lennart Martens
-    and Lieven Clement (2015). Summarization vs Peptide-Based Models in Label-Free
-    Quantitative Proteomics: Performance, Pitfalls, and Data Analysis Guidelines.
-    Journal of Proteome Research 15(10), 3550-3562. When using MSqRob, please refer
-    to our published algorithm: Goeminne, L. J. E., Gevaert, K., and Clement, L.
-    (2016) Peptide-level Robust Ridge Regression Improves Estimation, Sensitivity,
-    and Specificity in Data-dependent Quantitative Label-free Shotgun Proteomics.
-    Molecular & Cellular Proteomics 15(2), pp 657-668.
-License: LGPL (>= 3)
+Description: The MSqRob package allows a user to do quantitative protein-level 			statistical inference on LC-MS proteomics data. More specifically, our package 		makes use of peptide-level input data, thus correcting for unbalancedness and 		peptide-specific biases. As previously shown (Goeminne et al. (2015)), this 		approach is both more sensitive and specific than summarizing peptide-level input 	to protein-level values. Model estimates are stabilized by ridge regression, 		empirical Bayes variance estimation and downweighing of outliers. Currently, only 	label-free proteomics data types are supported.
+	The MSqRob Shiny App allows for an easy-to-use graphical user interface that 		requires no programming skills. Interactive plots are outputted and results are 	automatically exported to Excel.
+	The authors kindly ask to make a reference to (Goeminne et al. (2016)) when making 	use of this package in any kind of publication or presentation.
+	Ludger Goeminne, Andrea Argentini, Lennart Martens and Lieven Clement (2015). 		Summarization vs Peptide-Based Models in Label-Free Quantitative Proteomics: 		Performance, Pitfalls, and Data Analysis Guidelines. Journal of Proteome Research 	15(10), 3550-3562.
+	When using MSqRob, please refer to our published algorithm:
+	Goeminne, L. J. E., Gevaert, K., and Clement, L. (2016) Peptide-level Robust Ridge 	Regression Improves Estimation, Sensitivity, and Specificity in Data-dependent 		Quantitative Label-free Shotgun Proteomics. Molecular & Cellular Proteomics 15(2), 	pp 657-668.License: LGPL (>= 3)
 LazyData: TRUE
-URL: https://github.com/ludgergoeminne/MSqRob, http://cran.r-
+URL: http://www.r-project.org, http://www.another.url, http://cran.r-
     project.org/package=MSqRob
-BugReports: https://github.com/ludgergoeminne/MSqRob, http://pkgname.bugtracker.url
+BugReports: http://pkgname.bugtracker.url
 Collate:
     'updateProgress.R'
     'preprocess_hlpFunctions.R'
     'preprocess_MaxQuant.R'
     'protdata.R'
     'MSnSet2protdata.R'
-    'addFactorInterations.R'
     'addVarFromVar.R'
     'countPeptides.R'
     'df2protdata.R'
@@ -82,7 +66,6 @@ Collate:
     'getBetaVcovDf.R'
     'squeezeVarRob.R'
     'getBetaVcovDfList.R'
-    'importDIAData.R'
     'makeContrast.R'
     'preprocess_long.R'
     'preprocess_wide.R'
@@ -100,4 +83,4 @@ Collate:
     'test_contrast_adjust.R'
     'test_contrast_stagewise.R'
 VignetteBuilder: knitr
-RoxygenNote: 6.0.1
+RoxygenNote: 5.0.1
