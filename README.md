@@ -22,7 +22,7 @@ library(devtools)
 Then, we call this to install `MSqRob`:
 
 ~~~~
-devtools::install_github("ludgergoeminne/MSqRob")
+devtools::install_github("statOmics/MSqRob")
 library(MSqRob)
 ~~~~
 
