@@ -368,8 +368,8 @@ result_files_new$models <- protLMFranc
 result_files_new$levelOptions <- c("genotypeWT","genotypeKO")
 #Should contain all random effects
 result_files_new$random <- c("Sequence","biorep","run")
-#Should contain a list with all fixed and random effects
-result_files_new$plot2DependentVars <- as.list(c("genotype","Sequence","biorep","run"))
+#Should contain all fixed effects
+result_files_new$fixed <- c("genotype")
 
 #############################################################################################
 
