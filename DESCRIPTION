@@ -25,6 +25,7 @@ Imports:
     MASS,
     Matrix,
     methods,
+    mzR,
     MSnbase,
     numDeriv,
     openxlsx,
