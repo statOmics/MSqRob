@@ -188,7 +188,8 @@ shinyServer(function(input, output, session) {
 
   ####select Fixed effects, random effects, Proteins and store options ####
   output$selectFixed <- renderUI({
-    selectInput("fixed", "Select fixed effects", nmsFixedOptions(), multiple=TRUE )})
+    selectInput("fixed", "Select fixed effects", nmsFixedOptions(), multiple=TRUE )
+    })
 
   selectedRandom <- reactive({
     if(!c("Sequence") %in% filterOptions()) {
@@ -335,6 +336,14 @@ shinyServer(function(input, output, session) {
 
   outputlist <- eventReactive(input$go, {
 
+    validate(
+      need((!is.null(saveFolder$folder) & length(saveFolder$folder)!=0), "No output folder selected!")
+    )
+
+    validate(
+      need((input$save==2 | !is.null(input$fixed)), "Please select at least one fixed effect!")
+    )
+
     #Check if saveFolder is correctly specified!
     check_save_folder(saveFolder$folder)
 
@@ -355,7 +364,7 @@ shinyServer(function(input, output, session) {
       #levelOptions is loaded in "levelOptions" reactive, needs to work before "go" button is pressed!
     }else{
 
-      fixed <- fixed$random
+      fixed <- input$fixed
       random <- input$random
 
       fs <- list()
