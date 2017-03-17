@@ -10,6 +10,8 @@ The authors kindly ask to make a reference to (Goeminne et al. (2016)) when maki
 
 ## Installation
 
+Make sure that R is installed on your computer. Optionally, you can also install RStudio as an integrated development invironment (IDE) for R. Instructions on how to install R and RStudio can be found here: http://web.cs.ucla.edu/~gulzar/rstudio/.
+
 On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows. Errors in MSqRob on Windows related to unable to zip the results Excel file might be related to errors in configuring RTools.
 
 To install MSqRob directly from GitHub, we first need to install the package `devtools`:
