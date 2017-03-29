@@ -20,14 +20,14 @@ loads_MSqRob(file = NULL, variables = NULL, ultra.fast = FALSE,
 Loaded data.frame.
 }
 \description{
-\code{loads_MSqRob} is almost a pure copy of the \code{loads} function from the \code{saves} package by Daróczi (2013) with some minor code tweaks to make it work for MSqRob. It loads data from a special binary file format (RDatas) made up by the \code{\link{MSqRob_saves}} function. This special, uncompressed tar archive inlcudes several separate RData files (saved by \code{\link{MSqRob_saves}} function) as being columns/variables of a data frame.
+\code{loads_MSqRob} is almost a pure copy of the \code{loads} function from the \code{saves} package by Dar\'oczi (2013) with some minor code tweaks to make it work for MSqRob. It loads data from a special binary file format (RDatas) made up by the \code{\link{MSqRob_saves}} function. This special, uncompressed tar archive inlcudes several separate RData files (saved by \code{\link{MSqRob_saves}} function) as being columns/variables of a data frame.
 }
 \details{
 The purpose of this function is to be able only a few variables of a data.frame really fast. It is done by reading and writing datas in binary format without any transformations, and combining the speed of only reading the needed part of an archive.
 
 Some minor experiments shows a huge performance gain against using SQLite/MySQL backends or loading whole binary data, but be conscious always choosing the aprropriate method to write and read data.
 
-The author of the \code{saves} package (Daróczi) emphasizes: this package could be useful only in few cases!
+The author of the \code{saves} package (Dar\'oczi) emphasizes: this package could be useful only in few cases!
 }
 \examples{
 ## Not run:
@@ -40,7 +40,7 @@ evs.filtered.df <- loads("evs.2000.hun.RDatas", c('v1', 'v5'), to.data.frame=TRU
 ## End(Not run)
 }
 \references{
-Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
+Dar\'oczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
 }
 \seealso{
 Other \code{\link{saves_MSqRob}} to save R objects to RDatas binary format: \code{\link{inspect_loads_MSqRob}}
