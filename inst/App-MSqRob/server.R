@@ -239,7 +239,7 @@ shinyServer(function(input, output, session) {
                                                                                     } else{value <- 0}
                                                                                   )
 
-                                                                                  numericInput(paste0("contrast ",i,"_",x), levelOptions()[i], value=value, min = NA, max = NA, step = NA, width = NULL)
+                                                                                  textInput(paste0("contrast ",i,"_",x), levelOptions()[i], value=value, width = NULL) #, min = NA, max = NA, step = NA,
                                                                                 })
                                                                               }
 
@@ -344,6 +344,27 @@ shinyServer(function(input, output, session) {
       need((input$save==2 | !is.null(input$fixed)), "Please select at least one fixed effect!")
     )
 
+    nTabs <- input$nContr
+    L <- matrix(0, nrow=length(levelOptions()), ncol=nTabs)
+
+    colnames(L) <- paste0('Contrast ', 1:nTabs)
+    rownames(L) <- levelOptions()
+    for(x in 1:nTabs){
+      if(!is.null(levelOptions())){
+        for(i in 1:length(levelOptions())){
+          validate(
+            #1. only numbers and mathematical operators
+            #2. the mathematical expression needs to be valid!
+            need((grep("^[0-9\\*\\+\\/-]*$", input[[paste0("contrast ",i,"_Contrast ",x)]])==1), "All contrast input should be numeric!")
+          )
+          validate(
+            need(is.numeric(eval(parse(text=input[[paste0("contrast ",i,"_Contrast ",x)]]))), "All contrast input should be numeric!")
+          )
+          L[i,x] <- eval(parse(text=input[[paste0("contrast ",i,"_Contrast ",x)]]))
+        }
+      }
+    }
+
     #Check if saveFolder is correctly specified!
     check_save_folder(saveFolder$folder)
 
@@ -390,19 +411,6 @@ shinyServer(function(input, output, session) {
       outputlist$RData$proteins <- proteins
       outputlist$RData$models <- models
 
-    }
-
-    nTabs <- input$nContr
-    L <- matrix(0, nrow=length(levelOptions()), ncol=nTabs)
-
-    colnames(L) <- paste0('Contrast ', 1:nTabs)
-    rownames(L) <- levelOptions()
-    for(x in 1:nTabs){
-      if(!is.null(levelOptions())){
-        for(i in 1:length(levelOptions())){
-          L[i,x] <- input[[paste0("contrast ",i,"_Contrast ",x)]]
-        }
-      }
     }
 
     outputlist$L <- L
