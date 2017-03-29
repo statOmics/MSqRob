@@ -1,6 +1,6 @@
 #' Save the variables of a data.frame in distinct binary files
 #'
-#' @description \code{saves_MSqRob} is almost a pure copy of the \code{saves} function from the \code{saves} package by Daróczi (2013) with some minor code tweaks to make it work for MSqRob. It saves dataframe(s) or list(s) to disk in a special, binary format. This binary format consists of distinct binary files of all separate variables of a dataframe/list merged into an uncompressed tar archive. This is done via a loop, which saves each variable/column to an an external representation of the R objects via save in a temporary directory. Theese 'RData' files are archived to an 'RDatas' tar archive, uncompressed for better speed.
+#' @description \code{saves_MSqRob} is almost a pure copy of the \code{saves} function from the \code{saves} package by Dar\'oczi (2013) with some minor code tweaks to make it work for MSqRob. It saves dataframe(s) or list(s) to disk in a special, binary format. This binary format consists of distinct binary files of all separate variables of a dataframe/list merged into an uncompressed tar archive. This is done via a loop, which saves each variable/column to an an external representation of the R objects via save in a temporary directory. Theese 'RData' files are archived to an 'RDatas' tar archive, uncompressed for better speed.
 #' @param ... R objects: the names of the objects to be saved (as symbols or character strings)
 #' @param list character vector: the name(s) of the data frame(s) or list(s) to save
 #' @param file character vector: the (RDatas) filename(s) in which to save the variables in the current working directory
@@ -21,7 +21,7 @@
 #' saves_MSqRob(list=c('cars', 'mtcars'), overwrite = TRUE)
 #'
 #' ## End(Not run)
-#' @references Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
+#' @references Dar\'oczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
 #' @export
 saves_MSqRob <- function (..., envir = environment(), list = character(), file = NULL, overwrite = FALSE,
                           ultra.fast = FALSE, shiny=FALSE, printProgress=FALSE, message=NULL)
@@ -100,7 +100,7 @@ saves_MSqRob <- function (..., envir = environment(), list = character(), file =
 
 #' Loading only given variables of a data.frame from binary file
 #'
-#' @description \code{loads_MSqRob} is almost a pure copy of the \code{loads} function from the \code{saves} package by Daróczi (2013) with some minor code tweaks to make it work for MSqRob. It loads data from a special binary file format (RDatas) made up by the \code{\link{MSqRob_saves}} function. This special, uncompressed tar archive inlcudes several separate RData files (saved by \code{\link{MSqRob_saves}} function) as being columns/variables of a data frame.
+#' @description \code{loads_MSqRob} is almost a pure copy of the \code{loads} function from the \code{saves} package by Dar\'oczi (2013) with some minor code tweaks to make it work for MSqRob. It loads data from a special binary file format (RDatas) made up by the \code{\link{MSqRob_saves}} function. This special, uncompressed tar archive inlcudes several separate RData files (saved by \code{\link{MSqRob_saves}} function) as being columns/variables of a data frame.
 #' @param file character string: the (RDatas) filename from which to load the variables. If using \code{ultra.fast = TRUE} option, specify the directory holding the uncompressed R objects (saved via \code{MSqRob_saves(..., ultra.fast = TRUE))}.
 #' @param variables Optional: a character vector containing the variable names to load. If not specified, all variables will be loaded.
 #' @param to.data.frame boolean: the default behavior of loads is to concatenate the variables to a list. This could be overriden with \code{TRUE} argument specified at to.data.frame parameter, which will return a dataframe instead of list. Only do this if all your variables have the same number of cases!
@@ -109,7 +109,7 @@ saves_MSqRob <- function (..., envir = environment(), list = character(), file =
 #'
 #' Some minor experiments shows a huge performance gain against using SQLite/MySQL backends or loading whole binary data, but be conscious always choosing the aprropriate method to write and read data.
 #'
-#' The author of the \code{saves} package (Daróczi) emphasizes: this package could be useful only in few cases!
+#' The author of the \code{saves} package (Dar\'oczi) emphasizes: this package could be useful only in few cases!
 #' @return Loaded data.frame.
 #' @family \code{\link{saves_MSqRob}} to save R objects to RDatas binary format
 #' @family \code{\link{inspect_loads_MSqRob}} to inspect the content of an RDatas binary object.
@@ -121,7 +121,7 @@ saves_MSqRob <- function (..., envir = environment(), list = character(), file =
 #' evs.filtered.df <- loads("evs.2000.hun.RDatas", c('v1', 'v5'), to.data.frame=TRUE)
 #'
 #' ## End(Not run)
-#' @references Daróczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
+#' @references Dar\'oczi, G. (2013). saves: Fast load variables. R package version 0.5, URL http://cran.r-project.org/package=saves
 #' @export
 loads_MSqRob <- function (file = NULL, variables = NULL,
                           ultra.fast = FALSE, printProgress=FALSE, shiny=FALSE, message=NULL)
