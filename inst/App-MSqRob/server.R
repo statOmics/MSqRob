@@ -355,7 +355,7 @@ shinyServer(function(input, output, session) {
           validate(
             #1. only numbers and mathematical operators
             #2. the mathematical expression needs to be valid!
-            need((grep("^[0-9\\*\\+\\/-\\.]*$", input[[paste0("contrast ",i,"_Contrast ",x)]])==1), "All contrast input should be numeric!")
+            need((grep("^[-0-9\\*\\+\\/\\.\\(\\)]*$", input[[paste0("contrast ",i,"_Contrast ",x)]])==1), "All contrast input should be numeric!")
           )
           validate(
             need(is.numeric(eval(parse(text=input[[paste0("contrast ",i,"_Contrast ",x)]]))), "All contrast input should be numeric!")
