@@ -437,7 +437,11 @@ makeFormulaPredictors <- function(input, intercept, effect){
   for(i in 1:length(groups)){
     index <- which(shrinkage.fixed==groups[i])
     fixed.names <- pred_names[pred_assigned %in% unique(pred_assigned)[index]]
-    x[,paste0("ridgeGroup.", i)] <- factor(rep(fixed.names,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
+    if(n>=length(fixed.names)){
+      x[,paste0("ridgeGroup.", i)] <- factor(rep(fixed.names,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
+    }else{ #The case where you have more levels in your ridge group than observations; this sometimes happens when you include mutliple numeric variables, set ridgeGroup to NA, which will make the fit invalid!
+      x[,paste0("ridgeGroup.", i)] <- factor(rep(NA,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
+    }
     ridgeGroups[i] <- paste0("ridgeGroup.", i)
   }
     ridgeGroupsForm <- paste0("+",paste0("(1 | ",ridgeGroups,")", collapse="+"))
@@ -478,8 +482,11 @@ makeFormulaPredictors <- function(input, intercept, effect){
                             error=function(e){
                               #warning(e)  #Outputting errors as warnings is not compatible with Shiny!!!
                               parsedFormula <- formula
+                              attr(parsedFormula,"MSqRob_fail") <- TRUE
                               return(parsedFormula)
                             }))
+
+  if(isTRUE(attr(parsedFormula,"MSqRob_fail"))){error <- TRUE}
 
   if(any(shrinkage.fixed!=0)  && !isTRUE(error)){
   num_indices <- as.list(which(names(parsedFormula$reTrms$cnms) %in% ridgeGroups))

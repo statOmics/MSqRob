@@ -46,7 +46,8 @@ test.ANOVA=function(beta, vcov, df, sigma, L, anova.na.ignore=TRUE)
   AveExpr <- mean(estimate) #, na.rm=anova.na.ignore
 
   #F value
-  Fval <- as.double(estimate%*%solve(t(L)%*%(vcov*sigma^2)%*%L)%*%estimate)
+  #Try-catch needed because sometimes t(L)%*%(vcov*sigma^2)%*%L is uninvertible while vcov is invertible
+  Fval <- tryCatch(as.double(estimate%*%solve(t(L)%*%(vcov*sigma^2)%*%L)%*%estimate), error=function(e){return(as.numeric(NA))})
 
   #df numerator:
   df_num <- tryCatch(Matrix::rankMatrix(L, method="qrLINPACK"), error=function(e){return(as.numeric(NA))})
