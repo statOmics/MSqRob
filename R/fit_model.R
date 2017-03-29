@@ -41,16 +41,6 @@
 fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting=NULL, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...)
 {
 
-  progress <- NULL
-  if(isTRUE(shiny)){
-    # Create a Progress object
-    progress <- shiny::Progress$new()
-
-    # Make sure it closes when we exit this reactive, even if there's an error
-    on.exit(progress$close())
-    progress$set(message = message_fitting, value = 0)
-  }
-
   #Control: fixed en random connot be NULL at the same time!
   if(is.null(response)){stop("Please specify a response variable.")}
   if(is.null(fixed) && is.null(random)){stop("Please specify appropriate fixed and/or random effects.")}
@@ -117,7 +107,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     data <- .adjustNames(data, random)
 
     #Fit the list of ridge models
-    modellist <- .createRidgeList(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,progress=progress,printProgress=printProgress,shiny=shiny,...)
+    modellist <- .createRidgeList(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,progress=progress,printProgress=printProgress,shiny=shiny,message_fitting=message_fitting,...)
 
   } else if(is.null(random)){
 
@@ -128,7 +118,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     attributes(terms) <- list(variables=c(response, fixed), factors=rbind(rep(0,length(fixed)),diag(1, length(fixed))), term.labels=fixed, order=rep(1, length(fixed)), intercept=1, response=1)
 
     #Fit the list of lm models
-    modellist <- .createLmList(data,weights,formula,fixed,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,progress=progress,printProgress=printProgress,shiny=shiny,...)
+    modellist <- .createLmList(data,weights,formula,fixed,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,progress=progress,printProgress=printProgress,shiny=shiny,message_fitting=message_fitting,...)
 
   }
 
@@ -249,7 +239,17 @@ makeFormulaPredictors <- function(input, intercept, effect){
 }
 
 #Create a list with fitted lm regression models
-.createLmList=function(data,weights,formula,predictors,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,progress=NULL,printProgress=NULL,shiny=FALSE,...){
+.createLmList=function(data, weights, formula, predictors, response, fixed, intercept, intercept_val, intercept_name, terms, k, tolPwrss, verbose, progress=NULL, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
+
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message_fitting, value = 0)
+  }
 
   count <- 0
 
@@ -306,7 +306,17 @@ makeFormulaPredictors <- function(input, intercept, effect){
 
 
 #Create a list with fitted ridge regression models
-.createRidgeList=function(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,progress=NULL,printProgress=NULL,shiny=FALSE,...){
+.createRidgeList=function(data, weights, response, fixed, shrinkage.fixed, formula_fix, random, formula_ran, add.intercept, intercept, intercept_val, intercept_name, k, tolPwrss, beta, verbose, progress=NULL, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
+
+  progress <- NULL
+  if(isTRUE(shiny)){
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = message_fitting, value = 0)
+  }
 
   count <- 0
 

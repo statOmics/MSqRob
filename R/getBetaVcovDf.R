@@ -1,7 +1,7 @@
 
 setGeneric (
   name= "getBetaVcovDf",
-  def=function(model, exp_unit=NULL, pars_df=NULL, subset=NULL, ...){standardGeneric("getBetaVcovDf")}
+  def=function(model, exp_unit=NULL, pars_df=NULL, ...){standardGeneric("getBetaVcovDf")}
 )
 
 #' Get beta, vcov, df and sigma from a general linear model
@@ -13,7 +13,6 @@ setGeneric (
 #' @param exp_unit The effect in the model that corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
 #' The default way (\code{exp_unit=NULL}) estimates the degrees of freedom by substracting the total number of observations by the number of parameters. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.
 #' @param pars_df Only used if \code{exp_unit} is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
-#' @param subset ...... !!!!Experimental feature not thoroughly tested!!!!
 #' @return A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom, (4) a numeric value equal to the residual standard deviation of the model and (5) \code{NULL} if \code{exp_unit} is left to its default value \code{NULL}, else: a conservative estimate of the degrees of freedom based on the number of experimental units and the degrees of freedom lost due to between-treatment effects.
 #' @examples
 #' data(proteinsCPTAC, package="MSqRob")
@@ -22,7 +21,7 @@ setGeneric (
 #' @include protdata.R
 #' @include protLM.R
 #' @export
-setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL, subset=NULL){
+setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL){
   beta <- as.matrix(model$coefficients,ncol=1)
   vcov <- summary(model)$cov.unscaled
   df <- getDf(model) #model$df.residual
@@ -41,6 +40,7 @@ setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL, su
     #Else, use the given pars_df
     } else{
       #Number of experimental units minus total number of parameters between treatments "pars_df" (to be declared by the user!)
+      #Zal afhangen van L => overweeg verplaatsen!!!
       df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-sum(model$assign %in% which(names(model$xlevels) %in% pars_df) | model$assign==0),0)
     }
   }
@@ -61,7 +61,6 @@ setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL, su
 #' @param exp_unit The effect in the model that corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
 #' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.
 #' @param pars_df Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
-#' @param subset ...... !!!!Experimental feature not thoroughly tested!!!!
 #' @param Ginvoffset A numeric value indicating the offset added the the diagonal of the G matrix to prevent near-singularity. Defaults to \code{1e-18}.
 #' @return A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom and (4) a numeric value equal to the residual standard deviation of the model.
 #' @examples
@@ -74,7 +73,7 @@ setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL, su
 #' @include protdata.R
 #' @include protLM.R
 #' @export
-setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_df=NULL, subset=NULL, Ginvoffset = 1e-18)
+setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_df=NULL, Ginvoffset = 1e-18)
 {
   # condVar <- function(model) {
   #   s2 <- sigma(model)^2
@@ -167,13 +166,13 @@ setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_df=NUL
   # Ct_w <- Ct_w*c(1,Matrix::colSums(Z))
   # Ct <- Ct*c(1,Matrix::colSums(Z))}
 
-  #When you only need a part of the output (e.g. for performance reasons)
-  if(!is.null(subset)){
-    if(is.character(subset)){subset <- which(rownames(Ct) %in% subset)}
-    vcovInv <- vcovInv[subset,subset,drop=FALSE]
-    Ct <- Ct[subset,,drop=FALSE]
-    Ct_w <- Ct_w[subset,,drop=FALSE]
-  }
+  #When you only need a part of the output (e.g. for performance reasons): doesn't work!
+  # if(!is.null(subset)){
+  #   if(is.character(subset)){subset <- which(rownames(Ct) %in% subset)}
+  #   vcovInv <- vcovInv[subset,subset,drop=FALSE]
+  #   Ct <- Ct[subset,,drop=FALSE]
+  #   Ct_w <- Ct_w[subset,,drop=FALSE]
+  # }
 
   #Sometimes, when you work with interaction terms, some factor combinations that are not present in the data might creep into to vcovInv matrix generating rows with only zeros, making it uninvertible
   defined <- rowSums(as.matrix(vcovInv==0))!=ncol(vcovInv)
