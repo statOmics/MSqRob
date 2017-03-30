@@ -441,6 +441,15 @@ makeFormulaPredictors <- function(input, intercept, effect){
     return(matrix(nrow=0, ncol=0))
   })
 
+  #If R_fix has more columns than rows, make it square by adding zeros
+  #Check before: Q_fix%*%R_fix
+  missingcols <- diff(dim(R_fix))
+  if(missingcols!=0){
+    R_fix=rbind(R_fix,matrix(0,nrow=missingcols,ncol=ncol(R_fix)))
+    Q_fix=cbind(Q_fix,matrix(0,nrow=nrow(Q_fix),ncol=missingcols))
+  }
+  #Check after: Q_fix%*%R_fix (idem!)
+
   ridgeGroupsForm <- NULL
   if(length(groups)!=0){
   ridgeGroups <- vector()
