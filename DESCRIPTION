@@ -71,7 +71,8 @@ Imports:
     magrittr,
     yaml,
     stringr,
-    stringi
+    stringi,
+    foreach
 Suggests:
     LFQbench,
     zoo,
