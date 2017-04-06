@@ -21,7 +21,14 @@ install.packages("devtools")
 library(devtools)
 ~~~~
 
-Then, we call this to install `MSqRob`:
+Then, install `Bionconductor`:
+
+~~~~
+source("https://bioconductor.org/biocLite.R")
+biocLite()
+~~~~
+
+Finally, we call this to install `MSqRob`:
 
 ~~~~
 devtools::install_github("statOmics/MSqRob")
