@@ -72,7 +72,8 @@ Imports:
     yaml,
     stringr,
     stringi,
-    foreach
+    foreach,
+    iterators
 Suggests:
     LFQbench,
     zoo,
