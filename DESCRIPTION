@@ -67,7 +67,8 @@ Imports:
     MALDIquant,
     ggplot2,
     XML,
-    minqa
+    minqa,
+    nloptr
 Suggests:
     LFQbench,
     zoo,
