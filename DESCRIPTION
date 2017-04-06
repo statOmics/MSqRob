@@ -45,7 +45,6 @@ Imports:
     snow,
     httpuv,
     xtable,
-    DT,
     htmlwidgets,
     colorspace,
     RColorBrewer,
