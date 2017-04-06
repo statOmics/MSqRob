@@ -69,7 +69,8 @@ Imports:
     minqa,
     nloptr,
     magrittr,
-    yaml
+    yaml,
+    stringr
 Suggests:
     LFQbench,
     zoo,
