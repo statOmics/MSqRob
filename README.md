@@ -21,7 +21,7 @@ install.packages("devtools")
 library(devtools)
 ~~~~
 
-Then, install `Bionconductor`:
+Then, install `Bioconductor`:
 
 ~~~~
 source("https://bioconductor.org/biocLite.R")
