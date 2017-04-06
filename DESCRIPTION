@@ -70,7 +70,8 @@ Imports:
     nloptr,
     magrittr,
     yaml,
-    stringr
+    stringr,
+    stringi
 Suggests:
     LFQbench,
     zoo,
