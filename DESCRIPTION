@@ -47,7 +47,6 @@ Imports:
     xtable,
     DT,
     htmlwidgets,
-    Msnbase,
     colorspace,
     RColorBrewer,
     dichromat,
@@ -67,8 +66,7 @@ Imports:
     mzID,
     MALDIquant,
     ggplot2,
-    XML,
-    MSnbase
+    XML
 Suggests:
     LFQbench,
     zoo,
