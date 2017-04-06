@@ -35,6 +35,8 @@ devtools::install_github("statOmics/MSqRob")
 library(MSqRob)
 ~~~~
 
+If you encounter any issues in installing MSqRob, please let us know at https://github.com/statOmics/MSqRob/issues/1!
+
 ## Run the MSqRob Shiny App (graphical user interface)
 
 Just enter the following command in RStudio to run the `MSqRob` Shiny app:
