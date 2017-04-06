@@ -68,7 +68,8 @@ Imports:
     XML,
     minqa,
     nloptr,
-    magrittr
+    magrittr,
+    yaml
 Suggests:
     LFQbench,
     zoo,
