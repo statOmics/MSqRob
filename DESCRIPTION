@@ -67,7 +67,8 @@ Imports:
     ggplot2,
     XML,
     minqa,
-    nloptr
+    nloptr,
+    magrittr
 Suggests:
     LFQbench,
     zoo,
