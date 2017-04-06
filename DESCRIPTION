@@ -68,6 +68,8 @@ Imports:
     MALDIquant,
     ggplot2,
     XML,
+    libnetcdf,
+    libcurl,
     MSnbase
 Suggests:
     LFQbench,
