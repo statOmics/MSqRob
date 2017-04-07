@@ -91,8 +91,7 @@ bash /Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/bash_CPTAC.sh
 
 ## Contact
 
-We are happy to help you with any problems you might encounter when using MSqRob.
-For any issues or questions, please e-mail us at: ludger.goeminne@vib-ugent.be
+For us it is important to get user-feedback so that we can continue improving MSqRob's user-friendliness. Therefore, we are happy to help you with any problems you might encounter when installing or using MSqRob. So for any issues or questions, even if you think that they might be trivial at first sight, please do not hesitate to e-mail us at: ludger.goeminne@vib-ugent.be
 
 ## References
 
