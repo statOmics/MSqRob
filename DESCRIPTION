@@ -73,7 +73,8 @@ Imports:
     stringr,
     stringi,
     foreach,
-    iterators
+    iterators,
+    Rcpp
 Suggests:
     LFQbench,
     zoo,
