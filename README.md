@@ -97,6 +97,8 @@ For us it is important to get user-feedback so that we can continue improving MS
 
 Ludger Goeminne, Andrea Argentini, Lennart Martens and Lieven Clement (2015). Summarization vs Peptide-Based Models in Label-Free Quantitative Proteomics: Performance, Pitfalls, and Data Analysis Guidelines. Journal of Proteome Research 15(10), 3550-3562.
 
-**When using MSqRob, please refer to our published algorithm:**
+**When using MSqRob, please refer to our published algorithm and our tutorial article on how to use the graphical user interface:**
 
 Goeminne, L. J. E., Gevaert, K., and Clement, L. (2016) Peptide-level Robust Ridge Regression Improves Estimation, Sensitivity, and Specificity in Data-dependent Quantitative Label-free Shotgun Proteomics. Molecular & Cellular Proteomics 15(2), pp 657-668.
+
+Ludger Goeminne, Kris Gevaert and Lieven Clement (2017). Experimental design and data-analysis in label-free quantitative LC/MS proteomics: A tutorial with MSqRob. Journal of Proteomics (in press).
