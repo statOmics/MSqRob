@@ -6,7 +6,7 @@ The MSqRob package allows a user to do quantitative protein-level statistical in
 
 The MSqRob Shiny App allows for an easy-to-use graphical user interface that requires no programming skills. Interactive plots are outputted and results are automatically exported to Excel.
 
-The authors kindly ask to make a reference to (Goeminne et al. (2016)) when making use of this package in any kind of publication or presentation.
+The authors kindly ask to make a reference to Goeminne et al. (2016) and Goeminne et al. (2017) when making use of this package in any kind of publication or presentation.
 
 ## Installation
 
