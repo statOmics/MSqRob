@@ -74,7 +74,8 @@ Imports:
     stringi,
     foreach,
     iterators,
-    Rcpp
+    Rcpp,
+    BiocGenerics
 Suggests:
     LFQbench,
     zoo,
