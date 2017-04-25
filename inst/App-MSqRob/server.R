@@ -9,8 +9,8 @@ library(grDevices)
 library(limma)
 source("utilities.R")
 
-#Max file size: 500 MB
-options(shiny.maxRequestSize=500*1024^2)
+#Max file size: 50 TB
+options(shiny.maxRequestSize=50000*1024^3)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
 
