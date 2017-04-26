@@ -4,9 +4,9 @@
 \alias{test.protLMcontrast}
 \title{Test a contrast}
 \usage{
-test.protLMcontrast(protLM, L, add.annotations = TRUE, custom_dfs = NULL,
-  simplify = TRUE, lfc = 0, anova = FALSE, anova.na.ignore = TRUE,
-  exp_unit = NULL, pars_df = NULL, satterthwaite = FALSE,
+test.protLMcontrast(protLM, L, add.annotations = TRUE, simplify = TRUE,
+  lfc = 0, anova = FALSE, anova.na.ignore = TRUE, type_dfs = "residual",
+  custom_dfs = NULL, exp_unit = NULL, pars_between = NULL,
   lmerModFun = NULL, gradMethod = "simple", printProgress = FALSE,
   shiny = FALSE, message_extract = NULL, message_test = NULL)
 }
@@ -17,8 +17,6 @@ test.protLMcontrast(protLM, L, add.annotations = TRUE, custom_dfs = NULL,
 
 \item{add.annotations}{A logical indicating whether the \code{annotations} slot of the \code{\link[=protLM-class]{protLM}} object should be added as extra columns to each matrix in the returned list of matrices. Defaults to \code{TRUE}.}
 
-\item{custom_dfs}{An optional vector of length equal to the number of models in \code{protLM} containing the degrees of freedom that should be used for each model in the \code{protLM} object. By default (\code{custom_dfs=NULL}), \code{MSqRob} uses the trace of the Hat matrix to determine the degrees of freedom or the Satterhtwiate approximation (if \code{satterthwaite=TRUE}). \code{custom_dfs} allows you to overrule this and use your own custom approximation for the degrees of freedom.}
-
 \item{simplify}{A logical indicating wheter, if there is only one contrast, a matrix should be returned instead of a list containing one matrix. Defaults to \code{TRUE}.}
 
 \item{lfc}{The minimum (log2) fold-change that is considered scientifically meaningful. Defaults to \code{0}. Ignored when \code{anova = TRUE}.}
@@ -27,12 +25,14 @@ test.protLMcontrast(protLM, L, add.annotations = TRUE, custom_dfs = NULL,
 
 \item{anova.na.ignore}{A logical indicating whether contrasts that cannot be fitted due to missing observations should be ignored when calculating an F value (\code{anova.na.ignore = TRUE}) or NA should be returned when at least one contrast cannot be estimated (\code{anova.na.ignore = FALSE}). Defaults to \code{TRUE}. Ignored when \code{anova = FALSE}.}
 
-\item{exp_unit}{The effect that in all models corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
-The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.}
+\item{type_dfs}{Either one of \code{"residual"}, \code{"between-within"}, \code{"Satterthwaite"}, \code{"exp_between"} or \code{"custom"}. This argument indicates how the degrees of freedom should be calculated. Defaults to \code{"residual"}.
+More information is given under 'Details'.}
 
-\item{pars_df}{Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the models that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the models will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).}
+\item{custom_dfs}{Only used if \code{type_dfs="custom"}. A list of length equal to the number of models in \code{protLM} containing vectors of lenght \code{ncol(L)} (if \code{anova = FALSE}) representing the degrees of freedom that should be used for each contrast in \code{L} and each model in the \code{protLM} object. If \code{anova = TRUE}, each element of the list should contain a single numeric value representing the degrees of freedom to be used for the anova test. Defaults to \code{NULL}.}
 
-\item{satterthwaite}{A logical indicating whether the Satterthwaite approximation for the degrees of freedom should be used instead of the classical trace of the Hat matrix. Defaults to \code{FALSE}.}
+\item{exp_unit}{Only used if \code{type_dfs="exp_between"}. The effect that in all models corresponds to the experimental unit.}
+
+\item{pars_between}{Only used if \code{type_dfs="exp_between"}. Character vector indicating all parameters in the models that are between-treatment effects. If left to default (\code{NULL}), all parameters in the models will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).}
 
 \item{lmerModFun}{Only used when \code{satterthwaite=TRUE}. \code{lmerModFun} indicates which deviance function should be used when calculating the Satterthwaite approximation for the degrees of freedom. The default (\code{NULL}) uses the lme4 \code{\link[=lme4::mkLmerDevfun]{mkLmerDevfun}} function to generate the deviance function. This parameter should only rarely, if ever, be changed.}
 
@@ -47,10 +47,18 @@ The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subt
 \item{message_test}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the testing of the contrasts, or \code{NULL} to hide the current message (if any).}
 }
 \value{
-A list of data frames, with each data frame in the list corresponding to a contrast in L. Each row of the data frame corresponds to a protein in the \code{\link[=protLM-class]{protLM}} object.
+A list of data frames, with each data frame in the list corresponding to a contrast in \code{L}. Each row of the data frame corresponds to a protein in the \code{\link[=protLM-class]{protLM}} object.
 The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast and the \code{pval} column holds the p-value corresponding to the contrast.
 If \code{simplify=TRUE} and the \code{\link[=protLM-class]{protLM}} object contains only one element, the data frame is not present in a list.
 }
 \description{
 This function can test a contrast based on a protLM object \code{protLM} and a contrast matrix \code{L}.
+}
+\details{
+Calculating degrees of freedom (and hence p values) for mixed models with unbalanced designs is an unresolved issue in the field (see for example here https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html and here https://stat.ethz.ch/pipermail/r-sig-mixed-models/2008q2/000904.html).
+We offer different approximations and leave it up to the user to select his/her preferred approach.
+\code{"residual"} calculates approximative degrees of freedom by subtracting the trace of the hat matrix from the number of observations. It is the default setting, but this approach might be somewhat too liberal.
+\code{"Satterthwaite"} calculates approximative degrees of freedom using Satterthwaite's approximation (Satterthwaite, 1946). This approximative approach is used in many applications but is rather slow to calculate and might lead to some missing values due difficulties in calculating the Hessian.
+\code{"exp_between"} calculates approximative degrees of freedom by defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_between}) from the number of experimental units \code{exp_unit}. This allows to mimick the behaviour of \code{type_dfs="between-within"} for more complex designs.
+\code{"custom"} Allows the user to provide his/her own degrees of freedom for each contrast and each protein. Custom degrees of freedom should be entered in the \code{custom_dfs} field.
 }

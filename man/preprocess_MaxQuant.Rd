@@ -32,7 +32,7 @@ preprocess_MaxQuant(MSnSet, accession = "Proteins", exp_annotation = NULL,
 \item{useful_properties}{The columns of the \code{\link{featureData}} slot that are useful in the further analysis and/or inspection of the data and should be retained. Defaults to \code{c("Proteins","Sequence","PEP")}.}
 
 \item{filter}{A vector of names corresponding to the columns in the \code{\link{featureData}} slot of the \code{\link[=MSnSet-class]{MSnSet}} object that contain a \code{filtersymbol} that indicates which rows should be removed from the data.
-Typical examples are contaminants or reversed sequences. Defaults to \code{c("Contaminant","Reverse")}. Note that in earlier versions of MaxQuant the "Contaminant" column was called "Potential.contaminant", so one should use \code{c("Potential.contaminant","Reverse")} then instead.}
+Typical examples are contaminants or reversed sequences. Defaults to \code{c("Contaminant","Reverse")}. Note that in earlier versions of MaxQuant the "Contaminant" column was called "Potential.contaminant". If "Potential.contaminant" is mentioned in this argument but could not be found, this function automatically tries to filter on "Contaminant".}
 
 \item{filter_symbol}{A character indicating the symbol in the columns corresponding to the \code{filter} argument that is used to indicate rows that should be removed from the data. Defaults to "+".}
 

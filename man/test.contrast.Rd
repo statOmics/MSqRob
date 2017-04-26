@@ -11,7 +11,7 @@ test.contrast(beta, vcov, df, sigma, L, lfc = 0)
 
 \item{vcov}{A matrix of the estimated covariances between the parameter estimates.}
 
-\item{df}{A numeric value indicating the residual degrees of freedom.}
+\item{df}{A vector of numeric values indicating the degrees of freedom corresponding to each contrast or a single numeric value if the degrees of freedom for each contrast are equal.}
 
 \item{sigma}{A numeric value indicating a residual standard deviation.}
 

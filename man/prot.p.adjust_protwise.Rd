@@ -4,7 +4,7 @@
 \alias{prot.p.adjust_protwise}
 \title{Adjust P-values for Multiple Comparisons per Protein}
 \usage{
-prot.p.adjust_protwise(coefmatlist, L, method = "Schaffer", pcol = "pval",
+prot.p.adjust_protwise(coefmatlist, L, method = "Holm", pcol = "pval",
   qname = "qval", stage2 = FALSE, significant_stage1 = NULL)
 }
 \arguments{
