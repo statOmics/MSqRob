@@ -681,11 +681,11 @@ makeFormulaPredictors <- function(input, intercept, effect){
 .adjustNames=function(data, predictors){
   data_adj <- lapply(data, function(x){
 
-    for(i in 1:length(x[,predictors]))
+    for(i in 1:length(x[,predictors, drop=FALSE]))
     {
-      if(is.factor(x[,predictors][[i]]) || is.character(x[,predictors][[i]]))
+      if(is.factor(x[,predictors, drop=FALSE][[i]]) || is.character(x[,predictors, drop=FALSE][[i]]))
       {
-        x[,predictors][[i]] <- factor(paste0(colnames(x[,predictors])[i],x[,predictors][[i]]), levels=unique(paste0(colnames(x[,predictors])[i],x[,predictors][[i]])))
+        x[,predictors[i]] <- factor(paste0(colnames(x[,predictors, drop=FALSE])[i],x[,predictors, drop=FALSE][[i]]), levels=unique(paste0(colnames(x[,predictors, drop=FALSE])[i],x[,predictors, drop=FALSE][[i]])))
       }
     }
 
