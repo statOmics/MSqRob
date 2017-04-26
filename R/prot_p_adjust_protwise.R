@@ -12,7 +12,7 @@
 #' @return Depending on the input, either a matrix or a list of matrices with an extra numeric column containing corrected p-values.
 #' @examples #....
 #' @export
-prot.p.adjust_protwise <- function(coefmatlist, L, method = "Schaffer", pcol="pval", qname="qval", stage2=FALSE, significant_stage1=NULL)
+prot.p.adjust_protwise <- function(coefmatlist, L, method = "Holm", pcol="pval", qname="qval", stage2=FALSE, significant_stage1=NULL)
 {
 
 if(is.list(coefmatlist)){
@@ -25,7 +25,7 @@ if(is.list(coefmatlist)){
     }
 
   q_frame <- p_frame
-  q_frame[,-1] <- NA
+  q_frame[,-1] <- NA #Initialisation: set all values for q_frame to NA
   #q_matrix <- matrix(NA, nrow=nrow(p_frame), ncol=ncol(p_frame)-1) #1 column less because of the accession number in p_frame
 
   for(j in 1:nrow(p_frame))
@@ -86,7 +86,7 @@ adjust_stage2 <- function(q_column, significant_stage1){
 
   #Only execute when the number of proteins in stage 1 is given.
   if(!is.null(significant_stage1)){
-    q_column <- q_column*sum(!is.na(q_column))/sum(!is.na(q_retained))
+    q_column <- q_column*sum(!is.na(q_column))/sum(!is.na(q_retained)) #Adjust p values to FDR significance level of stage 1
   }
   return(q_column)
 }
