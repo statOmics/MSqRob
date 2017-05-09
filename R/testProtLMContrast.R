@@ -198,6 +198,8 @@ getXlevels=function(model, class){
 ##########Satterthwaite degrees of freedom calculation##################
 ########################################################################
 
+#https://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_mixed_sect015.htm#statug.mixed.mixedmodelddfm
+
 dfSatterthwaite=function(lmerModFun, model, vcov, sigma, L2, gradMethod, anova=FALSE){
 
   if(isTRUE(anova)){stop("Satterthwaire degrees of freedom not yet implemented for ANOVA.")}
@@ -244,6 +246,32 @@ dfSatterthwaite=function(lmerModFun, model, vcov, sigma, L2, gradMethod, anova=F
   },L=L2,vcovContrast=vcovContrast)
 
   return(df)
+
+
+  ###Proposal Satterthwaite for ANOVA:###
+
+  test <- eigen(vcovContrast)
+  D <- test$values
+  P <- test$vectors
+  q <- Matrix::rankMatrix(vcovContrast)[1]
+
+  df2 <- sapply(1:ncol(L2),function(ic,L2,D)
+  {
+    Lh=as.matrix(L2[,ic])
+    #CalculateGradient
+    g=numDeriv::grad(function(x) {
+
+      return(as.matrix(t(Lh)%*%getVcovBetaBforGrad(x,lmerModFun, R_fix=attr(model,"MSqRob_R_fix"), Zt_indices=attr(model, "MSqRob_Zt_indices"), unshr_pos=attr(model, "MSqRob_unshr_pos"), gew=gew)%*%Lh))
+    } , x=sigmaTheta,method=gradMethod)
+    #Calculate denominator for sattertwaite approximation of degrees of freedom
+    denom <- t(g) %*% vcovTheta %*% g
+    #Calculate degrees of freedom
+    return(as.double(2*(D[ic])^2/denom))
+  },L=L2,D=D)
+
+
+  E <- sum(df2[df2>2]/(df2[df2>2]-2))
+  2*E/(E-q)
 
 }
 
@@ -379,7 +407,7 @@ devianceForHessian <- function(sigmaTheta,devFunUpdate) {
 
 #Should be done via custom_dfs because we also need the proteins as input!
 
-dfBetweenWithin <- function(protein, model, L2, anova){
+dfBetweenWithin <- function(protein, model, L, anova){
 
   #De zaken die je van protein moet hebben als attribute meegeven!!!!
 
@@ -387,14 +415,16 @@ dfBetweenWithin <- function(protein, model, L2, anova){
 
   #vertrekken van proteinS, modelS
 
-  comp_preds <- getComp_preds(model, L2)
+  comp_preds <- getComp_preds(model, L)
   options <- names(attr(model,"MSqRob_cnms"))
 
-  ns <- getN(protein, options, comp_preds, L2)
+  ns <- getN(protein, options, comp_preds, L)
 
-  ps <- getPs(protein, ns, options, comp_preds, L2)
+  ps <- getPs(protein, ns, options, comp_preds, L)
 
-  elements <- rep(FALSE,length(names(getBetaVcovDf(model)$df_pars)))
+  df_pars <- getBetaVcovDf(model)$df_pars
+
+  elements <- rep(FALSE,length(names(df_pars)))
 
   #Escape special characters such as the "(" in "(Intercept)"
   library(stringr)
@@ -402,30 +432,31 @@ dfBetweenWithin <- function(protein, model, L2, anova){
     str_replace_all(string, "(\\W)", "\\\\\\1")
   }
 
-  for(i in 1:length(ps[[1]])){
-    elements <- elements | grepl(paste0("^",quotemeta(ps[[1]][i])),names(getBetaVcovDf(model)$df_pars))
-  }
+  p_sums <- lapply(ps, function(x){
+    #Match all elements corresponding to p's in df_pars
+    x <- grepl(paste(paste0("^",quotemeta(x)),collapse="|"),names(df_pars))
+    x <- sum(df_pars[x])
+    return(x)
+  })
 
   ####Probleem: groter dan 6... -> je kan ook niet zomaar de treatments gaan nemen die over je contrast gaan,
   #want is reference class codering...
 
-  getBetaVcovDf(model)$df_pars[elements]
+  df <- ns-unlist(p_sums)
 
-  sum(getBetaVcovDf(model)$df_pars[elements])
-
-  ns
+  return(df)
 
 }
 
 
-#!!!!!Make sure to execute this with L2!!! => a will also be different!!!!
-getComp_preds <- function(model, L2){
+#!!!!!Make sure to execute this with L!!! => a will also be different!!!!
+getComp_preds <- function(model, L){
 
-  comp_preds <- vector("list", ncol(L2))
-  for(i in 1:ncol(L2)){
-    Lcol <- L2[,i]
+  comp_preds <- vector("list", ncol(L))
+  for(i in 1:ncol(L)){
+    Lcol <- L[,i]
     if(!any(is.na(Lcol))){
-    #a: levels in L2 matrix that are not 0
+    #a: levels in L matrix that are not 0
     a <- names(Lcol[Lcol!=0])
 
     #cnms: names of all predictors
@@ -434,7 +465,7 @@ getComp_preds <- function(model, L2){
     df <- data.frame(lapply(cnms, function(x){return(grepl(paste0("^",x),a))}))
     #If any rowSums(df)!=1 => one or more elements of a start with the name of more than one predictor e.g. if there would be predictors like "sample" and "sample2"
     if(any(rowSums(df)!=1)){stop("Unable to determine which levels come from which predictor. Please use non-overlapping factor names!")} #Is also the case for lme4!
-    #All columns with at least one TRUE -> these are predictors that are present in the column names of L2
+    #All columns with at least one TRUE -> these are predictors that are present in the column names of L
     comp_preds[[i]] <- cnms[which(colSums(df)!=0)]
     }
   }
@@ -444,17 +475,17 @@ getComp_preds <- function(model, L2){
 
 
 
-getN <- function(protein, options, comp_preds, L2){
+getN <- function(protein, options, comp_preds, L){
   #Start with all independent
-  n <- rep(Inf, ncol(L2))
-  n_option <- rep(NA, ncol(L2))
+  n <- rep(Inf, ncol(L))
+  n_option <- rep(NA, ncol(L))
 
-  for(i in 1:ncol(L2)){
+  for(i in 1:ncol(L)){
 
     #If the contrast is NA => don't try to calculate the partset and all...
-    if(!any(is.na(L2[,i]))){
+    if(!any(is.na(L[,i]))){
 
-    partset <- getPartSet(protein, Lcol=L2[,i], comp_pred=comp_preds[[i]])
+    partset <- getPartSet(protein, Lcol=L[,i], comp_pred=comp_preds[[i]])
     options2 <- options[options!=comp_preds[[i]]]
 
     for(k in 1:length(options2)){
@@ -504,16 +535,16 @@ getPartSet <- function(protein, Lcol, comp_pred){
 
 
 
-getPs <- function(protein, ns, options, comp_preds, L2){
+getPs <- function(protein, ns, options, comp_preds, L){
 
-  p_options <- vector("list", ncol(L2))
+  p_options <- vector("list", ncol(L))
 
-  for(i in 1:ncol(L2)){
+  for(i in 1:ncol(L)){
 
     p_options[[i]] <- c("(Intercept)", comp_preds[[i]])
-    partset <- getPartSet(protein, Lcol=L2[,i], comp_pred=comp_preds[[i]])
+    partset <- getPartSet(protein, Lcol=L[,i], comp_pred=comp_preds[[i]])
     n_option <- names(ns[i])
-    options2 <- options[options!=n_option]
+    options2 <- options[!(options %in% c(n_option,"(Intercept)",comp_preds[[i]]))]
 
     for(k in 1:length(options2)){
 
