@@ -47,7 +47,7 @@ shiny::runApp(system.file("App-MSqRob", package="MSqRob"))
 
 ## Tutorial for the MSqRob Shiny App
 
-A tutorial on using the MSqRob Shiny App can be found in Goeminne et al. (2017). For the *Francisella* example, one can find the peptides.txt file, the experimental annotation file (label-free_Francisella_annotation.xlsx) and the proteinGroups.txt file under  https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/. For the CPTAC example, these files can be found under https://github.com/statOmics/MSqRobData/tree/master/inst/extdata/CPTAC (use label-free_CPTAC_annotation.xlsx as the experimental annotation file).
+A tutorial on using the MSqRob Shiny App can be found in Goeminne et al. (2017). For the *Francisella* example, one finds the peptides.txt file, the experimental annotation file (label-free_Francisella_annotation.xlsx) and the proteinGroups.txt file under  https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/. For the CPTAC example, these files can be found under https://github.com/statOmics/MSqRobData/tree/master/inst/extdata/CPTAC (use label-free_CPTAC_annotation.xlsx as the experimental annotation file).
 
 ### The CPTAC example
 
