@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added question marks to the MSqRob GUI that link the user to a page with extra info on how to use the input terms.
+- Added possibility to zoom in on density plots.
 
 ### Changed
 
