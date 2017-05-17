@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Added an error message when trying to calculate Satterthwaite degrees of freedom with ANOVA, as this is not yet implemented.
+- xlim of density plots is now calculated based on the density object and not on the data itself, giving a better overview of the densities.
 
 ## 0.6.3 - 2017-04-14
 
