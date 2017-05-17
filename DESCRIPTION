@@ -8,7 +8,7 @@ Authors@R: c(
     "lieven.clement@UGent.be"),
     person("Lieven", "Clement", role = c("aut", "cre"), email =
     "lieven.clement@UGent.be"))
-Version: 0.6.4
+Version: 0.6.3
 Date: 2015-07-07
 Author: Ludger Goeminne [aut],
     Kris Gevaert [ctb],
@@ -20,6 +20,7 @@ Depends:
 Imports:
     Biobase,
     DT,
+    graphics,
     grDevices,
     limma,
     MASS,
