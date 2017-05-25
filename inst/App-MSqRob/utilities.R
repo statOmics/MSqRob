@@ -26,14 +26,14 @@ choose.dir2 <- function(default = NA, caption = NA) {
   } else {
     prompt = ''
   }
-  args = sub('{{prompt}}', prompt, args, fixed = T)
+  args = sub('{{prompt}}', prompt, args, fixed = TRUE)
 
   if (!is.null(default) && !is.na(default) && nzchar(default)) {
     default = sprintf(' default location \\"%s\\"', path.expand(default))
   } else {
     default = ''
   }
-  args = sub('{{default}}', default, args, fixed = T)
+  args = sub('{{default}}', default, args, fixed = TRUE)
 
   suppressWarnings({
     path = system2(command, args = args, stderr = TRUE)
@@ -43,6 +43,36 @@ choose.dir2 <- function(default = NA, caption = NA) {
     path = NA
   }
 
+  return(path)
+}
+
+choose.dir_Linux <- function(default = NA, caption = NA) {
+  
+  command = "zenity"
+  
+  args1 = "--file-selection --directory"
+  
+  if (!is.null(caption) && !is.na(caption) && nzchar(caption)) {
+    prompt = sprintf(' with prompt \\"%s\\"', caption)
+  } else {
+    prompt = ''
+  }
+  
+  if (!is.null(default) && !is.na(default) && nzchar(default)) {
+    default = path.expand(default) #sprintf(' default location \\"%s\\"', path.expand(default))
+  } else {
+    default = "/dev/null"
+  }
+  
+  suppressWarnings({
+    path = system2(command, args = args1, stderr = default, stdout=TRUE)
+  })
+  
+  if (!is.null(attr(path, 'status')) && attr(path, 'status')) {
+    # user canceled
+    path = NA
+  }
+  
   return(path)
 }
 
