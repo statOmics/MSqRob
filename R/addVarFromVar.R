@@ -1,4 +1,4 @@
-#' Add a variable based on an existing column
+#' Add a variable to a protdata object based on an existing column
 #'
 #' @description Adds a categorical variable to the data slot of a \code{\link[=protdata-class]{protdata}} object based on an exisiting variable.
 #' @param protdata A \code{\link[=protdata-class]{protdata}} object of which the data slot needs to be expanded.
@@ -22,7 +22,7 @@
 #' proteinsCPTAC <- addVarFromVar(proteinsCPTAC,"run","instrlab",instrlab)
 #' @include protdata.R
 #' @export
-addVarFromVar <- function(protdata, basecol, name, vector, ...){
+addVarFromVar <- function(protdata, basecol, name, vector){
 
    protdatanew <- lapply(protdata@data, function(x){
 

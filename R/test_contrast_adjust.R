@@ -39,7 +39,7 @@
 #' @include prot_p_adjust.R
 #' @include prot_signif.R
 #' @export
-test.contrast_adjust <- function(protLM, L, level=0.05, method="fdr", add.annotations=TRUE, simplify=TRUE, lfc=0, anova=FALSE, anova.na.ignore=TRUE, type_dfs="residual", custom_dfs=NULL, exp_unit=NULL, pars_between=NULL, lmerModFun = NULL, gradMethod = "simple", printProgress=FALSE, shiny=FALSE, message_extract=NULL, message_test=NULL)
+test.contrast_adjust <- function(protLM, L, level = 0.05, method = "fdr", add.annotations = TRUE, simplify = TRUE, lfc = 0, anova = FALSE, anova.na.ignore = TRUE, type_dfs = "residual", custom_dfs = NULL, exp_unit = NULL, pars_between = NULL, lmerModFun = NULL, gradMethod = "simple", printProgress = FALSE, shiny = FALSE, message_extract = NULL, message_test = NULL)
 {
   contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, simplify=simplify, lfc=lfc, anova=anova, anova.na.ignore=anova.na.ignore, type_dfs=type_dfs, custom_dfs=custom_dfs, exp_unit=exp_unit, pars_between=pars_between, lmerModFun = lmerModFun, gradMethod = gradMethod, printProgress=printProgress, shiny=shiny, message_extract=message_extract, message_test=message_test)
   contrasts <- prot.p.adjust(contrasts, method=method)

@@ -1,39 +1,70 @@
 fitFDist_LG <- function(x, df1, covariate=NULL, min_df=1)
-  #  Moment estimation of the parameters of a scaled F-distribution
-  #	The first degrees of freedom are given
+  #	Moment estimation of the parameters of a scaled F-distribution.
+  #	The numerator degrees of freedom are given, the denominator is to be estimated.
   #	Gordon Smyth and Belinda Phipson
-  #	8 Sept 2002.  Last revised 27 Oct 2012.
+  #	8 Sept 2002.  Last revised 25 Jan 2017.
 {
+  
+  #	Check x
+  n <- length(x)
+  if(n <= 1L) return(list(scale=NA,df2=NA))
+  
+  #	Check df1
+  ok <- is.finite(df1) & df1 > min_df #1e-15
+  if(length(df1)==1L) {
+    if(!ok) {
+      return(list(scale=NA,df2=NA))
+    } else {
+      ok <- rep_len(TRUE,n)
+    }
+  } else {
+    if(length(df1) != n) stop("x and df1 have different lengths")
+  }
+  
   #	Check covariate
-  if(!is.null(covariate)) {
-    if(length(covariate) != length(x)) stop("covariate and x must be of same length")
-    if(any(is.na(covariate))) stop("NA covariate values not allowed")
+  if(is.null(covariate)) {
+    splinedf <- 1L
+  } else {
+    if(length(covariate) != n) stop("x and covariate must be of same length")
+    if(anyNA(covariate)) stop("NA covariate values not allowed")
     isfin <- is.finite(covariate)
     if(!all(isfin)) {
-      if(!any(isfin))
-        covariate <- sign(covariate)
-      else {
+      if(any(isfin)) {
         r <- range(covariate[isfin])
         covariate[covariate == -Inf] <- r[1]-1
         covariate[covariate == Inf] <- r[2]+1
+      } else {
+        covariate <- sign(covariate)
       }
     }
-    splinedf <- min(4,length(unique(covariate)))
-    if(splinedf < 2) covariate <- NULL
+    splinedf <- min(4L,length(unique(covariate)))
+    #		If covariate takes only one value, recall with NULL covariate
+    if(splinedf < 2L) {
+      out <- Recall(x=x,df1=df1)
+      out$scale <- rep_len(out$scale,n)
+      return(out)
+    }
   }
+  
   #	Remove missing or infinite values and zero degrees of freedom
-  ok <- is.finite(x) & is.finite(df1) & (x > -1e-15) & (df1 > min_df) #1e-15
+  ok <- ok & is.finite(x) & (x > -1e-15)
+  nok <- sum(ok)
   notallok <- !all(ok)
   if(notallok) {
     x <- x[ok]
-    df1 <- df1[ok]
+    if(length(df1)>1L) df1 <- df1[ok]
     if(!is.null(covariate)) {
-      covariate2 <- covariate[!ok]
+      covariate.notok <- covariate[!ok]
       covariate <- covariate[ok]
     }
   }
-  n <- length(x)
-  if(n==0) return(list(scale=NA,df2=NA))
+
+  #	Check whether enough observations to estimate variance around trend
+  if(nok <= splinedf) {
+    s20 <- NA
+    if(!is.null(covariate)) s20 <- rep_len(s20,n)
+    return(list(scale=s20,df2=NA))
+  }
 
   #	Avoid exactly zero values
   x <- pmax(x,0)
@@ -52,22 +83,21 @@ fitFDist_LG <- function(x, df1, covariate=NULL, min_df=1)
 
   if(is.null(covariate)) {
     emean <- mean(e)
-    evar <- sum((e-emean)^2)/(n-1) # equals evar <- var(e) if emean=mean(e)
-
+    evar <- sum((e-emean)^2)/(nok-1L) # equals evar <- var(e) if emean=mean(e)
   } else {
-    require(splines)
-    design <- try(ns(covariate,df=splinedf,intercept=TRUE),silent=TRUE)
+    if(!requireNamespace("splines",quietly=TRUE)) stop("splines package required but is not available")
+    design <- try(splines::ns(covariate,df=splinedf,intercept=TRUE),silent=TRUE)
     if(is(design,"try-error")) stop("Problem with covariate")
     fit <- lm.fit(design,e)
     if(notallok) {
-      design2 <- predict(design,newx=covariate2)
-      emean <- rep.int(0,n+length(covariate2))
+      design2 <- predict(design,newx=covariate.notok)
+      emean <- rep_len(0,n)
       emean[ok] <- fit$fitted
       emean[!ok] <- design2 %*% fit$coefficients
     } else {
       emean <- fit$fitted
     }
-    evar <- mean(fit$residuals[-(1:fit$rank)]^2)
+    evar <- mean(fit$effects[-(1:fit$rank)]^2)
   }
 
   #MSqRob added: avoid NaN in evar
@@ -79,8 +109,14 @@ fitFDist_LG <- function(x, df1, covariate=NULL, min_df=1)
     s20 <- exp(emean+digamma(df2/2)-log(df2/2))
   } else {
     df2 <- Inf
-    s20 <- exp(emean)
+    if(is.null(covariate))
+      #			Use simple pooled variance, which is MLE of the scale in this case.
+      #			Versions of limma before Jan 2017 returned the limiting value of the evar>0 estimate, which is larger.
+      s20 <- mean(x)
+    else
+      s20 <- exp(emean)
   }
+  
   list(scale=s20,df2=df2)
 }
 
@@ -91,14 +127,14 @@ fitFDistRobustly_LG <- function(x, df1, covariate=NULL, winsor.tail.p=c(0.05,0.1
   #	given the first degrees of freedom, using first and second
   #	moments of Winsorized z-values
   #	Gordon Smyth and Belinda Phipson
-  #	Created 7 Oct 2012.  Last revised 20 November 2015.
+  #	Created 7 Oct 2012.  Last revised 25 November 2016.
 {
   #	Check x
   n <- length(x)
-
+  
   #	Eliminate cases of no useful data
   if(n<2) return(list(scale=NA,df2=NA,df2.shrunk=NA))
-  if(n==2) return(fitFDist_LG(x=x,df1=df1,covariate=covariate,min_df=min_df))
+  if(n==2) return(fitFDist_LG(x=x,df1=df1,covariate=covariate,min_df=min_df)) #fitFDist_LG instead of fitFDist
 
   #	Check df1
   if(all(length(df1) != c(1,n))) stop("x and df1 are different lengths")
@@ -112,7 +148,7 @@ fitFDistRobustly_LG <- function(x, df1, covariate=NULL, winsor.tail.p=c(0.05,0.1
 
   #	Treat zero df1 values as non-informative cases
   #	Similarly for missing values or x or df1
-  ok <- !is.na(x) & is.finite(df1) & (df1 > min_df) #1e-6
+  ok <- !is.na(x) & is.finite(df1) & (df1 > min_df) #min_df instead of 1e-6
   notallok <- !all(ok)
   if(notallok) {
     df2.shrunk <- x
@@ -140,12 +176,16 @@ fitFDistRobustly_LG <- function(x, df1, covariate=NULL, winsor.tail.p=c(0.05,0.1
   if(m<=0)	stop("x values are mostly <= 0")
   i <- (x < m*1e-12)
   if(any(i)) {
-    warning("small x values have been offset away from zero")
+    nzero <- sum(i)
+    if(nzero==1)
+      warning("One very small variance detected, has been offset away from zero", call.=FALSE)
+    else
+      warning(nzero," very small variances detected, have been offset away from zero", call.=FALSE)
     x[i] <- m*1e-12
   }
 
   #	Store non-robust estimates
-  NonRobust <- fitFDist_LG(x=x,df1=df1,covariate=covariate)
+  NonRobust <- fitFDist_LG(x=x,df1=df1,covariate=covariate,min_df=min_df) #fitFDist_LG instead of fitFDist
 
   #	Check winsor.tail.p
   prob <- winsor.tail.p <- rep(winsor.tail.p,length=2)
@@ -277,45 +317,55 @@ fitFDistRobustly_LG <- function(x, df1, covariate=NULL, winsor.tail.p=c(0.05,0.1
   #	Posterior df for outliers
   zresid <- z-ztrendcorrected
   Fstat <- exp(zresid)
-  TailP <- pf(Fstat,df1=df1,df2=df2,lower.tail=FALSE)
+  LogTailP <- pf(Fstat,df1=df1,df2=df2,lower.tail=FALSE,log.p=TRUE)
+  TailP <- exp(LogTailP)
   r <- rank(Fstat)
-  EmpiricalTailProb <- (n-r+0.5)/n
-  ProbNotOutlier <- pmin(TailP/EmpiricalTailProb,1)
-  ProbOutlier <- 1-ProbNotOutlier
+  LogEmpiricalTailProb <- log(n-r+0.5)-log(n)
+  LogProbNotOutlier <- pmin(LogTailP-LogEmpiricalTailProb,0)
+  ProbNotOutlier <- exp(LogProbNotOutlier)
+  ProbOutlier <- -expm1(LogProbNotOutlier)
+  
   if(any(ProbNotOutlier<1)) {
     o <- order(TailP)
+    
     #		Old calculation for df2.outlier
-    VarOutlier <- max(zresid)^2
-    VarOutlier <- VarOutlier-trigamma(df1/2)
-    if(trace) cat("VarOutlier",VarOutlier,"\n")
-    if(VarOutlier > 0) {
-      df2.outlier.old <- 2*limma::trigammaInverse(VarOutlier)
-      if(trace) cat("df2.outlier.old",df2.outlier.old,"\n")
-      if(df2.outlier.old < df2) {
-        df2.shrunk.old <- ProbNotOutlier*df2+ProbOutlier*df2.outlier.old
-        #				Make df2.shrunk.old monotonic in TailP
-        df2.ordered <- df2.shrunk.old[o]
-        df2.ordered[1] <- min(df2.ordered[1],NonRobust$df2)
-        m <- cumsum(df2.ordered)
-        m <- m/(1:n)
-        imin <- which.min(m)
-        df2.ordered[1:imin] <- m[imin]
-        df2.shrunk.old[o] <- cummax(df2.ordered)
-      }
-    }
+    #		VarOutlier <- max(zresid)^2
+    #		VarOutlier <- VarOutlier-trigamma(df1/2)
+    #		if(trace) cat("VarOutlier",VarOutlier,"\n")
+    #		if(VarOutlier > 0) {
+    #			df2.outlier.old <- 2*trigammaInverse(VarOutlier)
+    #			if(trace) cat("df2.outlier.old",df2.outlier.old,"\n")
+    #			if(df2.outlier.old < df2) {
+    #				df2.shrunk.old <- ProbNotOutlier*df2+ProbOutlier*df2.outlier.old
+    #				Make df2.shrunk.old monotonic in TailP
+    #				df2.ordered <- df2.shrunk.old[o]
+    #				df2.ordered[1] <- min(df2.ordered[1],NonRobust$df2)
+    #				m <- cumsum(df2.ordered)
+    #				m <- m/(1:n)
+    #				imin <- which.min(m)
+    #				df2.ordered[1:imin] <- m[imin]
+    #				df2.shrunk.old[o] <- cummax(df2.ordered)
+    #			}
+    #		}
 
     #		New calculation for df2.outlier
     #		Find df2.outlier to make maxFstat the median of the distribution
     #		Exploit fact that log(TailP) is nearly linearly with positive 2nd deriv as a function of df2
     #		Note that minTailP and NewTailP are always less than 0.5
-    df2.outlier <- log(0.5)/log(min(TailP))*df2
-    #		Iterate for accuracy
-    NewTailP <- pf(max(Fstat),df1=df1,df2=df2.outlier,lower.tail=FALSE)
-    df2.outlier <- log(0.5)/log(NewTailP)*df2.outlier
-    df2.shrunk <- ProbNotOutlier*df2+ProbOutlier*df2.outlier
+    minLogTailP <- min(LogTailP)
+    if(minLogTailP == -Inf) {
+      df2.outlier <- 0
+      df2.shrunk <- ProbNotOutlier*df2
+    } else {
+      df2.outlier <- log(0.5)/minLogTailP*df2
+      #			Iterate for accuracy
+      NewLogTailP <- pf(max(Fstat),df1=df1,df2=df2.outlier,lower.tail=FALSE,log.p=TRUE)
+      df2.outlier <- log(0.5)/NewLogTailP*df2.outlier
+      df2.shrunk <- ProbNotOutlier*df2+ProbOutlier*df2.outlier
+    }
 
     #		Force df2.shrunk to be monotonic in TailP
-    o <- order(TailP)
+    o <- order(LogTailP)
     df2.ordered <- df2.shrunk[o]
     m <- cumsum(df2.ordered)
     m <- m/(1:n)
@@ -324,19 +374,52 @@ fitFDistRobustly_LG <- function(x, df1, covariate=NULL, winsor.tail.p=c(0.05,0.1
     df2.shrunk[o] <- cummax(df2.ordered)
 
     #		Use isoreg() instead. This gives similar results.
-    df2.shrunk.iso <- rep.int(df2,n)
-    o <- o[1:(n/2)]
-    df2.shrunk.iso[o] <- ProbNotOutlier[o]*df2+ProbOutlier[o]*df2.outlier
-    df2.shrunk.iso[o] <- isoreg(TailP[o],df2.shrunk.iso[o])$yf
+    #		df2.shrunk.iso <- rep.int(df2,n)
+    #		o <- o[1:(n/2)]
+    #		df2.shrunk.iso[o] <- ProbNotOutlier[o]*df2+ProbOutlier[o]*df2.outlier
+    #		df2.shrunk.iso[o] <- isoreg(TailP[o],df2.shrunk.iso[o])$yf
 
   } else {
     df2.outlier <- df2.outlier2 <- df2
     df2.shrunk2 <- df2.shrunk <- rep.int(df2,n)
   }
 
-  list(scale=s20,df2=df2,tail.p.value=TailP,prob.outlier=ProbOutlier,df2.outlier=df2.outlier,df2.outlier.old=df2.outlier.old,df2.shrunk=df2.shrunk,df2.shrunk.old=df2.shrunk.old,df2.shrunk.iso=df2.shrunk.iso)
+  list(scale=s20,df2=df2,tail.p.value=TailP,prob.outlier=ProbOutlier,df2.outlier=df2.outlier,df2.shrunk=df2.shrunk)
 
 }
+
+.squeezeVarRob <- function(var, df, var.prior, df.prior){
+
+  #	Squeeze posterior variances given hyperparameters
+  #	NAs not allowed in df.prior
+  #	Gordon Smyth
+  #	Created 5 May 2016
+
+  n <- length(var)
+  isfin <- is.finite(df.prior)
+  if(all(isfin)) return( (df*var + df.prior*var.prior) / (df+df.prior) )
+  
+  #	From here, at least some df.prior are infinite
+  
+  #	For infinite df.prior, return var.prior
+  if(length(var.prior) == n) {
+    var.post <- var.prior
+  } else {
+    var.post <- rep_len(var.prior, length.out=n)
+  }
+  
+  #	Maybe some df.prior are finite
+  if(any(isfin)) {
+    i <- which(isfin)
+    if(length(df)>1) df <- df[i]
+    df.prior <- df.prior[i]
+    var.post[i] <- (df*var[i] + df.prior*var.post[i]) / (df+df.prior)
+  }
+
+  return(var.post)
+
+}
+
 
 #' Robustly Squeeze Sample Variances
 #'
@@ -354,16 +437,26 @@ fitFDistRobustly_LG <- function(x, df1, covariate=NULL, winsor.tail.p=c(0.05,0.1
 #' \code{df.prior} The degrees of freedom of prior distribution. A vector if \code{robust=TRUE}, otherwise a scalar.
 #' @export
 squeezeVarRob <- function(var, df, covariate=NULL, robust=FALSE, winsor.tail.p=c(0.05,0.1), min_df=1)
-  #  Empirical Bayes posterior variances
+  # Empirical Bayes posterior variances
   #	Adapted from Gordon Smyth
+  # Based on version created 2 March 2004.  Last modified 5 May 2016.
 {
   n <- length(var)
+  
+  #	Degenerate special case
   if(n == 0) stop("var is empty")
-  #If there is only one variance that is not NA:
+  #if(n == 1) return(list(var.post=var,var.prior=var,df.prior=0)) -> removed by MSqRob!!!, we want the same results if we have only one observation!
+  
+  #If there is only one variance that is not NA: we want the same results if we have only one observation!
   if(sum(!is.na(var)) == 1){
-    df[!is.na(df)] <- 0
+    #df[!is.na(df)] <- 0
     return(list(var.post=var,var.prior=var,df.prior=df))
   }
+  
+  #	Removed: "when df==0, guard against missing or infinite values in var": we want to keep NA at NA and Inf at Inf!
+  # if(length(df)>1) var[df==0] <- 0
+  
+  #Addition: if only one df is given, repeat it!
   if(length(df)==1) {
     df <- rep.int(df,n)
   } else {
@@ -371,38 +464,18 @@ squeezeVarRob <- function(var, df, covariate=NULL, robust=FALSE, winsor.tail.p=c
   }
 
   #	Estimate prior var and df
-  if(robust)
+  if(robust) {
     fit <- fitFDistRobustly_LG(var, df1=df, covariate=covariate, winsor.tail.p=winsor.tail.p, min_df=min_df)
-  else
-    fit <- fitFDist_LG(var, df1=df, covariate=covariate, min_df=min_df)
-
-  #	Prior var will be vector if robust=TRUE, otherwise scalar
-  var.prior <- fit$scale
-
-  #	Prior df will be vector if covariate is non-NULL, otherwise scalar
-  df.prior <- fit$df2.shrunk
-  if(is.null(df.prior)) df.prior <- fit$df2
-
-  #	Check estimated prior df
-  if(is.null(df.prior) || any(is.na(df.prior))) stop("Could not estimate prior df")
-
-  #	Squeeze the posterior variances
-  df.total <- df + df.prior
-  var[df==0] <- 0 # guard against missing or infinite values
-  Infdf <- df.prior==Inf
-  if(any(Infdf)) {
-    var.post <- rep(var.prior,length.out=n)
-    i <- which(!Infdf)
-    if(length(i)) {
-      if(is.null(covariate))
-        s02 <- var.prior
-      else
-        s02 <- var.prior[i]
-      var.post[i] <- (df[i]*var[i] + df.prior[i]*s02) / df.total[i]
-    }
+    df.prior <- fit$df2.shrunk
   } else {
-    var.post <- (df*var + df.prior*var.prior) / df.total
+    fit <- fitFDist_LG(var, df1=df, covariate=covariate, min_df=min_df)
+    df.prior <- fit$df2
   }
-
-  list(df.prior=df.prior,var.prior=var.prior,var.post=var.post)
+  #	if(anyNA(df.prior)) stop("Could not estimate prior df") -> we want NA's to stay where they are!
+  
+  #	Posterior variances
+  var.post <- .squeezeVarRob(var=var, df=df, var.prior=fit$scale, df.prior=df.prior)
+  
+  list(df.prior=df.prior,var.prior=fit$scale,var.post=var.post)
 }
+
