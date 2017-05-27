@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Added an error message when trying to calculate Satterthwaite degrees of freedom with ANOVA, as this is not yet implemented.
 - xlim of density plots is now calculated based on the density object and not on the data itself, giving a better overview of the densities.
 - Default size of MDS plot is adjusted so that labels are always in the plot window.
+- Fixed a bug in which the ANOVA option would wrongly give NA numerator degrees of freedom and p values when the rank of the contrast matrix would be 1. Also, the estimate of the average effect would sometimes be estimated wrongly when the contrast matrix was of less than full rank.
 
 ## 0.6.3 - 2017-04-14
 
