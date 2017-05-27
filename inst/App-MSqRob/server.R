@@ -7,6 +7,7 @@ library(MSqRob)
 library(MSnbase)
 library(grDevices)
 library(limma)
+library(graphics)
 source("utilities.R")
 
 #Max file size: 50 TB
@@ -22,7 +23,7 @@ shinyServer(function(input, output, session) {
 
   #Function to check if save folder is set
   check_save_folder <- function(save_folder){
-    if(is.null(save_folder) | length(save_folder)==0){stop("No output folder selected!")
+    if(is.null(save_folder) | length(save_folder)==0){stop("No output location selected!")
     } else if(is.na(save_folder)){
       stop("No output folder selected!")
     } else if(!dir.exists(save_folder)){
@@ -39,6 +40,13 @@ shinyServer(function(input, output, session) {
     if(Sys.info()['sysname']=="Darwin"){
       saveFolder$folder <- tryCatch(
         choose.dir2()
+        , error=function(e){
+          library(svDialogs)
+          svDialogs::dlgDir()$res
+        })
+    } else if(Sys.info()["sysname"]=="Linux"){
+      saveFolder$folder <- tryCatch(
+        choose.dir_Linux()
         , error=function(e){
           library(svDialogs)
           svDialogs::dlgDir()$res
@@ -69,8 +77,13 @@ shinyServer(function(input, output, session) {
       value = saveFolder$folder
     }
 
-    folderInput(inputId="outputFolder", label="Specify the location where your output will be saved", value = value, multiple = FALSE, accept = NULL, width = NULL, style=style)
-  })
+    # folderInput(inputId="outputFolder", label=span("Specify the location where your output will be saved", popify(bsButton("q_outputFolder", label = "", icon = icon("question"), style = "info", size = "extra-small")
+    #                                                , title = "Output directory",
+    #                                                content = "A new folder will be created in this directory. This folder will contain all your output. This includes your resulting Excel file as well",
+    #                                                placement = "right")), value = value, multiple = FALSE, accept = NULL, width = NULL, style=style)
+    folderInput(inputId="outputFolder", label=NULL, value = value, multiple = FALSE, accept = NULL, width = NULL, style=style)
+
+    })
 
   observe({
 
@@ -124,7 +137,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectFilters <- renderUI({
-    selectInput("filter", "Also filter based on these columns", filterOptions(), multiple=TRUE, selected=selectedFilter())})
+    selectInput("filter", NULL, filterOptions(), multiple=TRUE, selected=selectedFilter(), width = '100%')})
 
 
   ########################################
@@ -188,7 +201,7 @@ shinyServer(function(input, output, session) {
 
   ####select Fixed effects, random effects, Proteins and store options ####
   output$selectFixed <- renderUI({
-    selectInput("fixed", "Select fixed effects", nmsFixedOptions(), multiple=TRUE )
+    selectInput("fixed", label=NULL, nmsFixedOptions(), multiple=TRUE )
     })
 
   selectedRandom <- reactive({
@@ -198,7 +211,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectRandom <- renderUI({
-    selectInput("random", "Select random effects", fixedOptions(), multiple=TRUE, selected=selectedRandom() )
+    selectInput("random", label=NULL, fixedOptions(), multiple=TRUE, selected=selectedRandom() )
   })
 
   selectedProteins <- reactive({
@@ -208,7 +221,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectProteins <- renderUI({
-    selectInput("proteins", "Select the grouping factor (mostly the \"Proteins\" column)", filterOptions(), multiple=FALSE, selected=selectedProteins() )
+    selectInput("proteins", label=NULL, filterOptions(), multiple=FALSE, selected=selectedProteins() )
   })
 
   selectedAnnotations <- reactive({
@@ -218,7 +231,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectAnnotations <- renderUI({
-    selectInput("annotations", "Select additional annotation columns you want to keep", filterOptions(), multiple=TRUE, selected=selectedAnnotations() )
+    selectInput("annotations", label=NULL, filterOptions(), multiple=TRUE, selected=selectedAnnotations() )
   })
 
 
@@ -267,6 +280,83 @@ shinyServer(function(input, output, session) {
   ###Function invoked when output button is pushed###
   #Here comes what happens when we activate the go button, here are the real calculations
   #Maybe with progress bar...
+
+
+observe({
+  shinyjs::onclick("button_outputFolder",
+                   shinyjs::toggle(id = "tooltip_outputFolder", anim = TRUE))
+  shinyjs::onclick("button_project_name",
+                   shinyjs::toggle(id = "tooltip_project_name", anim = TRUE))
+  shinyjs::onclick("button_peptides",
+                   shinyjs::toggle(id = "tooltip_peptides", anim = TRUE))
+  shinyjs::onclick("button_annotation",
+                   shinyjs::toggle(id = "tooltip_annotation", anim = TRUE))
+  shinyjs::onclick("button_newExpAnnText",
+                   shinyjs::toggle(id = "tooltip_newExpAnnText", anim = TRUE))
+  shinyjs::onclick("button_cite",
+                   shinyjs::toggle(id = "tooltip_cite", anim = TRUE))
+  shinyjs::onclick("button_notinlist",
+                   shinyjs::toggle(id = "tooltip_notinlist", anim = TRUE))
+  shinyjs::onclick("button_logtransform",
+                   shinyjs::toggle(id = "tooltip_logtransform", anim = TRUE))
+  shinyjs::onclick("button_log_base",
+                   shinyjs::toggle(id = "tooltip_log_base", anim = TRUE))
+  shinyjs::onclick("button_normalisation",
+                   shinyjs::toggle(id = "tooltip_normalisation", anim = TRUE))
+  shinyjs::onclick("button_onlysite",
+                   shinyjs::toggle(id = "tooltip_onlysite", anim = TRUE))
+  shinyjs::onclick("button_proteingroups",
+                   shinyjs::toggle(id = "tooltip_proteingroups", anim = TRUE))
+  shinyjs::onclick("button_smallestUniqueGroups",
+                   shinyjs::toggle(id = "tooltip_smallestUniqueGroups", anim = TRUE))
+  shinyjs::onclick("button_minIdentified",
+                   shinyjs::toggle(id = "tooltip_minIdentified", anim = TRUE))
+  shinyjs::onclick("button_filter",
+                   shinyjs::toggle(id = "tooltip_filter", anim = TRUE))
+  shinyjs::onclick("button_evalnorm",
+                   shinyjs::toggle(id = "tooltip_evalnorm", anim = TRUE))
+  shinyjs::onclick("button_selColPlotNorm",
+                   shinyjs::toggle(id = "tooltip_selColPlotNorm", anim = TRUE))
+  shinyjs::onclick("button_h4_int_transformation",
+                   shinyjs::toggle(id = "tooltip_h4_int_transformation", anim = TRUE))
+  shinyjs::onclick("button_h4_full_preprocessing",
+                   shinyjs::toggle(id = "tooltip_h4_full_preprocessing", anim = TRUE))
+  shinyjs::onclick("button_h4_MDS_full_preprocessing",
+                   shinyjs::toggle(id = "tooltip_h4_MDS_full_preprocessing", anim = TRUE))
+
+  shinyjs::onclick("button_proteins",
+                   shinyjs::toggle(id = "tooltip_proteins", anim = TRUE))
+  shinyjs::onclick("button_annotations",
+                   shinyjs::toggle(id = "tooltip_annotations", anim = TRUE))
+  shinyjs::onclick("button_fixed",
+                   shinyjs::toggle(id = "tooltip_fixed", anim = TRUE))
+  shinyjs::onclick("button_random",
+                   shinyjs::toggle(id = "tooltip_random", anim = TRUE))
+  shinyjs::onclick("button_save",
+                   shinyjs::toggle(id = "tooltip_save", anim = TRUE))
+  shinyjs::onclick("button_load_model",
+                   shinyjs::toggle(id = "tooltip_load_model", anim = TRUE))
+  shinyjs::onclick("button_analysis_type",
+                   shinyjs::toggle(id = "tooltip_analysis_type", anim = TRUE))
+  shinyjs::onclick("button_nContr",
+                   shinyjs::toggle(id = "tooltip_nContr", anim = TRUE))
+  shinyjs::onclick("button_plot_contrast",
+                   shinyjs::toggle(id = "tooltip_plot_contrast", anim = TRUE))
+  shinyjs::onclick("button_h4_volcano_plot",
+                   shinyjs::toggle(id = "tooltip_h4_volcano_plot", anim = TRUE))
+  shinyjs::onclick("button_h4_detail_plot",
+                   shinyjs::toggle(id = "tooltip_h4_detail_plot", anim = TRUE))
+  shinyjs::onclick("button_alpha",
+                   shinyjs::toggle(id = "tooltip_alpha", anim = TRUE))
+  shinyjs::onclick("button_selMainPlot2",
+                   shinyjs::toggle(id = "tooltip_selMainPlot2", anim = TRUE))
+  shinyjs::onclick("button_selPlot2",
+                   shinyjs::toggle(id = "tooltip_selPlot2", anim = TRUE))
+  shinyjs::onclick("button_selColPlot2",
+                   shinyjs::toggle(id = "tooltip_selColPlot2", anim = TRUE))
+  shinyjs::onclick("button_selPchPlot2",
+                   shinyjs::toggle(id = "tooltip_selPchPlot2", anim = TRUE))
+})
 
   observe({
 
@@ -518,10 +608,12 @@ shinyServer(function(input, output, session) {
   # )
 
   output$contrastL <- renderPrint({
+    if(input$analysis_type!="ANOVA"){
     #The contrast corresponding to the selected contrast
     L <- outputlist()$L[,input$plot_contrast,drop=FALSE]
     L <- L[L!=0,,drop=FALSE]
     return(L)
+    }
   })
 
 
@@ -538,7 +630,14 @@ shinyServer(function(input, output, session) {
   })
   output$plot_contrast <- renderUI({
     if(input$analysis_type!="ANOVA"){
-      selectInput("plot_contrast", "Select the contrast you want to visualize", contrastOptions())
+      div(class="MSqRob_input_container",
+          list(
+            tags$label("Show contrast", `for`="plot_contrast", class="MSqRob_label"),
+            tags$button(id="button_plot_contrast", tags$sup("[?]"), class="MSqRob_tooltip"),
+            selectInput("plot_contrast", label=NULL, contrastOptions()),
+            hidden(helpText(id="tooltip_plot_contrast","Select the contrast you want to visualize."))
+          )
+      )
     }
   })
 
@@ -560,7 +659,7 @@ shinyServer(function(input, output, session) {
 
 
 
-  ###Volcanoplot###
+  ###Volcano plot###
   output$plot1 <- renderPlot({
     #!!!Quick fix voor ANOVA waarbij alles NA is (e.g. data Emmy, treatKO-treatWT en treatKO_LPS_1h-treatWT_LPS_1h), verder verfijnen!!!!:
     if(!all(is.na(dataset()$minus_log10_p))){
@@ -616,7 +715,7 @@ shinyServer(function(input, output, session) {
   clickInfo <- reactive({
     # Because it's a ggplot2, we don't need to supply xvar or yvar; if this
     # were a base graphics plot, we'd need those.
-    if(!is.null(ranges$x) && !is.null(ranges$y)){clickInfo <- subset(dataset(), (dataset()$estimate>ranges$x[1] & dataset()$estimate<ranges$x[2] & dataset()$minus_log10_p>ranges$y[1] & dataset()$minus_log10_p<ranges$y[2]))
+    if(!is.null(ranges$x) && !is.null(ranges$y)){clickInfo <- subset(dataset(), (dataset()[[estimate()]]>ranges$x[1] & dataset()[[estimate()]]<ranges$x[2] & dataset()$minus_log10_p>ranges$y[1] & dataset()$minus_log10_p<ranges$y[2]))
     } else if(is.null(ranges$x) && is.null(ranges$y)){clickInfo <- dataset()}
     return(clickInfo)
   })
@@ -719,19 +818,59 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectMainPlot2 <- renderUI({
-    selectInput("selMainPlot2", "Select title variable", plot2MainVars$values)
+    div(class="MSqRob_input_container",
+        list(
+          tags$label("Title variable", `for`="selMainPlot2", class="MSqRob_label"),
+          tags$button(id="button_selMainPlot2", tags$sup("[?]"), class="MSqRob_tooltip"),
+    selectInput("selMainPlot2", label=NULL, plot2MainVars$values),
+    hidden(helpText(id="tooltip_selMainPlot2","
+                    Select the title variable.
+                    This is the title that will be shown on top of the detail plot.
+                    "))
+        )
+    )
   })
 
   output$selectPlot2 <- renderUI({
-    selectInput("selPlot2", "Select independent variable", plot2DependentVars())
+    div(class="MSqRob_input_container",
+        list(
+          tags$label("Independent variable", `for`="selPlot2", class="MSqRob_label"),
+          tags$button(id="button_selPlot2", tags$sup("[?]"), class="MSqRob_tooltip"),
+    selectInput("selPlot2", label=NULL, plot2DependentVars()),
+    hidden(helpText(id="tooltip_selPlot2","
+                    Select the independent variable.
+                    This is the variable that will be present on the x-axis of the plot.
+                    "))
+        )
+    )
   })
 
   output$selectColPlot2 <- renderUI({
-    selectInput("selColPlot2", "Select color variable", plot2OtherVars())
+    div(class="MSqRob_input_container",
+        list(
+          tags$label("Color variable", `for`="selColPlot2", class="MSqRob_label"),
+          tags$button(id="button_selColPlot2", tags$sup("[?]"), class="MSqRob_tooltip"),
+    selectInput("selColPlot2", label=NULL, plot2OtherVars()),
+    hidden(helpText(id="tooltip_selColPlot2","
+                    Select the color variable.
+                    This is the variable by which the individual peptides should be colored.
+                    "))
+        )
+    )
   })
 
   output$selectPchPlot2 <- renderUI({
-    selectInput("selPchPlot2", "Select shape variable", plot2OtherVars())
+    div(class="MSqRob_input_container",
+        list(
+          tags$label("Shape variable", `for`="selPchPlot2", class="MSqRob_label"),
+          tags$button(id="button_selPchPlot2", tags$sup("[?]"), class="MSqRob_tooltip"),
+          selectInput("selPchPlot2", label=NULL, plot2OtherVars()),
+          hidden(helpText(id="tooltip_selPchPlot2","
+                          Select the shape variable.
+                          This is the variable that is represented by the different plot symbols.
+                          "))
+        )
+    )
   })
 
   acc_plot2 <- reactive({as.character(clickInfo()[input$table_rows_selected,"Accessions"])})
@@ -811,7 +950,14 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectColPlotNorm1 <- renderUI({
-    selectInput("selColPlotNorm1", "Select color variable",  plotNorm1DependentVars())
+    div(class="MSqRob_input_container",
+        list(
+          tags$label("Color variable", `for`="selColPlotNorm", class="MSqRob_label"),
+          tags$button(id="button_selColPlotNorm", tags$sup("[?]"), class="MSqRob_tooltip"),
+          selectInput("selColPlotNorm1", label=NULL,  plotNorm1DependentVars()),
+          hidden(helpText(id="tooltip_selColPlotNorm","Select the variable by which the densities should be colored."))
+        )
+    )
   })
 
   output$npeptidesNormalized = renderText(NULL)
@@ -849,10 +995,11 @@ shinyServer(function(input, output, session) {
 
   })
 
-  getDensXlimYim <- function(eset){
+  getDensXlimYlim <- function(eset){
     densAll=apply(eset,2,density,na.rm=TRUE)
-    ymax=max(sapply(densAll,function(d) max(d$y)))
-    xlim=range(eset,na.rm=TRUE)
+    ymax=max(vapply(densAll,function(d) max(d$y),1))
+    rangematrix <- vapply(densAll,function(d) range(d$x, na.rm=TRUE), c(1,1)) #no longer range(eset), but range of d$x!
+    xlim=range(rangematrix,na.rm=TRUE)
     ylim=c(0,ymax)
     return(list(densAll=densAll, xlim=xlim, ylim=ylim))
   }
@@ -870,132 +1017,132 @@ shinyServer(function(input, output, session) {
     return(eset)
   })
 
+  ###Possibilities for zooming
+  rangesRaw <- reactiveValues(x = NULL, y = NULL)
+  rangesNorm1 <- reactiveValues(x = NULL, y = NULL)
+  rangesMDS <- reactiveValues(x = NULL, y = NULL)
+
+  ####Raw density plot with zoom####
+  observeEvent(input$plotRaw_dblclick, {
+    brush <- input$plotRaw_brush
+    if (!is.null(brush)) {
+      rangesRaw$x <- c(brush$xmin, brush$xmax)
+      rangesRaw$y <- c(brush$ymin, brush$ymax)
+
+    } else {
+      rangesRaw$x <- NULL
+      rangesRaw$y <- NULL
+    }
+  })
+
+  ####Normal density plot with zoom####
+  observeEvent(input$plotNorm1_dblclick, {
+    brush <- input$plotNorm1_brush
+    if (!is.null(brush)) {
+      rangesNorm1$x <- c(brush$xmin, brush$xmax)
+      rangesNorm1$y <- c(brush$ymin, brush$ymax)
+
+    } else {
+      rangesNorm1$x <- NULL
+      rangesNorm1$y <- NULL
+    }
+  })
+
+  ####MDS plot with zoom####
+  observeEvent(input$plotMDS_dblclick, {
+    brush <- input$plotMDS_brush
+    if (!is.null(brush)) {
+      rangesMDS$x <- c(brush$xmin, brush$xmax)
+      rangesMDS$y <- c(brush$ymin, brush$ymax)
+
+    } else {
+      rangesMDS$x <- NULL
+      rangesMDS$y <- NULL
+    }
+  })
+
   output$plotRaw<- renderPlot({
-    if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a protein groups file or untick the box \"Remove proteins that are only identified by modified peptides\".")}
+    if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
     if(!is.null(eset())){
-      densXlimYim <- getDensXlimYim(eset())
-      plotDens(eset(), densXlimYim[["densAll"]], densXlimYim[["xlim"]], densXlimYim[["ylim"]], colorsNorm(), main="")
+
+      densXlimYlim <- getDensXlimYlim(eset())
+
+      #Allow for zooming
+      if(is.null(rangesRaw$y) & is.null(rangesRaw$x)){
+        xlim=densXlimYlim[["xlim"]]
+        ylim=densXlimYlim[["ylim"]]
+      } else{
+        xlim=rangesRaw$x
+        ylim=rangesRaw$y
+      }
+
+      plotDens(eset(), densXlimYlim[["densAll"]], xlim, ylim, colorsNorm(), main="")
       output$npeptidesRaw = renderText(nrow(peps()))
     }
   })
 
 
   output$plotNorm1<- renderPlot({
-    if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a protein groups file or untick the box \"Remove proteins that are only identified by modified peptides\".")}
+    if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
     if(isTRUE(input$evalnorm) & !is.null(esetN())){
-      densXlimYimN <- getDensXlimYim(esetN())
-      plotDens(esetN(), densXlimYimN[["densAll"]], densXlimYimN[["xlim"]], densXlimYimN[["ylim"]], colorsNorm(), main="")
+
+      densXlimYlimN <- getDensXlimYlim(esetN())
+
+      #Allow for zooming
+      if(is.null(rangesNorm1$y) & is.null(rangesNorm1$x)){
+        xlim=densXlimYlimN[["xlim"]]
+        ylim=densXlimYlimN[["ylim"]]
+      } else{
+        xlim=rangesNorm1$x
+        ylim=rangesNorm1$y
+      }
+
+      plotDens(esetN(), densXlimYlimN[["densAll"]], xlim, ylim, colorsNorm(), main="")
       output$npeptidesNormalized = renderText(nrow(esetN()))
-    }
-  })
-
-  ####NEW######
-
-
-
-
-
-
-
-  # output$plotRaw<- renderPlot({
-  #
-  #  if(input$onlysite && is.null(input$proteingroups)){stop("Please provide a protein groups file or untick the box \"Remove proteins that are only identified by modified peptides\".")}
-  #
-  #  if(!is.null(peptidesDatapath())){
-  #       peps=read_MaxQuant(peptidesDatapath(), shiny=TRUE)
-  #       if(input$logtransform) eset=log(exprs(peps),base=input$log_base) else eset=exprs(peps)
-  #       eset[is.infinite(eset)]=NA
-  #
-  #       densAll=apply(eset,2,density,na.rm=TRUE)
-  #       ymax=max(sapply(densAll,function(d) max(d$y)))
-  #       xlim=range(eset,na.rm=TRUE)
-  #       ylim=c(0,ymax)
-  #
-  #        plotDens(eset, densAll, xlim, ylim, colorsNorm(), main="")
-  #        output$npeptidesRaw = renderText(nrow(peps))
-  #       }
-  # })
-  #
-  #
-  # ####Normalized peptide density plot####
-  # output$plotNorm1<- renderPlot({
-  #
-  # if(input$onlysite && is.null(input$proteingroups)){stop("Please provide a protein groups file or untick the box \"Remove proteins that are only identified by modified peptides\".")}
-  #
-  #
-  #       if(!is.null(peptidesDatapath())){
-  #       peps=read_MaxQuant(peptidesDatapath(), shiny=TRUE)
-  #       if (input$evalnorm)
-  #       error=try({
-  #
-  #           filter <- gsub(" ",".",input$filter)
-  #
-  #           pepsN=preprocess_MaxQuant(peps, logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=filter, remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
-  #
-  #           esetN=exprs(pepsN)
-  #
-  #           densAllN=apply(esetN,2,density,na.rm=TRUE)
-  #           ymax=max(sapply(densAllN,function(d) max(d$y)))
-  #           xlim=range(esetN,na.rm=TRUE)
-  #           ylim=c(0,ymax)
-  #
-  #        plotDens(esetN, densAllN, xlim, ylim, colorsNorm(), main="")
-  #        output$npeptidesNormalized = renderText(nrow(pepsN))
-  #
-  #       },silent=TRUE)
-  #       }
-  # })
-
-  ranges2 <- reactiveValues(x = NULL, y = NULL)
-
-  ####MDS plot with zoom####
-  observeEvent(input$plotMDS_dblclick, {
-    brush <- input$plotMDS_brush
-    if (!is.null(brush)) {
-      ranges2$x <- c(brush$xmin, brush$xmax)
-      ranges2$y <- c(brush$ymin, brush$ymax)
-
-    } else {
-      ranges2$x <- NULL
-      ranges2$y <- NULL
     }
   })
 
   output$plotMDS<- renderPlot(
     {
-      if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a protein groups file or untick the box \"Remove proteins that are only identified by modified peptides\".")}
+      if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
 
-      if(isTRUE(input$evalnorm) & !is.null(esetN())){
+      if(isTRUE(input$evalnorm) & !is.null(esetN()) & (isTRUE(input$plotMDSLabels) | isTRUE(input$plotMDSPoints))){ #Last condition: at least one of the boxes labels or points must be ticked, otherwise no plot!
 
-        if(isTRUE(input$plotMDSLabels) & !isTRUE(input$plotMDSPoints)){
-          #Only labels
-          limma::plotMDS(esetN(), col=colorsNorm(), xlim = ranges2$x, ylim = ranges2$y, las=1, bty="n")
+        mds <- plotMDS(esetN(), plot=FALSE)
+        labels_mds <- names(mds$x) #Doesn't matter whether you take mds$x or mds$y here
+
+        #Only dots: plot is always made in order to set the ranges correctly: strwidth and strheight are calculated based on the previous plot!
+        plot(mds, col=colorsNorm(), xlim = rangesMDS$x, ylim = rangesMDS$y, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
+
+        #Calculate maximal increase in plot size due to labels
+        max_increase <- (par("usr")[2]-par("usr")[1]+max(graphics::strwidth(labels_mds)))/(par("usr")[2]-par("usr")[1])
+        
+        #Need extra space on x axis for labels
+        if(is.null(rangesMDS$x)){
+          xrange=c((min(mds$x)-max(graphics::strwidth(labels_mds))*max_increase/2),(max(mds$x)+max(graphics::strwidth(labels_mds))*max_increase/2)) #min(mds$x), max(mds$x)
         } else{
+          xrange=c(rangesMDS$x[1],rangesMDS$x[2])
+        }
+        
+        #Only labels
+        if(isTRUE(input$plotMDSLabels) & !isTRUE(input$plotMDSPoints)){
+          limma::plotMDS(esetN(), col=colorsNorm(), xlim = xrange, ylim = rangesMDS$y, las=1, bty="n")
+        }
 
-          mds <- plotMDS(esetN(), plot=FALSE)
-
-          #Dots with labels
-          if(isTRUE(input$plotMDSLabels) & isTRUE(input$plotMDSPoints)){
+        #Labels and dots
+        if(isTRUE(input$plotMDSLabels) & isTRUE(input$plotMDSPoints)){
 
             #Need extra space on top for labels
-            if(is.null(ranges2$y)){
-              yrange=c(min(mds$y),(max(mds$y)+(range(mds$y)[2]-range(mds$y)[1])/10))
+            if(is.null(rangesMDS$y)){
+              yrange=c(min(mds$y),(max(mds$y)+max(graphics::strheight(labels_mds)))) #c(min(mds$y),(max(mds$y)+(range(mds$y)[2]-range(mds$y)[1])/10))
             } else{
-              yrange=c(ranges2$y[1],(ranges2$y[2]+(ranges2$y[2]-ranges2$y[1])/10))
+              yrange=c(rangesMDS$y[1],rangesMDS$y[2]) #c(rangesMDS$y[1],(rangesMDS$y[2]+(rangesMDS$y[2]-rangesMDS$y[1])/10))
             }
 
-            plot(mds, col=colorsNorm(), xlim = ranges2$x, ylim = yrange, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
+            plot(mds, col=colorsNorm(), xlim = xrange, ylim = yrange, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
             text(mds, labels=colnames(esetN()), col=colorsNorm(), cex= 1, pos=3)
-          }
-
-          #Only dots
-          if(!isTRUE(input$plotMDSLabels) & isTRUE(input$plotMDSPoints)){
-            plot(mds, col=colorsNorm(), xlim = ranges2$x, ylim = ranges2$y, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
-          }
-
-          #No dots and no labels => no plot!
-
         }
+
         #pch NULL, pch NA, text
         # plotMDS(mds, las=1, bty="n",pch=NULL)
         # text(mds, labels=colnames(test), cex= 0.7, pos=3)

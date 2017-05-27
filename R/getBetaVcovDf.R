@@ -1,7 +1,7 @@
 
 setGeneric (
   name= "getBetaVcovDf",
-  def=function(model, exp_unit=NULL, pars_df=NULL, ...){standardGeneric("getBetaVcovDf")}
+  def=function(model, exp_unit=NULL, pars_between=NULL, ...){standardGeneric("getBetaVcovDf")}
 )
 
 #' Get beta, vcov, df and sigma from a general linear model
@@ -11,8 +11,8 @@ setGeneric (
 #' This function will only rarely be called by the end-user. When calculating these values for \code{\link[=protLM-class]{protLM}} objects, we recommend using the function \code{getbetaVcovDfList}.
 #' @param model A general linear model object of class \code{\link[=lm-class]{lm}}.
 #' @param exp_unit The effect in the model that corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
-#' The default way (\code{exp_unit=NULL}) estimates the degrees of freedom by substracting the total number of observations by the number of parameters. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.
-#' @param pars_df Only used if \code{exp_unit} is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
+#' The default way (\code{exp_unit=NULL}) estimates the degrees of freedom by substracting the total number of observations by the number of parameters. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_between}) from the number of treatments.
+#' @param pars_between Only used if \code{exp_unit} is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
 #' @return A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom, (4) a numeric value equal to the residual standard deviation of the model and (5) \code{NULL} if \code{exp_unit} is left to its default value \code{NULL}, else: a conservative estimate of the degrees of freedom based on the number of experimental units and the degrees of freedom lost due to between-treatment effects.
 #' @examples
 #' data(proteinsCPTAC, package="MSqRob")
@@ -21,7 +21,7 @@ setGeneric (
 #' @include protdata.R
 #' @include protLM.R
 #' @export
-setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL){
+setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_between=NULL){
   beta <- as.matrix(model$coefficients,ncol=1)
   vcov <- summary(model)$cov.unscaled
   df <- getDf(model) #model$df.residual
@@ -33,15 +33,15 @@ setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL){
 
     #If the effects that consume dfs are not given, all effects are used
     #This is not really advisable, mostly within-treatment effects (such as a Sequence effect) are present in the model:
-    if(is.null(pars_df)){
+    if(is.null(pars_between)){
       #Number of experimental units minus total number of parameters
       df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-length(model$assign),0)
 
-    #Else, use the given pars_df
+    #Else, use the given pars_between
     } else{
-      #Number of experimental units minus total number of parameters between treatments "pars_df" (to be declared by the user!)
+      #Number of experimental units minus total number of parameters between treatments "pars_between" (to be declared by the user!)
       #Zal afhangen van L => overweeg verplaatsen!!!
-      df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-sum(model$assign %in% which(names(model$xlevels) %in% pars_df) | model$assign==0),0)
+      df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-sum(model$assign %in% which(names(model$xlevels) %in% pars_between) | model$assign==0),0)
     }
   }
 
@@ -59,8 +59,8 @@ setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL){
 #' The variance covariance matrix is bias-adjusted, the degrees of freedom are calculated as the trace of the Hat matrix (Ruppert et al., 2003).
 #' @param model A linear mixed effects model object of class \code{\link[=lmerMod-class]{lmerMod}}.
 #' @param exp_unit The effect in the model that corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
-#' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.
-#' @param pars_df Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
+#' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_between}) from the number of treatments.
+#' @param pars_between Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
 #' @param Ginvoffset A numeric value indicating the offset added the the diagonal of the G matrix to prevent near-singularity. Defaults to \code{1e-18}.
 #' @return A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom and (4) a numeric value equal to the residual standard deviation of the model.
 #' @examples
@@ -73,7 +73,7 @@ setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_df=NULL){
 #' @include protdata.R
 #' @include protLM.R
 #' @export
-setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_df=NULL, Ginvoffset = 1e-18)
+setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_between=NULL, Ginvoffset = 1e-18)
 {
   # condVar <- function(model) {
   #   s2 <- sigma(model)^2
@@ -202,25 +202,29 @@ setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_df=NUL
   #df <- sum((resid(model)*gew)^2)/sigma^2
   #Equal to: df <- ncol(Ct)-sum(Matrix::t(Ct)%*%vcov*Matrix::t(Ct_w)*gew) ## cheaper version of: Hat <- Matrix::t(Ct)%*%vcov%*%Ct_w*gew  and  df <- ncol(Ct)-sum(Matrix::diag(Hat))
 
+  #Degrees of freedom that you lose due to each parameter
+  df_pars <- Matrix::colSums(Matrix::t(Ct)%*%vcov*Matrix::t(Ct_w)*gew)
+
   #If you declare the experimental units, you can use a more conservative way to estimate the df
   df_exp <- NULL
   if(!is.null(exp_unit)){
 
     #If the effects that consume dfs are not given, all fixed effects (shrunken and unshrunken) are used
-    if(is.null(pars_df)){
+    if(is.null(pars_between)){
       ridgeFix <- which(grepl("ridgeGroup.",names(model@flist)))
       df_indices <- c(1:p,unlist(sapply(ridgeFix, function(x){return((model@Gp[x]+1):model@Gp[x+1])}))+p)
 
-      #Else, use the given pars_df
+      #Else, use the given pars_between
     } else{
-      pars_df2 <- which(attr(model,"MSqRob_fullcnms") %in% pars_df)
-      df_indices <- unlist(sapply(pars_df2, function(x){return((attr(model,"MSqRob_XGp")[x]+1):attr(model,"MSqRob_XGp")[x+1])}))
+      pars_between2 <- which(attr(model,"MSqRob_fullcnms") %in% pars_between)
+      df_indices <- unlist(sapply(pars_between2, function(x){return((attr(model,"MSqRob_XGp")[x]+1):attr(model,"MSqRob_XGp")[x+1])}))
     }
-    df_exp <- length(unique(model@frame[,exp_unit]))-sum(Matrix::diag(Matrix::t(Ct[df_indices, ,drop=FALSE])%*%vcov[df_indices, ,drop=FALSE]%*%Ct_w*gew))
+    #!!!!GEEFT PROBLEMEN ALS EXP. UNIT IN DE RIDGEGROUP ZIT!!!! => modelframe aanpassen zodat alles van protein erin zit!!!
+    df_exp <- length(unique(model@frame[,exp_unit]))-sum(df_pars[df_indices])  #sum(Matrix::diag(Matrix::t(Ct[df_indices, ,drop=FALSE])%*%vcov[df_indices, ,drop=FALSE]%*%Ct_w*gew))
   }
 
   #Return beta, vcov, df and sigma as a list:
-  returnlist <- list(beta=beta,vcov=vcov,df=df,sigma=sigma,df_exp=df_exp)
+  returnlist <- list(beta=beta, vcov=vcov, df=df, sigma=sigma, df_exp=df_exp, df_pars=df_pars)
 
   return(returnlist)
 })

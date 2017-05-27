@@ -5,18 +5,16 @@
 \alias{getBetaVcovDf,lmerMod-method}
 \title{Get beta, vcov, df and sigma from a mixed model}
 \usage{
-\S4method{getBetaVcovDf}{lmerMod}(model, exp_unit = NULL, pars_df = NULL,
-  subset = NULL, Ginvoffset = 1e-18)
+\S4method{getBetaVcovDf}{lmerMod}(model, exp_unit = NULL,
+  pars_between = NULL, Ginvoffset = 1e-18)
 }
 \arguments{
 \item{model}{A linear mixed effects model object of class \code{\link[=lmerMod-class]{lmerMod}}.}
 
 \item{exp_unit}{The effect in the model that corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
-The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.}
+The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_between}) from the number of treatments.}
 
-\item{pars_df}{Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).}
-
-\item{subset}{...... !!!!Experimental feature not thoroughly tested!!!!}
+\item{pars_between}{Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).}
 
 \item{Ginvoffset}{A numeric value indicating the offset added the the diagonal of the G matrix to prevent near-singularity. Defaults to \code{1e-18}.}
 }

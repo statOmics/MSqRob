@@ -3,7 +3,7 @@
 #' @description This function can test a contrast based on parameter estimates \code{beta}, a variance covariance matrix \code{vcov}, a number of degrees of freedom \code{df}, a residual error term \code{sigma} and a contrast matrix \code{L}.
 #' @param beta A matrix with a single column containing parameter estimates.
 #' @param vcov A matrix of the estimated covariances between the parameter estimates.
-#' @param df A numeric value indicating the residual degrees of freedom.
+#' @param df A vector of numeric values indicating the degrees of freedom corresponding to each contrast or a single numeric value if the degrees of freedom for each contrast are equal.
 #' @param sigma A numeric value indicating a residual standard deviation.
 #' @param L A contrast matrix with the parameter levels as rows and a column for each contrast.
 #' @param lfc The minimum log2-fold-change that is considered scientifically meaningful. Defaults to \code{0}.

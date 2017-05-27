@@ -104,6 +104,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
     #Adjust names of predictors to make them similar to those of "lm"
     #In case of factors, the name of the factor is concatenated with the level of the factor
+    #Also takes a bit of time with big datasets:
     data <- .adjustNames(data, random)
 
     #Fit the list of ridge models
@@ -500,12 +501,16 @@ makeFormulaPredictors <- function(input, intercept, effect){
                                                                                                 check.nobs.vs.nRE="ignore", check.nlev.gtr.1 = "ignore")),
                             error=function(e){
                               #warning(e)  #Outputting errors as warnings is not compatible with Shiny!!!
-                              parsedFormula <- formula
+                              parsedFormula <- list(formula=formula, fr=x)
                               attr(parsedFormula,"MSqRob_fail") <- TRUE
                               return(parsedFormula)
                             }))
 
   if(isTRUE(attr(parsedFormula,"MSqRob_fail"))){error <- TRUE}
+
+  #Execute only once: add missing columns in data frame (e.g. the ones that are now in ridgeGroup) to "fr" slot of parsedFormula
+  #-> bad idea: fitting doesn't work anymore then!
+  #parsedFormula$fr <- cbind(parsedFormula$fr,x[,!(colnames(x) %in% colnames(parsedFormula$fr)), drop=FALSE])
 
   if(any(shrinkage.fixed!=0)  && !isTRUE(error)){
   num_indices <- as.list(which(names(parsedFormula$reTrms$cnms) %in% ridgeGroups))

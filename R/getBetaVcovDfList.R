@@ -6,8 +6,8 @@
 #' For mixed models, the variance covariance matrix is bias-adjusted, the degrees of freedom are calculated as the trace of the Hat matrix (Ruppert et al., 2003).
 #' @param protLM An object of class \code{\link[=protLM-class]{protLM}}.
 #' @param exp_unit The effect that in all models corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
-#' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_df}) from the number of treatments.
-#' @param pars_df Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the models that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the models will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
+#' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_between}) from the number of treatments.
+#' @param pars_between Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the models that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the models will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
 #' @param printProgress A logical indicating whether the R should print a message before calculating the contrasts for each accession. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
@@ -25,7 +25,7 @@
 #' @include squeezeVarRob.R
 #' @include updateProgress.R
 #' @export
-getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_df=NULL, printProgress=FALSE, shiny=FALSE, message=NULL)
+getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_between=NULL, printProgress=FALSE, shiny=FALSE, message=NULL)
 {
 
   #Progress bar for extraction of beta, vcov, df and sigma
@@ -53,7 +53,7 @@ getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_df=NULL, printProgress
     updateProgress(progress=progress, detail=paste0("Extracting parameters for protein ",i," of ",length(classes),"."), n=length(classes), shiny=shiny, print=isTRUE(printProgress))
 
     if(classes[i] %in% c("lm","lmerMod"))  {
-      betaVcovDfList[[i]] <- getBetaVcovDf(models[[i]], exp_unit=exp_unit, pars_df=pars_df)
+      betaVcovDfList[[i]] <- getBetaVcovDf(models[[i]], exp_unit=exp_unit, pars_between=pars_between)
     } else{
       betaVcovDfList[[i]] <- NULL
       warning(paste0("classes[",i,"] is not equal to \"lm\" or \"lmerMod\". Returning NULL."))

@@ -23,7 +23,7 @@ saves_MSqRob(..., envir = environment(), list = character(), file = NULL,
 The saved filename(s) (invisible).
 }
 \description{
-\code{saves_MSqRob} is almost a pure copy of the \code{saves} function from the \code{saves} package by Dar\'oczi (2013) with some minor code tweaks to make it work for MSqRob. It saves dataframe(s) or list(s) to disk in a special, binary format. This binary format consists of distinct binary files of all separate variables of a dataframe/list merged into an uncompressed tar archive. This is done via a loop, which saves each variable/column to an an external representation of the R objects via save in a temporary directory. Theese 'RData' files are archived to an 'RDatas' tar archive, uncompressed for better speed.
+\code{saves_MSqRob} is almost a pure copy of the \code{saves} function from the \code{saves} package by Dar\'oczi (2013) with some minor code tweaks to make it work for MSqRob. It saves dataframe(s) or list(s) to disk in a special, binary format. This binary format consists of distinct binary files of all separate variables of a dataframe/list merged into an uncompressed tar archive. This is done via a loop, which saves each variable/column to an an external representation of the R objects via save in a temporary directory. These 'RData' files are archived to an 'RDatas' tar archive, uncompressed for better speed.
 }
 \examples{
 ## Not run:
