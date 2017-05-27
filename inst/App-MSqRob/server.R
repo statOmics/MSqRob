@@ -608,10 +608,12 @@ observe({
   # )
 
   output$contrastL <- renderPrint({
+    if(input$analysis_type!="ANOVA"){
     #The contrast corresponding to the selected contrast
     L <- outputlist()$L[,input$plot_contrast,drop=FALSE]
     L <- L[L!=0,,drop=FALSE]
     return(L)
+    }
   })
 
 
@@ -657,7 +659,7 @@ observe({
 
 
 
-  ###Volcanoplot###
+  ###Volcano plot###
   output$plot1 <- renderPlot({
     #!!!Quick fix voor ANOVA waarbij alles NA is (e.g. data Emmy, treatKO-treatWT en treatKO_LPS_1h-treatWT_LPS_1h), verder verfijnen!!!!:
     if(!all(is.na(dataset()$minus_log10_p))){
@@ -713,7 +715,7 @@ observe({
   clickInfo <- reactive({
     # Because it's a ggplot2, we don't need to supply xvar or yvar; if this
     # were a base graphics plot, we'd need those.
-    if(!is.null(ranges$x) && !is.null(ranges$y)){clickInfo <- subset(dataset(), (dataset()$estimate>ranges$x[1] & dataset()$estimate<ranges$x[2] & dataset()$minus_log10_p>ranges$y[1] & dataset()$minus_log10_p<ranges$y[2]))
+    if(!is.null(ranges$x) && !is.null(ranges$y)){clickInfo <- subset(dataset(), (dataset()[[estimate()]]>ranges$x[1] & dataset()[[estimate()]]<ranges$x[2] & dataset()$minus_log10_p>ranges$y[1] & dataset()$minus_log10_p<ranges$y[2]))
     } else if(is.null(ranges$x) && is.null(ranges$y)){clickInfo <- dataset()}
     return(clickInfo)
   })
