@@ -25,3 +25,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - This CHANGELOG file.
+
+### Fixed
+- .adjustNames now also works for models with only one random effect.
