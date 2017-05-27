@@ -484,6 +484,8 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                   In a standard analysis, each contrast will be estimated separately (default).
                   In an ANOVA analysis, one assesses whether there is on average an effect over the specified contrasts.
                   It is often more of an exploratory tool to identify proteins that are significant in many contrasts at once.
+                  Note that the average expression for an ANOVA can be close to er even equal to zero for very significant effects 
+                  (i.e. when some contrasts are highly positive and others highly negative).
                   "))
       )
   ),
