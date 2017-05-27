@@ -27,6 +27,9 @@ test.ANOVA=function(beta, vcov, df, sigma, L, anova.na.ignore=TRUE)
   #If there are still any NA values in L => means that anova.na.ignore=FALSE or all(is.na(L)) => everything should be NA
   if(any(is.na(L))){L[L==L] <- NA}
 
+  #First calculate the average expression over all contrasts (average over all estimates!)
+  AveExpr <- mean(as.double(crossprod(L,beta))) #, na.rm=anova.na.ignore
+
   #Remove columns that make L less than full rank.
   #It doesn't matter which columns you remove (as long as the rank stays the same), the result will always be the same.
   if(!any(is.na(L))){
@@ -36,14 +39,11 @@ test.ANOVA=function(beta, vcov, df, sigma, L, anova.na.ignore=TRUE)
     stop("contrasts are all zero")
   coef <- 1:ncontrasts
   if (ncontrasts < ncol(L))
-    L <- L[, qrc$pivot[coef]]
+    L <- L[, qrc$pivot[coef], drop=FALSE]
   }
 
-  #Estimates
+  #Estimates (based on reduced L matrix, only needed for Fval)
   estimate <- as.double(crossprod(L,beta))
-
-  #AveExpr
-  AveExpr <- mean(estimate) #, na.rm=anova.na.ignore
 
   #F value
   #Try-catch needed because sometimes t(L)%*%(vcov*sigma^2)%*%L is uninvertible while vcov is invertible
