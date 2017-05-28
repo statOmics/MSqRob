@@ -27,7 +27,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 ############################################################################
 #Navigation bar with 3 panel:Input, preprocessing, quantification
 ############################################################################
-   navbarPage("MSqRob for MaxQuant data v 0.6.4", inverse=TRUE,
+   navbarPage("MSqRob for MaxQuant data v 0.7.0", inverse=TRUE,
 
 
     ####################################
