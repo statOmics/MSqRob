@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## 0.6.4 - 2017-04-24
+## 0.6.4 - 2017-05-28
 
 ### Added
 
