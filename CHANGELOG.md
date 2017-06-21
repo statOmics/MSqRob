@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
- - The function "prot.p.adjust" now gets the option to calculate the values for more than one multiple testing procedure at once. An extra option "fdrtool" is included, which allows FDR correction as specified in Strimmer, K. (2008a & 2008b). Extra elements "mitigate_excess1" and "threshold_excess1" are added to the function. These allow to ignore the excess p values close to 1 when determining the shape of the null distribution. These excess 1 values are indeed often observed when fitting ridge regression models with sparse data.
+ - The function "prot.p.adjust" now gets the option to calculate the values for more than one multiple testing procedure at once. An extra option "fdrtool" is included, which allows FDR correction as specified in Strimmer, K. (2008a & 2008b). An extra element "threshold_excess1" is added to the function. This allows to ignore the excess p-values close to 1 when determining the shape of the null distribution. These excess 1 values are indeed often observed when fitting ridge regression models with sparse data. "threshold_excess1" defaults to 1e-90. In order to get the exact same results from previous MSqRob versions, set "threshold_excess1" to 0 (then a correction will never be performed, no matter how strong the evidence for enrichment in p-values close to 1).
  
  Strimmer, K. (2008a). A unified approach to false discovery rate estimation. BMC Bioinformatics 9: 303. Available from http://www.biomedcentral.com/1471-2105/9/303/.
 
