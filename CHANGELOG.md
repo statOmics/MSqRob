@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 Strimmer, K. (2008b). fdrtool: a versatile R package for estimating local and tail area- based false discovery rates. Bioinformatics 24: 1461-1462. Available from http://bioinformatics.oxfordjournals.org/cgi/content/abstract/24/12/1461.
 
+### Fixed
+
+ - Fixed a bug in which adding no fixed effects to the fit.model function would cause an error.
+
 ## 0.6.4 - 2017-05-28
 
 ### Added
