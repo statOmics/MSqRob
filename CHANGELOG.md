@@ -15,6 +15,10 @@ Strimmer, K. (2008b). fdrtool: a versatile R package for estimating local and ta
 
  - Fixed a bug in which adding no fixed effects to the fit.model function would cause an error.
  - Fixed a bug in which the number of residual degrees of freedom for unfitted empty models appeared incorrect.
+ 
+### Changed
+
+ - Ordinary least squares models now also remove factors from their formulae for which only one level is present, instead of returning an empty model.
 
 ## 0.6.4 - 2017-05-28
 
