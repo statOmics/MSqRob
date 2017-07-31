@@ -19,6 +19,7 @@ Strimmer, K. (2008b). fdrtool: a versatile R package for estimating local and ta
 ### Changed
 
  - Ordinary least squares models now also remove factors from their formulae for which only one level is present, instead of returning an empty model.
+ - Added a robust version of M estimation.
 
 ## 0.6.4 - 2017-05-28
 
