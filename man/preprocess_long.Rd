@@ -5,16 +5,17 @@
 \title{Preprocess data in "long" format}
 \usage{
 preprocess_long(df, accession, split, exp_annotation = NULL,
-  type_annot = NULL, quant_col = "quant_value", run_col, aggr_by,
-  aggr_function = "sum", logtransform = TRUE, base = 2, normalisation,
-  smallestUniqueGroups = TRUE, useful_properties, filter, filter_symbol,
+  type_annot = NULL, quant_col = "quant_value", run_col, aggr_by = NULL,
+  aggr_function = "sum", logtransform = TRUE, base = 2,
+  normalisation = "quantiles", smallestUniqueGroups = TRUE,
+  useful_properties = NULL, filter = NULL, filter_symbol = NULL,
   minIdentified = 2, colClasses_df = NA, colClasses_exp = NA,
   printProgress = FALSE, shiny = FALSE, message = NULL, ...)
 }
 \arguments{
 \item{df}{A data frame that contains data in "long" format.}
 
-\item{accession}{A character indicating the column that contains the unit on which you want to do inference (typically the protein identifiers). Defaults to "ProteinName".}
+\item{accession}{A character indicating the column that contains the unit on which you want to do inference (typically the protein identifiers).}
 
 \item{split}{A character indicating which string is used to separate accession groups.}
 
@@ -26,24 +27,24 @@ preprocess_long(df, accession, split, exp_annotation = NULL,
 
 \item{run_col}{A character indicating the column in data frame \code{df} that contains the mass spec run names.}
 
-\item{aggr_by}{A character indicating the column by which the data should be aggregated. We advise to aggregate the data by peptide sequence (thus aggregate over different charge states and modification statuses of the same peptide). If you only want to aggregate over charge states, set \code{aggr_by} to the column corresponding to the modified sequences. If no aggregation at all is desired, create a new column in which you paste together the modified sequences and the charge states. Data will never be aggregated over different \code{run_col}.}
+\item{aggr_by}{A character indicating the column by which the data should be aggregated. We advise to aggregate the data by peptide sequence (thus aggregate over different charge states and modification statuses of the same peptide). If you only want to aggregate over charge states, set \code{aggr_by} to the column corresponding to the modified sequences. If no aggregation at all is desired, leave \code{aggr_by} at \code{NULL} (default). Data will never be aggregated over different \code{run_col}.}
 
-\item{aggr_function}{The function used to aggregate intensity data. Defaults to \code{"sum"}.}
+\item{aggr_function}{Only used when \code{aggr_by} is not \code{NULL}. The function used to aggregate intensity data. Defaults to \code{"sum"}.}
 
 \item{logtransform}{A logical value indicating whether the intensities should be log-transformed. Defaults to \code{TRUE}.}
 
-\item{base}{A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.}
+\item{base}{Only used when \code{logtransform} is \code{TRUE}. A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.}
 
 \item{normalisation}{A character vector of length one that describes how to normalise the data frame \code{df}. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.}
 
 \item{smallestUniqueGroups}{A logical indicating whether proteins groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.}
 
-\item{useful_properties}{The columns of the data frame \code{df} that are useful in the further analysis and/or inspection of the data and should be retained. Defaults to \code{c("ProteinName","ProteinDescription","ProteinAccession","PeptideSequence")}.}
+\item{useful_properties}{Character vector of column names of the data frame \code{df} that are useful in the further analysis and/or inspection of the data and should be retained. All columns that are not in \code{useful_properties}, \code{accession}, \code{quant_col}, \code{run_col} or \code{aggr_by} will be dropped. Defaults to \code{NULL}, in which case only \code{accession}, \code{quant_col}, \code{run_col} and \code{aggr_by} will be retained.}
 
 \item{filter}{A vector of names corresponding to the columns in the data frame \code{df} that contain a \code{filtersymbol} that indicates which rows should be removed from the data.
-Typical examples are contaminants or reversed sequences. Defaults to \code{"IsDecoy"}.}
+Typical examples are contaminants or reversed sequences. Defaults to \code{NULL}, indicating no filtering should be applied.}
 
-\item{filter_symbol}{A character indicating the symbol in the columns corresponding to the \code{filter} argument that is used to indicate rows that should be removed from the data. Defaults to "True".}
+\item{filter_symbol}{Only used when \code{filter} is not \code{NULL}. A character indicating the symbol in the columns corresponding to the \code{filter} argument that is used to indicate rows that should be removed from the data. Defaults to \code{NULL}.}
 
 \item{minIdentified}{A numeric value indicating the minimal number of times a peptide sequence should be identified in the dataset in order not to be removed. Defaults to 2.}
 

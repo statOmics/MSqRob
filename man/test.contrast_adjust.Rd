@@ -5,6 +5,7 @@
 \title{Test a contrast and perform FDR correction}
 \usage{
 test.contrast_adjust(protLM, L, level = 0.05, method = "fdr",
+  pcol = "pval", qname = "qval", Tcol = NULL, threshold_excess1 = 1e-90,
   add.annotations = TRUE, simplify = TRUE, lfc = 0, anova = FALSE,
   anova.na.ignore = TRUE, type_dfs = "residual", custom_dfs = NULL,
   exp_unit = NULL, pars_between = NULL, lmerModFun = NULL,
@@ -18,7 +19,15 @@ test.contrast_adjust(protLM, L, level = 0.05, method = "fdr",
 
 \item{level}{The significance level at which the q-value needs to be controlled. Defaults to 5\%.}
 
-\item{method}{Correction method. Can be abbreviated. Defaults to "fdr". To get all available methods, type \code{p.adjust.methods}. For more information on these methods, see the \code{\link{p.adjust}} function.}
+\item{method}{Correction method. Can be abbreviated. Defaults to \code{"fdr"}. To get all available methods, type \code{c("fdrtool", p.adjust.methods)}. For more information on the "fdrtool" method, check out the package \code{fdrtool} by Bernd Klaus and Korbinian Strimmer. For more information on the other methods, see the \code{\link{p.adjust}} function.}
+
+\item{pcol}{A character string or numeric index indicating the column containing the p-values. Defaults to \code{"pval"}.}
+
+\item{qname}{A character string indicating the name that will be given to the column containing the q-values. Defaults to \code{"qval"}.}
+
+\item{Tcol}{Only needed when \code{method = "fdrtool"}. A character string or numeric index indicating the column containing the T-values. Defaults to \code{NULL}.}
+
+\item{threshold_excess1}{A numeric value between 0 and 1 indicating the threshold at which correcting for an excess in p-values close to 1 should be performed. This is sometimes needed when a null distribution needs to be fitted. Note that the method still accounts for the total number of p-values when performing this correction. Only if there is, according to a binomial test, a significant enrichment of p-values above an automatically determined cut-off at the \code{threshold_excess1} significance level, a correction for enrichment in  p-values close to 1 will be performed. If you never want to correct for an excess in p-values close to 1, set \code{threshold_excess1} to \code{0}. If you always want to correct for an excess in p-values close to 1, set \code{threshold_excess1} to \code{1}. Defaults to \code{1e-90}.}
 
 \item{add.annotations}{A logical indicating whether the \code{annotations} slot of the \code{\link[=protLM-class]{protLM}} object should be added as extra columns to each matrix in the returned list of matrices. Defaults to \code{TRUE}.}
 
@@ -69,7 +78,9 @@ We offer different approximations and leave it up to the user to select his/her 
 \code{"custom"} Allows the user to provide his/her own degrees of freedom for each contrast and each protein. Custom degrees of freedom should be entered in the \code{custom_dfs} field.
 }
 \references{
-F. E. Satterthwaite.
-An Approximate Distribution of Estimates of Variance Components.
-Biometrics Bulletin, 1946.
+F. E. Satterthwaite. An Approximate Distribution of Estimates of Variance Components. Biometrics Bulletin, 1946.
+
+Strimmer, K. (2008a). A unified approach to false discovery rate estimation. BMC Bioinformatics 9: 303. Available from \url{http://www.biomedcentral.com/1471-2105/9/303/}.
+
+Strimmer, K. (2008b). fdrtool: a versatile R package for estimating local and tail area- based false discovery rates. Bioinformatics 24: 1461-1462. Available from \url{http://bioinformatics.oxfordjournals.org/cgi/content/abstract/24/12/1461}.
 }

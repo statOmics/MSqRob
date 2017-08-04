@@ -10,7 +10,7 @@ read_MaxQuant(file, pattern = "Intensity ", remove_pattern = TRUE,
 \arguments{
 \item{file}{The name of a MaxQuant peptides.txt file. For more details about how this argument can be specified, see \code{\link[utils]{read.table}}.}
 
-\item{pattern}{A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values. Defaults to "Intensity.".}
+\item{pattern}{A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values. Defaults to "Intensity ".}
 
 \item{remove_pattern}{A logical indicating whether the expression in "pattern" should be removed from the column names in the resulting \code{\link[=MSnSet-class]{MSnSet}} object. Defaults to \code{TRUE}.}
 
@@ -22,5 +22,10 @@ read_MaxQuant(file, pattern = "Intensity ", remove_pattern = TRUE,
 An object of class \code{\link[=MSnSet-class]{MSnSet}}.
 }
 \description{
-Imports a MaxQuant peptides.txt file and converts it into an \code{\link[=MSnSet-class]{MSnSet}} object.
+Imports a MaxQuant (Cox and Mann, 2008) peptides.txt file and converts it into an \code{\link[=MSnSet-class]{MSnSet}} object (Gatto et al., 2012).
+}
+\references{
+Gatto L, Lilley KS. MSnbase - an R/Bioconductor package for isobaric tagged mass spectrometry data visualization, processing and quantitation. Bioinformatics. 2012 Jan 15;28(2):288-9. \url{https://doi.org/10.1093/bioinformatics/btr645}.
+
+Cox, J. and Mann, M. MaxQuant enables high peptide identification rates, individualized p.p.b.-range mass accuracies and proteome-wide protein quantification. Nat Biotechnol, 2008, 26, pp 1367-72. \url{http://www.nature.com/nbt/journal/v26/n12/full/nbt.1511.html}.
 }
