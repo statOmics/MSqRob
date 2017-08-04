@@ -55,7 +55,7 @@ MSnSet2protdata <- function(MSnSet, accession, annotations=NULL, quant_name="qua
     intensities <- exprs[sel,,drop=FALSE]
     properties <- fData[sel,,drop=FALSE]
     #If for the same accession in an annation column, there would be multiple different values, just paste them together.
-    annotation_matrix[i,] <- apply(properties[,annotations, drop=FALSE], 2, function(x){paste0(unique(x))})
+    annotation_matrix[i,] <- matrix(as.character(unlist(lapply(properties[,annotations, drop=FALSE], function(x){paste0(unique(x), collapse="")}))),nrow=1)
     properties <- properties[,-which(colnames(properties) %in% c(colnames(properties[,accession,drop=FALSE]),colnames(properties[,annotations,drop=FALSE]))), drop=FALSE]
 
     quant_value <- as.vector(intensities)
@@ -64,12 +64,12 @@ MSnSet2protdata <- function(MSnSet, accession, annotations=NULL, quant_name="qua
 
     frame <- plyr::rbind.fill(framelist)
 
-    frame2 <- cbind(data.frame(quant_value=quant_value,frame), pData[rep(row.names(pData), each=nrow(intensities)), ])
+    frame2 <- cbind(data.frame(quant_value=quant_value,frame), pData[rep(row.names(pData), each=nrow(intensities)),,drop=FALSE])
     #Name the newly create intensity column.
     names(frame2)[1] <- quant_name
 
     #Removing NA
-    frame3 <- frame2[complete.cases(frame2[,1]),]
+    frame3 <- frame2[complete.cases(frame2[,1]),,drop=FALSE]
 
     datalist[[i]] <- frame3
   }

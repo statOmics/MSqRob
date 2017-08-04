@@ -264,7 +264,7 @@ setMethod("selectAccessions", "protdata",
 #' @param accessions A character or factor vector containing accessions.
 #' @return A numeric vector containing either the original numeric values or the numeric values corresponding to the position of each element of \code{i} in the \code{accessions} vector.
 index2Numeric <- function(i, accessions){
-  i[i %in% accessions] <- which(accessions %in% i)
+  i[i %in% accessions] <- match(i,accessions) #->this gives the right order, also for character vectors! #OLD: which(accessions %in% i)
   i <- as.numeric(i)
   if(anyDuplicated(i)){warning("Some accessions are selected multiple times!")}
   if(anyNA(i)){stop("You tried to select some accessions that were not present in the \"Accessions\" slot or you tried to select out of bounds indices.")}

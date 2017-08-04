@@ -2,7 +2,7 @@
 #'
 #' @description Fits a model to each protein of a \code{\link[=protdata-class]{protdata}} object and returns a corresponding \code{\link[=protLM-class]{protLM}} object.
 #' In its standard settings, the function returns a \code{\link[=protLM-class]{protLM}} object containing robust ridge models as described in Goeminne et al. (2015).
-#' However, the the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
+#' However, the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
 #' @param protdata A \code{\link[=protdata-class]{protdata}} object to which peptide-based models must be fitted. Note that factors should be coded as factors and numeric variables as numeric in each data slot.
 #' @param response The name of the column in the data slot of the \code{\link[=protdata-class]{protdata}} object that contains the response variable for the model, mostly the column containing the log2 transformed intensity values.
 #' @param fixed Either a vector of names corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables, or a right-hand sided fixed effects formula without intercept, which should be indicated in the argument \code{add.intercept}. \code{NULL} (the default) indicates that no fixed effects other than a possible fixed intercept are present in the model.
@@ -11,7 +11,7 @@
 #' @param shrinkage.fixed A numeric vector containing only 0 and/or 1 of length equal to the number of fixed effects, potential intercept included. The nth element in the shrinkage.fixed vector indicates whether the nth fixed effect should be shrunken (value 1) or not (value 0). If \code{add.intercept=TRUE}, the first element of the vector indicates the intercept. \code{shrinkage.intercept = NULL} (default) indicates all fixed effects except the intercept should be shrunken.
 #' @param weights The type of weighing that should be performed. Supported weighing methods incluce \code{"Huber"} (the default) for M estimation with Huber weights and \code{NULL} when no weighing should be applied. One can also supply a list of weights with length equal to the number of proteins in the \code{\link[=protdata-class]{protdata}} object. Each element of the list should either contain \code{"Huber"} or \code{NULL} or a numeric vector containing weights with length equal to the number of observations for that protein.
 #' @param k The tuning constant for the Huber mean when weighing down outliers. The default (\code{k = 1.345}) produces 95 \% efficiency relative to the sample mean when the population is normal but provides substantial resistance to outliers when it is not.
-#' @param par_squeeze Character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.
+#' @param par_squeeze A character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.
 #' @param squeezeVar A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.
 #' @param min_df A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}.
 #' @param robust_var A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}. Defaults to \code{TRUE}.
@@ -38,12 +38,9 @@
 #' @include dummyVars_MSqRob.R
 #' @include updateProgress.R
 #' @export
-fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting=NULL, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...)
+fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, robustM = FALSE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting=NULL, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...)
 {
-
-  #Control: fixed en random connot be NULL at the same time!
-  if(is.null(response)){stop("Please specify a response variable.")}
-  if(is.null(fixed) && is.null(random)){stop("Please specify appropriate fixed and/or random effects.")}
+  datalist <- getData(protdata, simplify=FALSE)
 
   fixed_input <- makeFormulaPredictors(fixed, add.intercept, effect="fixed")
   random_input <- makeFormulaPredictors(random, add.intercept, effect="random")
@@ -54,72 +51,40 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   formula_fix <- fixed_input[[2]]
   formula_ran <- random_input[[2]]
 
-  #Error control: fixed and random effects should be present as colnames in the data slot
-  #Random effects only checked if random is not NULL (see below)
-  possible_vars <- colnames(getData(protdata, simplify=FALSE)[[1]])
+  #If weights is a single element, turn it into a list
+  if(!is.list(weights)){weights <- rep(list(weights), length(datalist))}
 
-  #Correct for possible interactions (only used in error control that follows)
-  fixed_all <- unique(unlist(strsplit(fixed,":")))
-  if(!all(fixed_all %in% possible_vars)){
-    not_present <- which(!(fixed_all %in% possible_vars))
-    stop(paste0("The following fixed effects are no possible predictors: \"",paste0(fixed_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
-  }
-
-  if(length(response)!=1){stop("Please provide exactly one response variable.")}
-  if(!(response %in% possible_vars)){
-    stop(paste0("The response variable should be one of: \"",paste0(possible_vars, collapse="\", \""),"\"."))
-  }
-
-  #If an intercept is specified in either the fixed or the random part, an intercept should be added!
-  #add.intercept <- fixed_input[[3]] || random_input[[3]]
+  #Do checks for appropriate input values
+  errorCheckFit(possible_vars=colnames(datalist[[1]]), response, fixed, random, weights, n_prot=length(datalist))
 
   ### Initialize variables ###
 
   #Variables for when the model cannot be fit:
-  intercept_name <- "(Intercept)"
   intercept <- TRUE
-
-  modellist <- vector("list", length(getAccessions(protdata)))
-  data <- getData(protdata,simplify=FALSE)
 
   #######
 
-  #If weights is a single element, turn it into a list
-  if(!is.list(weights)){weights <- rep(list(weights), length(protdata))}
+  modellist <- vector("list", length(datalist))
 
-  #Check if length of weights equals length of protdata object
-  if(length(weights)!=length(protdata)){stop("The length of list \"weights\" should be equal to the number of proteins in the dataset.")}
-
-  if(!is.null(random)){
-
-    random_all <- unique(unlist(strsplit(random,":")))
-    if(!all(random_all %in% possible_vars)){
-      not_present <- which(!(random_all %in% possible_vars))
-      stop(paste0("The following random effects are no possible predictors: \"",paste0(random_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
-    }
-
-    #Initialize variables specifically for ridge models
-    beta <- as.numeric(NA)
-    intercept_val <- 1
+  #1. We need a mixed model (lme4 - lmer)
+  if(!is.null(random) || !all(shrinkage.fixed==0)){
 
     #Adjust names of predictors to make them similar to those of "lm"
     #In case of factors, the name of the factor is concatenated with the level of the factor
     #Also takes a bit of time with big datasets:
-    data <- .adjustNames(data, random)
+    datalist <- .adjustNames(datalist, random)
 
     #Fit the list of ridge models
-    modellist <- .createRidgeList(data,weights,response,fixed,shrinkage.fixed,formula_fix,random,formula_ran,add.intercept,intercept,intercept_val,intercept_name,k,tolPwrss,beta,verbose,progress=progress,printProgress=printProgress,shiny=shiny,message_fitting=message_fitting,...)
+    modellist <- .createRidgeList(datalist = datalist, weights = weights, response = response, fixed = fixed, shrinkage.fixed = shrinkage.fixed, formula_fix = formula_fix, random = random, formula_ran = formula_ran, add.intercept = add.intercept, intercept = intercept, intercept_name = "(Intercept)", k = k, robustM = robustM, tolPwrss = tolPwrss, verbose = verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, ...)
 
-  } else if(is.null(random)){
+    #2. We need a simple linear regression model (lm)
+  } else if(is.null(random) && all(shrinkage.fixed==0)){
 
     #Initialize variables specifically for OLS models
     formula <- formula(paste0(response,paste0(as.character(formula_fix), collapse="")))
-    intercept_val <- NA
-    terms <- formula
-    attributes(terms) <- list(variables=c(response, fixed), factors=rbind(rep(0,length(fixed)),diag(1, length(fixed))), term.labels=fixed, order=rep(1, length(fixed)), intercept=1, response=1)
 
     #Fit the list of lm models
-    modellist <- .createLmList(data,weights,formula,fixed,response,fixed,intercept,intercept_val,intercept_name,terms,k,tolPwrss,verbose,progress=progress,printProgress=printProgress,shiny=shiny,message_fitting=message_fitting,...)
+    modellist <- .createLmList(datalist = datalist, weights = weights, formula = formula, predictors = fixed, response = response, add.intercept = add.intercept, intercept_name = "(Intercept)", k = k, robustM = robustM, tolPwrss = tolPwrss, verbose = verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, ...)
 
   }
 
@@ -130,38 +95,151 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
 }
 
+
+#' Fit peptide-based models with a fast 2-stage approach
+#'
+#' @description Fits a model to each protein of a \code{\link[=protdata-class]{protdata}} object and returns a corresponding \code{\link[=protLM-class]{protLM}} object.
+#' In its standard settings, the function returns a \code{\link[=protLM-class]{protLM}} object containing robust ridge models as described in .......
+#' In the first stage, the data is summarized at the run level over different peptides. In a second stage, robust ridge models as described in Goeminne et al. (2016) are fitted to the data.
+#' However, for the second stage, the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
+#' @param protdata A \code{\link[=protdata-class]{protdata}} object to which peptide-based models must be fitted. Note that factors should be coded as factors and numeric variables as numeric in each data slot.
+#' @param response The name of the column in the data slot of the \code{\link[=protdata-class]{protdata}} object that contains the response variable for the model, mostly the column containing the log2 transformed intensity values.
+#' @param stage1 A character vector corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables which should be integrated over in the first stage. Typically these are only the peptide sequence effects.
+#' @param run A character vector corresponding to the column in the data slot of the \code{\link[=protdata-class]{protdata}} object that contains the level to which summarization needs to be done. This should typically be the name of the column that contains the mass spec runs.
+#' @param fixed Either a vector of names corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables, or a right-hand sided fixed effects formula without intercept, which should be indicated in the argument \code{add.intercept}. \code{NULL} (the default) indicates that no fixed effects other than a possible fixed intercept are present in the model.
+#' @param random Either a vector of names corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables or a right-hand sided random effects formula. Adding the peptide sequences as one of the random effects predictors is highly recommended as individual peptide effects are often quite strong. \code{NULL} (the default) indicates that no random effects are present in the model.
+#' @param add.intercept A logical value indicating whether the fitted models should contain a fixed intercept. If missing, the value is set to \code{TRUE}, indicating the intercept should be present in the model.
+#' @param shrinkage.fixed A numeric vector containing only 0 and/or 1 of length equal to the number of fixed effects, potential intercept included. The nth element in the shrinkage.fixed vector indicates whether the nth fixed effect should be shrunken (value 1) or not (value 0). If \code{add.intercept=TRUE}, the first element of the vector indicates the intercept. \code{shrinkage.intercept = NULL} (default) indicates all fixed effects except the intercept should be shrunken.
+#' @param weights The type of weighing that should be performed. Supported weighing methods incluce \code{"Huber"} (the default) for M estimation with Huber weights and \code{NULL} when no weighing should be applied. One can also supply a list of weights with length equal to the number of proteins in the \code{\link[=protdata-class]{protdata}} object. Each element of the list should either contain \code{"Huber"} or \code{NULL} or a numeric vector containing weights with length equal to the number of observations for that protein.
+#' @param k The tuning constant for the Huber mean when weighing down outliers. The default (\code{k = 1.345}) produces 95 \% efficiency relative to the sample mean when the population is normal but provides substantial resistance to outliers when it is not.
+#' @param par_squeeze A character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.
+#' @param squeezeVar A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.
+#' @param min_df A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}.
+#' @param robust_var A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}. Defaults to \code{TRUE}.
+#' @param tolPwrss A numeric value indicating the maximally tolerated deviation on the penalized weighted residual sum of squares when iteratively estimating the weights by M estimation.
+#' @param verbose A logical value indicating whether the models should be printed out. Defaults to \code{FALSE}.
+#' @param printProgress A logical indicating whether the R should print a message before fitting each model. Defaults to \code{FALSE}.
+#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
+#' @param message_fitting Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the fitting of the models, or \code{NULL} to hide the current message (if any).
+#' @param message_thetas Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_squeeze Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).
+#' @param message_update Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
+#' @param ... Other parameters to be passed to the model fitting function internally.
+#' @return A \code{\link[=protLM-class]{protLM}} object containing the names of all proteins in the input \code{\link[=protdata-class]{protdata}} object and their corresponding fitted models.
+#' @examples data(proteinsCPTAC, package="MSqRob")
+#' #Fitting models for the first 10 proteins in the protdata object proteinsCPTAC using the robust ridge approach of Goeminne et al. (2015):
+#' modelRRCPTAC <- fit.model(protdata=proteinsCPTAC[1:10], response="value", fixed="conc", random=c("Sequence","instrlab"), add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE)
+#' #Fitting models for the first 10 proteins in the protdata object proteinsCPTAC using an ordinary least squares approach (i.e. no shrinkage and no M estimation):
+#' modelLmCPTAC <- fit.model(protdata=proteinsCPTAC[1:10], response="value", fixed=c("conc","Sequence","instrlab"), random=NULL, add.intercept=TRUE, shrinkage.fixed=c(0,0,0), weights=NULL, k = 1.345, tolPwrss = 1e-10, verbose=FALSE)
+#' @references Ludger Goeminne, Kris Gevaert and Lieven Clement.
+#' Peptide-level robust ridge regression improves estimation, sensitivity and specificity in data-dependent quantitative label-free shotgun proteomics.
+#'  Molecular & Cellular Proteomics, 2016.
+#' @export
+fit.modelS2=function(protdata, response=NULL, stage1=NULL, run=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, robustM = FALSE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting=NULL, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...)
+{
+
+  fixed1 <- c(run,stage1) #Run must be first because we want each run to have a value (will be like that if there is no intercept)!!!
+
+  sums=fit.model(protdata, fixed=fixed1, response=response, squeezeVar=FALSE, add.intercept=FALSE, shrinkage.fixed=rep(0,length(fixed1)))
+
+  #Make a new datalist!
+
+  datalist <- getData(protdata, simplify=FALSE)
+  datalist <- .adjustNames(datalist, c(run, random))
+
+  datalist2 <- vector("list", length(datalist))
+
+  for(k in 1:length(datalist)){
+    lol <- datalist[[k]][!duplicated(datalist[[k]][[run]]),]
+    lol[[response]] <- getModels(sums[k])$coef[unique(datalist[[k]][[run]])]
+    lol2 <- lol[,(colnames(lol)!=stage1),drop=FALSE]
+    datalist2[[k]] <- lol2
+  }
+
+  protdata2 <- protdata
+
+  protdata2@data <- datalist2
+
+  protLM <- fit.model(protdata2, response=response, fixed=fixed, random=random, add.intercept=add.intercept, shrinkage.fixed=shrinkage.fixed, weights=weights, k=k, par_squeeze=par_squeeze, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var, robustM = robustM, tolPwrss = tolPwrss, verbose=verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, message_thetas=message_thetas, message_squeeze=message_squeeze, message_update=message_update, ...)
+
+  return(protLM)
+
+}
+
+errorCheckFit <- function(possible_vars, response, fixed, random, weights, n_prot){
+
+  #Error control: fixed and random effects should be present as colnames in the data slot ("possible_vars")
+
+  errorMsg <- NULL
+
+  #Control: fixed en random connot be NULL at the same time!
+  if(is.null(response)){errorMsg <- paste0(errorMsg, "\n\n", "Please specify a response variable.")}
+  if(is.null(fixed) && is.null(random)){errorMsg <- paste0(errorMsg, "\n\n", "Please specify appropriate fixed and/or random effects.")}
+
+  #Correct for possible interactions (only used in error control that follows)
+  errorMsg <- checkPredictors(errorMsg, fixed, possible_vars, "fixed")
+  errorMsg <- checkPredictors(errorMsg, random, possible_vars, "random")
+
+  if(length(response)!=1){errorMsg <- paste0(errorMsg, "\n\n", "Please provide exactly one response variable.")}
+  if(!(response %in% possible_vars)){
+    errorMsg <- paste0(errorMsg, "\n\n", paste0("The response variable should be one of: \"",paste0(possible_vars, collapse="\", \""),"\"."))
+  }
+
+  #Check if length of weights equals length of protdata object
+  if(length(weights)!=n_prot){errorMsg <- paste0(errorMsg, "\n\n", "The length of list \"weights\" should be equal to the number of proteins in the dataset.")}
+
+  if(!is.null(errorMsg)){stop(errorMsg)}
+}
+
+checkPredictors <- function(errorMsg, predictors, possible_vars, type_predictor){
+
+  if(!is.null(predictors)){
+    predictor_all <- unique(unlist(strsplit(predictors,":")))
+    if(!all(predictor_all %in% possible_vars)){
+      not_present <- which(!(predictor_all %in% possible_vars))
+      errorMsg <- paste0(errorMsg, "\n\n",paste0("The following ",type_predictor," effects are no possible predictors: \"",paste0(predictor_all[not_present], collapse="\", \""),"\". Please choose from the following predictors: \"",paste0(possible_vars, collapse="\", \""),"\"."))
+    }
+  }
+  return(errorMsg)
+}
+
 removeSingleLevels <- function(fixed, shrinkage.fixed, formula_fix, x, add.intercept){
 
   morelvls <- getMoreLevels(fixed, x)
-  fixed <- fixed[morelvls]
+  fixedOld <- fixed
+  fixed <- fixedOld[morelvls]
 
   if(isTRUE(add.intercept)){
     #If add.intercept==TRUE, add an intercept
     terms <- c(1,fixed)
     #Keep the shrinkage term for the intercept, add the other terms
     shrinkage.fixed <- c(shrinkage.fixed[1],(shrinkage.fixed[-1])[morelvls])
-  #If add.intercept==FALSE, no intercept
+    #If add.intercept==FALSE, no intercept
   }    else{
     terms <- c(-1,fixed)
     shrinkage.fixed <- shrinkage.fixed[morelvls]
-    }
+  }
 
-  formula_fix <- paste0(c("~",rep("",length(terms)-1)),terms, collapse="+")
+  #formula_fix <- paste0(c("~",rep("",length(terms)-1)),terms, collapse="+")
+  #Remove the ones with only one level from the formula. Advantage of this approach: also works for other formulae!
+  if(length(fixed)!=length(fixedOld)){
+  formula_fix <- do.call("update", list(as.formula(formula_fix),paste0("~ . - ",paste0(fixedOld[!morelvls], collapse = "-"))))
+  }
 
-  return(list(fixed, shrinkage.fixed, as.formula(formula_fix)))
+  return(list(fixed, shrinkage.fixed, formula_fix)) #as.formula(formula_fix)
 }
 
 getMoreLevels <- function(predictors, x){
   #return(unlist(lapply(predictors, function(y) length(levels(x[,y]))!=1)))
   if(is.null(predictors)){return(FALSE)
-    }else{
-  return(unlist(lapply(strsplit(predictors,":"), function(y) prod(unlist(lapply(x[,y,drop=FALSE], function(z) prod(length(unique(z))))))!=1)))
-    }
+  }else{
+    return(unlist(lapply(strsplit(predictors,":"), function(y) prod(unlist(lapply(x[,y,drop=FALSE], function(z) prod(length(unique(z))))))!=1)))
+  }
 }
 
 
 #A function to turn predictor variables into a formula
-makeFormulaPredictors <- function(input, intercept, effect){
+makeFormulaPredictors <- function(input, add.intercept, effect){
 
   #Check the input type: TRUE if formula, FALSE if vector, NA if NULL
   type <- grepl("~",input)[1]
@@ -180,20 +258,20 @@ makeFormulaPredictors <- function(input, intercept, effect){
       predictors <- all.vars(as.formula(formula))
     }
 
-  #If it's NULL (type==NA), only an intercept if there is one, else keep NULL
+    #If it's NULL (type==NA), only an intercept if there is one, else keep NULL
   }  else if(is.na(type)){
 
-    #If intercept==TRUE, add an intercept to the fixed effects, don't do it for random effects
-    if(isTRUE(intercept) && effect=="fixed"){
+    #If add.intercept==TRUE, add an intercept to the fixed effects, don't do it for random effects
+    if(isTRUE(add.intercept) && effect=="fixed"){
       formula <- "~1"
       #We return our predictors WITHOUT a possible intercept term
       predictors <- NULL
-    #If intercept==FALSE, no intercept
+      #If add.intercept==FALSE, no intercept
     }    else{
-    formula <- NULL
-    predictors <- NULL}
+      formula <- NULL
+      predictors <- NULL}
 
-  #If it's a vector (type==FALSE), turn it into a formula
+    #If it's a vector (type==FALSE), turn it into a formula
   }  else {
 
     #We return our predictors WITHOUT a possible intercept term
@@ -204,14 +282,14 @@ makeFormulaPredictors <- function(input, intercept, effect){
     #1. If it's fixed
     if(effect=="fixed"){
 
-      #If intercept==TRUE, add an intercept
-      if(isTRUE(intercept)){input <- c(1,input)
-      #If intercept==FALSE, no intercept
+      #If add.intercept==TRUE, add an intercept
+      if(isTRUE(add.intercept)){input <- c(1,input)
+      #If add.intercept==FALSE, no intercept
       }    else{input <- c(-1,input)}
 
       formula <- paste0(c("~",rep("",length(input)-1)),input, collapse="+")
 
-    #2. If it's random
+      #2. If it's random
     }  else if(effect=="random"){formula <- paste0(c("~(1|",rep("(1|",length(input)-1)),input, ")", collapse="+")}
 
   }
@@ -240,7 +318,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
 }
 
 #Create a list with fitted lm regression models
-.createLmList=function(data, weights, formula, predictors, response, fixed, intercept, intercept_val, intercept_name, terms, k, tolPwrss, verbose, progress=NULL, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
+.createLmList=function(datalist, weights, formula, predictors, response, add.intercept, intercept_name = "(Intercept)", k, robustM, tolPwrss, verbose, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
 
   progress <- NULL
   if(isTRUE(shiny)){
@@ -258,29 +336,34 @@ makeFormulaPredictors <- function(input, intercept, effect){
   mapply(function(x,y){
 
     count <<- count+1
-    updateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
+    updateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(datalist),"."), n=length(datalist), shiny=shiny, print=isTRUE(printProgress))
 
     n <- nrow(x)
     #If the weighs for this particular protein are of length 1, duplicate them to the correct length
     if(length(y)==1){y <- rep(y,n)}
 
+    #Remove fixed effects with only one level so that these models can be fit (interpretation is done when fitting contrasts!)
+    fixedTmp <- makeFormulaPredictors(formula, add.intercept, effect="fixed")[[1]]
+    templist <- removeSingleLevels(fixed=fixedTmp, shrinkage.fixed=rep(0, length(fixedTmp)), formula, x, add.intercept)
+    formulaAdj <- templist[[3]]
+
     return(
       tryCatch(
-        .lmEstM3(formula=formula,data=x,k=k,weights=y,tolWrss=tolPwrss,verbose=verbose,...)
+        .lmEstM3(formula=formulaAdj,data=x,k=k,weights=y,robustM=robustM,tolWrss=tolPwrss,verbose=verbose,...)
         , error=function(e){
-          return(.emptyLM(data,formula,x,y,predictors,response,intercept,intercept_val,intercept_name,n,terms))})
+          return(.emptyLM(formulaAdj,x,y,predictors,response,add.intercept,intercept_name,n))})
     )
 
-  }, data, weights, SIMPLIFY = FALSE)
+  }, datalist, weights, SIMPLIFY = FALSE)
 
 }
 
 #Function for OLS regression
-.lmEstM3=function(formula,data,k,weights,tolWrss = 1e-10,verbose=FALSE,...)
+.lmEstM3=function(formula,data,k,weights,robustM=TRUE,tolWrss = 1e-10,verbose=FALSE,...)
 {
 
   #If OLS regression with Huber weights:
-  if(!is.null(weights) && weights[1]=="Huber"){lmFit <- .huberLmFit(formula,data,k,tolWrss,verbose,...)}
+  if(!is.null(weights) && weights[1]=="Huber"){lmFit <- .huberLmFit(formula,data,k,robustM,tolWrss,verbose,...)}
 
   #Additional weighing options could be added here
 
@@ -307,7 +390,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
 
 
 #Create a list with fitted ridge regression models
-.createRidgeList=function(data, weights, response, fixed, shrinkage.fixed, formula_fix, random, formula_ran, add.intercept, intercept, intercept_val, intercept_name, k, tolPwrss, beta, verbose, progress=NULL, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
+.createRidgeList=function(datalist, weights, response, fixed, shrinkage.fixed, formula_fix, random, formula_ran, add.intercept, intercept, intercept_name = "(Intercept)", k, robustM, tolPwrss, verbose, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
 
   progress <- NULL
   if(isTRUE(shiny)){
@@ -324,45 +407,46 @@ makeFormulaPredictors <- function(input, intercept, effect){
   modellist <- mapply(function(x,y){
 
     count <<- count+1
-    updateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(data),"."), n=length(data), shiny=shiny, print=isTRUE(printProgress))
+    updateProgress(progress=progress, detail=paste0("Fitting model ",count," of ",length(datalist),"."), n=length(datalist), shiny=shiny, print=isTRUE(printProgress))
 
     n <- nrow(x)
     #If the weighs for this particular protein are of length 1, duplicate them to the correct length
     if(length(y)==1){y <- rep(y,n)}
 
-      parsedFormula <- .createParsedFormula(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix)
+    parsedFormula <- .createParsedFormula(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix)
 
-      #For models that cannot be fitted, factors with only one level should not be removed (as is being done in .createParsedFormula), as the model cannot be fitted anyways!
-      predictors2 <- unique(unlist(strsplit(c(fixed,random),":")))
-      ridgeModel <-
+    #For models that cannot be fitted, factors with only one level should not be removed (as is being done in .createParsedFormula), as the model cannot be fitted anyways!
+    predictors2 <- unique(unlist(strsplit(c(fixed,random),":")))
+    ridgeModel <-
 
-         tryCatch(
+      tryCatch(
 
         #Return a fitted lmerMod model with M estimation or fitted with given weights or NULL weights
         .ridgeEstM3(parsedFormula,
                     k = k,
+                    robustM = robustM,
                     tolPwrss = tolPwrss,
                     verbose = verbose, ...)
-       ,
+        ,
         #If the fitting fails, return an empty lmerMod object
-         error=function(e){
-           .emptylmerMod(data,parsedFormula,x,y,predictors2,response,intercept,intercept_val,intercept_name,n,beta)
-         })
+        error=function(e){
+          .emptylmerMod(parsedFormula,x,y,predictors2,response,intercept,intercept_name,n)
+        })
 
-      #Pass on attributes from parsedFormula
-      attr(ridgeModel,"MSqRob_R_fix") <- attr(parsedFormula,"MSqRob_R_fix")
-      attr(ridgeModel,"MSqRob_Q_fix") <- attr(parsedFormula,"MSqRob_Q_fix")
-      attr(ridgeModel,"MSqRob_Zt_indices") <- attr(parsedFormula,"MSqRob_Zt_indices")
-      attr(ridgeModel,"MSqRob_unshr_pos") <- attr(parsedFormula,"MSqRob_unshr_pos")
-      attr(ridgeModel,"MSqRob_levels") <- attr(parsedFormula,"MSqRob_levels")
-      attr(ridgeModel,"MSqRob_cnms") <- attr(parsedFormula,"MSqRob_cnms")
-      attr(ridgeModel,"MSqRob_Xp") <- attr(parsedFormula,"MSqRob_Xp")
-      attr(ridgeModel,"MSqRob_Gp") <- attr(parsedFormula,"MSqRob_Gp")
-      attr(ridgeModel,"MSqRob_XGp") <- attr(parsedFormula,"MSqRob_XGp")
-      attr(ridgeModel,"MSqRob_fullcnms") <- attr(parsedFormula,"MSqRob_fullcnms")
+    #Pass on attributes from parsedFormula
+    attr(ridgeModel,"MSqRob_R_fix") <- attr(parsedFormula,"MSqRob_R_fix")
+    attr(ridgeModel,"MSqRob_Q_fix") <- attr(parsedFormula,"MSqRob_Q_fix")
+    attr(ridgeModel,"MSqRob_Zt_indices") <- attr(parsedFormula,"MSqRob_Zt_indices")
+    attr(ridgeModel,"MSqRob_unshr_pos") <- attr(parsedFormula,"MSqRob_unshr_pos")
+    attr(ridgeModel,"MSqRob_levels") <- attr(parsedFormula,"MSqRob_levels")
+    attr(ridgeModel,"MSqRob_cnms") <- attr(parsedFormula,"MSqRob_cnms")
+    attr(ridgeModel,"MSqRob_Xp") <- attr(parsedFormula,"MSqRob_Xp")
+    attr(ridgeModel,"MSqRob_Gp") <- attr(parsedFormula,"MSqRob_Gp")
+    attr(ridgeModel,"MSqRob_XGp") <- attr(parsedFormula,"MSqRob_XGp")
+    attr(ridgeModel,"MSqRob_fullcnms") <- attr(parsedFormula,"MSqRob_fullcnms")
 
     return(ridgeModel)
-  }, data, weights, SIMPLIFY = FALSE)
+  }, datalist, weights, SIMPLIFY = FALSE)
   return(modellist)
 }
 
@@ -393,7 +477,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
   if(!is.null(fixed) && is.null(shrinkage.fixed)){
     shrinkage.fixed <- rep(1, length(fixed))
     if(isTRUE(add.intercept)){ #If shrinkage.fixed is NULL AND there is an intercept!!!
-    shrinkage.fixed <- c(0,shrinkage.fixed)
+      shrinkage.fixed <- c(0,shrinkage.fixed)
     }
   }
 
@@ -409,82 +493,83 @@ makeFormulaPredictors <- function(input, intercept, effect){
     ridgeGroupsForm <- NULL
     fixedUnshrForm <- paste0(fixed2, collapse="+")
 
-  #If there is at least one shrunken fixed effect
+    #If there is at least one shrunken fixed effect
   } else if(any(shrinkage.fixed!=0)){
 
-  #Make fixed design model matrix MM, this step is only because we need its attributes
-  MM <- model.matrix(formula_fix, data=x)
+    #Make fixed design model matrix MM, this step is only because we need its attributes
+    #If you find a bug here, check options("contrasts")$contrasts: unordered should be "contr.treatment" and definitely not "contr.ltfr_MSqRob"!
+    MM <- model.matrix(formula_fix, data=x)
 
-  #Make fixed design matrix
-  #design_fix <- Matrix::Matrix(MM)
+    #Make fixed design matrix
+    #design_fix <- Matrix::Matrix(MM)
 
-  #Wat we nodig hebben:
-  pred_assigned <- attr(MM, "assign")
-  pred_names <- attr(MM, "dimnames")[[2]]
+    #Wat we nodig hebben:
+    pred_assigned <- attr(MM, "assign")
+    pred_names <- attr(MM, "dimnames")[[2]]
 
-  groups <- unique(shrinkage.fixed[shrinkage.fixed!=0]) #select the groups that should get shrinkage
-  indices <- which(shrinkage.fixed %in% groups)
-  shrink <- pred_assigned %in% unique(pred_assigned)[indices]
+    groups <- unique(shrinkage.fixed[shrinkage.fixed!=0]) #select the groups that should get shrinkage
+    indices <- which(shrinkage.fixed %in% groups)
+    shrink <- pred_assigned %in% unique(pred_assigned)[indices]
 
-  #Decompose fixed design matrix that needs shrinkage
-  #qr_matrix <- Matrix::qr(design_fix[,shrink])
-  # Q_fix=tryCatch(Matrix::Matrix(Matrix::qr.Q(qr_matrix), sparse=TRUE), error=function(e){
-  #   return(Matrix(nrow=n, ncol=0, sparse=TRUE))
-  # })
-  # R_fix=suppressWarnings(tryCatch(Matrix::Matrix(Matrix::qr.R(qr_matrix), sparse=TRUE), error=function(e){ #qrR lukt niet altijd!
-  #   return(Matrix(nrow=0, ncol=0, sparse=TRUE))
-  # }))
+    #Decompose fixed design matrix that needs shrinkage
+    #qr_matrix <- Matrix::qr(design_fix[,shrink])
+    # Q_fix=tryCatch(Matrix::Matrix(Matrix::qr.Q(qr_matrix), sparse=TRUE), error=function(e){
+    #   return(Matrix(nrow=n, ncol=0, sparse=TRUE))
+    # })
+    # R_fix=suppressWarnings(tryCatch(Matrix::Matrix(Matrix::qr.R(qr_matrix), sparse=TRUE), error=function(e){ #qrR lukt niet altijd!
+    #   return(Matrix(nrow=0, ncol=0, sparse=TRUE))
+    # }))
 
-  Q_fix=tryCatch(Matrix::qr.Q(Matrix::qr(MM)), error=function(e){
-    return(matrix(nrow=n, ncol=0))
-  })
-  R_fix=tryCatch(Matrix::qr.R(Matrix::qr(MM)), error=function(e){
-    return(matrix(nrow=0, ncol=0))
-  })
+    Q_fix=tryCatch(Matrix::qr.Q(Matrix::qr(MM)), error=function(e){
+      return(matrix(nrow=n, ncol=0))
+    })
+    R_fix=tryCatch(Matrix::qr.R(Matrix::qr(MM)), error=function(e){
+      return(matrix(nrow=0, ncol=0))
+    })
 
-  #If R_fix has more columns than rows, make it square by adding zeros
-  #Check before: Q_fix%*%R_fix
-  missingcols <- diff(dim(R_fix))
-  if(missingcols!=0){
-    R_fix=rbind(R_fix,matrix(0,nrow=missingcols,ncol=ncol(R_fix)))
-    Q_fix=cbind(Q_fix,matrix(0,nrow=nrow(Q_fix),ncol=missingcols))
-  }
-  #Check after: Q_fix%*%R_fix (idem!)
+    #If R_fix has more columns than rows, make it square by adding zeros
+    #This happens when some predictors are perfectly linearly dependent
+    QR_fix <- addZerosQR(Q=Q_fix, R=R_fix)
+    Q_fix <- QR_fix[["Q"]]
+    R_fix <- QR_fix[["R"]]
 
-  ridgeGroupsForm <- NULL
-  if(length(groups)!=0){
-  ridgeGroups <- vector()
-  for(i in 1:length(groups)){
-    index <- which(shrinkage.fixed==groups[i])
-    fixed.names <- pred_names[pred_assigned %in% unique(pred_assigned)[index]]
-    if(n>=length(fixed.names)){
-      x[,paste0("ridgeGroup.", i)] <- factor(rep(fixed.names,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
-    }else{ #The case where you have more levels in your ridge group than observations; this sometimes happens when you include mutliple numeric variables, set ridgeGroup to NA, which will make the fit invalid!
-      x[,paste0("ridgeGroup.", i)] <- factor(rep(NA,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
+    ridgeGroupsForm <- NULL
+    if(length(groups)!=0){
+      ridgeGroups <- vector()
+      for(i in 1:length(groups)){
+        index <- which(shrinkage.fixed==groups[i])
+        fixed.names <- pred_names[pred_assigned %in% unique(pred_assigned)[index]]
+        if(n>=length(fixed.names)){
+          x[,paste0("ridgeGroup.", i)] <- factor(rep(fixed.names,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
+        }else{ #The case where you have more levels in your ridge group than observations; this sometimes happens when you include mutliple numeric variables, set ridgeGroup to NA, which will make the fit invalid!
+          x[,paste0("ridgeGroup.", i)] <- factor(rep(NA,length=n),levels=fixed.names) #moet gewoon als levels het aantal groepen hebben
+        }
+        ridgeGroups[i] <- paste0("ridgeGroup.", i)
+      }
+      ridgeGroupsForm <- paste0("+",paste0("(1 | ",ridgeGroups,")", collapse="+"))
     }
-    ridgeGroups[i] <- paste0("ridgeGroup.", i)
-  }
-    ridgeGroupsForm <- paste0("+",paste0("(1 | ",ridgeGroups,")", collapse="+"))
-  }
 
-  #If there are fixed effects that should not be shrunken on top of fixed effects that should be shrunken:
+    #If there are fixed effects that should not be shrunken on top of fixed effects that should be shrunken:
 
-  #position of unshrunken effects in Q_fix:
-  fixedUnshrForm <- NULL
+    #If there are no unshrunken fixed effects:
+    fixedUnshrForm <- "-1"
 
-  if(any(shrinkage.fixed==0)){
-  unshr_pos <- which(!shrink)
-  fixedUnshrGroups <- vector()
+    unshr_pos <- which(!shrink)
 
-  for(i in 1:length(unshr_pos)){
-  unshrunken_fixed_name <- fixed2[unshr_pos[i]]
-  if(unshrunken_fixed_name=="1"){unshrunken_fixed_name <- "Intercept_MSqRob"}
-  x[[unshrunken_fixed_name]] <- Q_fix[,unshr_pos[i],drop=FALSE]
-  fixedUnshrGroups[i] <- unshrunken_fixed_name
-  }
+    #If there are also unshrunken fixed effects next to shrunken fixed effects
+    #position of unshrunken effects in Q_fix:
+    if(any(shrinkage.fixed==0)){
+      fixedUnshrGroups <- vector()
 
-  fixedUnshrForm <- paste0("-1+",paste0(fixedUnshrGroups,collapse="+"))
-  }
+      for(i in 1:length(unshr_pos)){
+        unshrunken_fixed_name <- fixed2[unshr_pos[i]]
+        if(unshrunken_fixed_name=="1"){unshrunken_fixed_name <- "Intercept_MSqRob"}
+        x[[unshrunken_fixed_name]] <- Q_fix[,unshr_pos[i],drop=FALSE]
+        fixedUnshrGroups[i] <- unshrunken_fixed_name
+      }
+
+      fixedUnshrForm <- paste0("-1+",paste0(fixedUnshrGroups,collapse="+"))
+    }
 
   }
 
@@ -497,14 +582,14 @@ makeFormulaPredictors <- function(input, intercept, effect){
   environment(formula) <- e
 
   parsedFormula <- suppressWarnings(tryCatch(lme4::lFormula(formula, data=x, weights=.weight., control=lme4::lmerControl(check.nobs.vs.nlev = "ignore",
-                                                                                                check.nobs.vs.rankZ = "ignore",
-                                                                                                check.nobs.vs.nRE="ignore", check.nlev.gtr.1 = "ignore")),
-                            error=function(e){
-                              #warning(e)  #Outputting errors as warnings is not compatible with Shiny!!!
-                              parsedFormula <- list(formula=formula, fr=x)
-                              attr(parsedFormula,"MSqRob_fail") <- TRUE
-                              return(parsedFormula)
-                            }))
+                                                                                                                         check.nobs.vs.rankZ = "ignore",
+                                                                                                                         check.nobs.vs.nRE="ignore", check.nlev.gtr.1 = "ignore")),
+                                             error=function(e){
+                                               #warning(e)  #Outputting errors as warnings is not compatible with Shiny!!!
+                                               parsedFormula <- list(formula=formula, fr=x)
+                                               attr(parsedFormula,"MSqRob_fail") <- TRUE
+                                               return(parsedFormula)
+                                             }))
 
   if(isTRUE(attr(parsedFormula,"MSqRob_fail"))){error <- TRUE}
 
@@ -513,94 +598,96 @@ makeFormulaPredictors <- function(input, intercept, effect){
   #parsedFormula$fr <- cbind(parsedFormula$fr,x[,!(colnames(x) %in% colnames(parsedFormula$fr)), drop=FALSE])
 
   if(any(shrinkage.fixed!=0)  && !isTRUE(error)){
-  num_indices <- as.list(which(names(parsedFormula$reTrms$cnms) %in% ridgeGroups))
-  Zt_indices <- unlist(lapply(as.list(num_indices), function(z){return((parsedFormula$reTrms$Gp+1)[z]:parsedFormula$reTrms$Gp[z+1])}))
+    num_indices <- as.list(which(names(parsedFormula$reTrms$cnms) %in% ridgeGroups))
+    Zt_indices <- unlist(lapply(as.list(num_indices), function(z){return((parsedFormula$reTrms$Gp+1)[z]:parsedFormula$reTrms$Gp[z+1])}))
 
-  #Fixed effects together, peptide sequences together
-  parsedFormula$reTrms <- try(within(parsedFormula$reTrms, {
-    #cnms$ridgeGroups <- "fixed"
-    Zt[Zt_indices,] <- Matrix::t(Q_fix[,-unshr_pos,drop=FALSE]) #t(design_fix_shrink)
-  }), silent=TRUE)
+    #Fixed effects together, peptide sequences together
+    parsedFormula$reTrms <- try(within(parsedFormula$reTrms, {
+      #cnms$ridgeGroups <- "fixed"
+      if(length(unshr_pos)!=0){
+        Zt[Zt_indices,] <- Matrix::t(Q_fix[,-unshr_pos,drop=FALSE]) #t(design_fix_shrink)
+      } else{Zt[Zt_indices,] <- Matrix::t(Q_fix[,,drop=FALSE])}
+    }), silent=TRUE)
 
-  if(!inherits(parsedFormula$reTrms,'try-error')){
-  #Pass Q_fix, R_fix and Zt_indices as attributes
-  attr(parsedFormula,"MSqRob_R_fix") <- R_fix
-  attr(parsedFormula,"MSqRob_Q_fix") <- Q_fix
-  attr(parsedFormula,"MSqRob_Zt_indices") <- Zt_indices
-  attr(parsedFormula,"MSqRob_unshr_pos") <- unshr_pos
+    if(!inherits(parsedFormula$reTrms,'try-error')){
+      #Pass Q_fix, R_fix and Zt_indices as attributes
+      attr(parsedFormula,"MSqRob_R_fix") <- R_fix
+      attr(parsedFormula,"MSqRob_Q_fix") <- Q_fix
+      attr(parsedFormula,"MSqRob_Zt_indices") <- Zt_indices
+      attr(parsedFormula,"MSqRob_unshr_pos") <- unshr_pos
 
-  # oldContr <- options("contrasts")$contrasts
-  # contr.ltfr_old <- tryCatch(contr.ltfr, error=function(e){
-  #   return(contr.treatment)})
-  #
-  # contr.ltfr <- caret::contr.ltfr
-  # environment(contr.ltfr) <- environment(caret::contr.ltfr)
-  # newContr <- oldContr
-  # newContr["unordered"] <- "contr.ltfr"
-  # options(contrasts = newContr)
+      # oldContr <- options("contrasts")$contrasts
+      # contr.ltfr_old <- tryCatch(contr.ltfr, error=function(e){
+      #   return(contr.treatment)})
+      #
+      # contr.ltfr <- caret::contr.ltfr
+      # environment(contr.ltfr) <- environment(caret::contr.ltfr)
+      # newContr <- oldContr
+      # newContr["unordered"] <- "contr.ltfr"
+      # options(contrasts = newContr)
 
-  dummies <- dummyVars_MSqRob(formula_fix, data=x)
-  dummies$sep <- ""
-  attr(parsedFormula,"MSqRob_levels") <-  c(colnames(predict(dummies, newdata=x)),rownames(parsedFormula$reTrms$Zt[-Zt_indices,]))
+      dummies <- dummyVars_MSqRob(formula_fix, data=x)
+      dummies$sep <- ""
+      attr(parsedFormula,"MSqRob_levels") <-  c(colnames(predict(dummies, newdata=x)),rownames(parsedFormula$reTrms$Zt[-Zt_indices,]))
 
-  #
-  #colnames(model.matrix(dummies, data=x))
+      #
+      #colnames(model.matrix(dummies, data=x))
 
-  # options(contrasts = oldContr)
-  # contr.ltfr <- contr.ltfr_old
+      # options(contrasts = oldContr)
+      # contr.ltfr <- contr.ltfr_old
 
-  if(isTRUE(add.intercept)){attr(parsedFormula,"MSqRob_levels") <- c("(Intercept)",attr(parsedFormula,"MSqRob_levels"))}
+      if(isTRUE(add.intercept)){attr(parsedFormula,"MSqRob_levels") <- c("(Intercept)",attr(parsedFormula,"MSqRob_levels"))}
 
 
-  ####Piece of code only needed for attributes####
-  #Determine real cnms: replace ridgeGroups
-  cnms <- parsedFormula$reTrms$cnms
-  for(i in 1: length(groups)){
+      ####Piece of code only needed for attributes####
+      #Determine real cnms: replace ridgeGroups
+      cnms <- parsedFormula$reTrms$cnms
+      for(i in 1: length(groups)){
 
-    index <- which(shrinkage.fixed==groups[i])
+        index <- which(shrinkage.fixed==groups[i])
 
-    target <- which(names(cnms)==paste0("ridgeGroup.", i))
+        target <- which(names(cnms)==paste0("ridgeGroup.", i))
 
-    test <- rep("(Intercept)", length(index))
-    names(test) <- fixed2[index]
+        test <- rep("(Intercept)", length(index))
+        names(test) <- fixed[index]
 
-    cnms <- c(cnms[(1:length(cnms))<target,drop=FALSE], test, cnms[(1:length(cnms))>target,drop=FALSE])
-  }
-  attr(parsedFormula,"MSqRob_cnms") <-  cnms
+        cnms <- c(cnms[(1:length(cnms))<target,drop=FALSE], test, cnms[(1:length(cnms))>target,drop=FALSE])
+      }
+      attr(parsedFormula,"MSqRob_cnms") <-  cnms
 
-  #Determine real Gp (no ridgeGroups)
-  #pred_assigned is about everything in Z
+      #Determine real Gp (no ridgeGroups)
+      #pred_assigned is about everything in Z
 
-  #Give names to pred_assigned
-  pred_counter <- pred_assigned[1]
-  assign_counter <- 1
-  for(k in 1: length(pred_assigned)){
+      #Give names to pred_assigned
+      pred_counter <- pred_assigned[1]
+      assign_counter <- 1
+      for(k in 1: length(pred_assigned)){
 
-    if(pred_counter==pred_assigned[k]){
-    } else{
-      assign_counter <- assign_counter+1
+        if(pred_counter==pred_assigned[k]){
+        } else{
+          assign_counter <- assign_counter+1
+        }
+        names(pred_assigned)[k] <- fixed[assign_counter]
+        pred_counter <- pred_assigned[k]
+      }
+
+      test <- pred_assigned[shrink][order(match(names(pred_assigned[shrink]),names(cnms)))]+1
+      Gp <- numeric()
+      rest_indices <- Zt_indices
+
+      for(k in 1:length(indices)){
+        Gp[k] <- rest_indices[1]-1
+        rest_indices <- rest_indices[-(1:sum(test==test[1]))]
+        test <- test[-(1:sum(test==test[1]))]
+      }
+
+      Gp <- unique(sort(c(parsedFormula$reTrms$Gp, Gp)))
+      attr(parsedFormula,"MSqRob_Gp") <-  Gp
+      ##########
+
     }
-    names(pred_assigned)[k] <- fixed2[assign_counter]
-    pred_counter <- pred_assigned[k]
-  }
 
-  test <- pred_assigned[shrink][order(match(names(pred_assigned[shrink]),names(cnms)))]+1
-  Gp <- numeric()
-  rest_indices <- Zt_indices
-
-  for(k in 1:length(indices)){
-    Gp[k] <- rest_indices[1]-1
-    rest_indices <- rest_indices[-(1:sum(test==test[1]))]
-    test <- test[-(1:sum(test==test[1]))]
-  }
-
-  Gp <- unique(sort(c(parsedFormula$reTrms$Gp, Gp)))
-  attr(parsedFormula,"MSqRob_Gp") <-  Gp
-  ##########
-
-  }
-
-  #If all fixed effects are zero, there still needs to be an attribute called "MSqRob_levels"
+    #If all fixed effects are zero, there still needs to be an attribute called "MSqRob_levels"
   } else if(!isTRUE(error)){
     dummies <- dummyVars_MSqRob(formula_fix, data=x)
     dummies$sep <- ""
@@ -628,14 +715,16 @@ makeFormulaPredictors <- function(input, intercept, effect){
     #Give names to X_assigned
     pred_counter <- X_assigned[1]
     assign_counter <- 1
-    for(k in 1: length(X_assigned)){
+    if(length(X_assigned)>0){
+      for(k in 1:length(X_assigned)){
 
-      if(pred_counter==X_assigned[k]){
-      } else{
-        assign_counter <- assign_counter+1
+        if(pred_counter==X_assigned[k]){
+        } else{
+          assign_counter <- assign_counter+1
+        }
+        names(X_assigned)[k] <- fixed_X[assign_counter]
+        pred_counter <- X_assigned[k]
       }
-      names(X_assigned)[k] <- fixed_X[assign_counter]
-      pred_counter <- X_assigned[k]
     }
 
     Xp <- which(!duplicated(names(X_assigned)))-1
@@ -651,16 +740,37 @@ makeFormulaPredictors <- function(input, intercept, effect){
 }
 
 
+#This function adds zero columns to the Q matrix and zero rows to the R matrix in a QR decomposition so that both matrices become square.
+#Can also be used if only an R matrix is provided
+#Is only used when some predictors are perfectly linearly dependent
+addZerosQR <- function(Q=NULL, R){
+  #If R_fix has more columns than rows, make it square by adding zeros
+  #Check before: Q_fix%*%R_fix
+  missingcols <- diff(dim(R))
+  if(missingcols!=0){
+    if(!is.null(Q)){Q=cbind(Q, matrix(0, nrow=nrow(Q), ncol=missingcols))}
+    R=rbind(R, matrix(0, nrow=missingcols, ncol=ncol(R)))
+  }
+  #Check after: Q_fix%*%R_fix (idem!)
+  return(list(Q=Q, R=R))
+}
+
 
 #This function creates an empty LM object
-.emptyLM=function(data,formula,x,weights,predictors,response,intercept,intercept_val,intercept_name,n,terms){
+.emptyLM=function(formula,x,weights,predictors,response,add.intercept,intercept_name,n){
+
+  terms <- terms(formula)
+
   flist <- lapply(as.list(x[,predictors]),"factor")
-  times=sapply(flist, function(x){return(length(unique(x)))})
+  times <- vapply(flist, function(x){return(length(unique(x)))}, 0)
 
-  coefs <- c(intercept_val,rep(NA,sum(times-1)))
-  names(coefs) <- c(intercept_name,names(unlist(sapply(flist, function(x){return(unique(x)[-1])}))))
+  coefs <- rep(NA,sum(times))
 
-  emptyLM <- list(coefficients=coefs,residuals=rep(NA, n),fitted.values=rep(NA, n),effects=rep(NA, n),rank=sum(times-1)+as.numeric(intercept),weights=rep(1, n), qr=list(qr=matrix(NA,max(nrow(x),length(coefs)), length(coefs)), qraux=rep(NA, length(coefs)),pivot=rep(NA, length(coefs)),tol=NA,rank=length(coefs)),df.residual=n-(sum(times-1)+as.numeric(intercept)),call=call("lm(formula = formula, data = data, weights = weights)"),terms=terms,contrasts=NA,xlevels=NA,offset=NA,y=NA,x=NA,model=data.frame(x[c(response,predictors)], "(weights)"=rep(1, n), check.names=FALSE),na.action=NA)
+  if(isTRUE(add.intercept)){
+    names(coefs) <- c(intercept_name,names(unlist(sapply(flist, function(x){return(unique(x)[-1])}))))
+  }else {names(coefs) <- names(unlist(sapply(flist, function(x){return(unique(x))})))}
+
+  emptyLM <- list(coefficients=coefs,residuals=rep(NA, n),fitted.values=rep(NA, n),effects=rep(NA, n),rank=sum(times)-1+as.numeric(add.intercept),weights=rep(1, n), qr=list(qr=matrix(NA, nrow(x), length(coefs)), qraux=rep(NA, length(coefs)), pivot=1:length(coefs), tol=NA, rank=length(coefs)), df.residual=n-(sum(times)-1+as.numeric(add.intercept)),call=call("lm(formula = formula, data = x, weights = weights)"),terms=terms,contrasts=NA,xlevels=NA,offset=NA,y=NA,x=NA,model=data.frame(x[c(response,predictors)], "(weights)"=rep(1, n), check.names=FALSE),na.action=NA)
   class(emptyLM) <- "lm"
 
   return(emptyLM)
@@ -668,23 +778,27 @@ makeFormulaPredictors <- function(input, intercept, effect){
 
 
 #This function creates an empty lmerMod object
-.emptylmerMod=function(data,formula,x,y,predictors,response,intercept,intercept_val,intercept_name,n,beta){
+.emptylmerMod=function(formula,x,y,predictors,response,intercept,intercept_name,n){
+
+  #Initialize variables specifically for ridge models when the model cannot be fit:
+  beta <- as.numeric(NA)
+
   cnms <- rep(list("(Intercept)"),length(predictors))
   names(cnms) <- predictors
   flist <- lapply(as.list(x[,predictors]),"factor")
   attr(flist, "assign") <- seq(1,length(predictors))
   nrandom <- sum(sapply(predictors, function(y){return(length(unique(do.call('$',list(x,y)))))}))
   y <- do.call('$', list(x,response))
-  X <- matrix(intercept_val,nrow=length(y), dimnames=list(NULL,intercept_name))
+  X <- matrix(1,nrow=length(y), dimnames=list(NULL,intercept_name))
   Lind <- rep(1:length(predictors),times=sapply(flist, function(y){return(length(unique(y)))}))
-  emptylmerMod <- new("lmerMod", resp=new("lmerResp",Ptr="<externalptr>", mu=rep(NA,n),offset=rep(0,n),sqrtXwt=rep(1,n),sqrtrwt=rep(1,n),weights=rep(1,n),y=y),Gp=as.integer(0),call=call(paste0("lme4::lmer(formula = ","formula",", data = data, weights = weights)")),frame=x,flist=flist,cnms=cnms,lower=as.numeric(NA),theta=as.numeric(rep(NA, length(cnms))),beta=beta,u=rep(as.numeric(NA),nrandom),devcomp=list(dims=c(N=n,n=length(y),p=as.numeric(intercept),nmp=0,nth=1,q=nrandom,nAGQ=NA,compDev=TRUE,useSc=TRUE,reTrms=1,REML=1,GLMM=FALSE,NLMM=FALSE),cmp=c(ldL2=NA,ldRX2=NA,wrss=NA,ussq=NA,pwrss=NA,drsum=NA,REML=1,dev=NA,sigmaML=NA,sigmaREML=NA,tolPwrss=NA)),pp=new("merPredD",X=X,Zt=do.call("rbind", sapply(x[,predictors], Matrix::fac2sparse)),Lambdat=Matrix::Matrix(diag(nrandom),sparse=TRUE),Lind=Lind,theta=as.numeric(rep(NA, length(cnms))),n=1),optinfo=list(optimizer="bobyqa",control=list(iprint=0),derivs=list(gradient=NA,Hessian=NA),conv=list(opt=0,lme4=list()),feval=NA,warnings=list(),val=NA))
+  emptylmerMod <- new("lmerMod", resp=new("lmerResp",Ptr="<externalptr>", mu=rep(NA,n),offset=rep(0,n),sqrtXwt=rep(1,n),sqrtrwt=rep(1,n),weights=rep(1,n),y=y),Gp=as.integer(0),call=call(paste0("lme4::lmer(formula = ","formula",", data = x, weights = weights)")),frame=x,flist=flist,cnms=cnms,lower=as.numeric(NA),theta=as.numeric(rep(NA, length(cnms))),beta=beta,u=rep(as.numeric(NA),nrandom),devcomp=list(dims=c(N=n,n=length(y),p=as.numeric(intercept),nmp=0,nth=1,q=nrandom,nAGQ=NA,compDev=TRUE,useSc=TRUE,reTrms=1,REML=1,GLMM=FALSE,NLMM=FALSE),cmp=c(ldL2=NA,ldRX2=NA,wrss=NA,ussq=NA,pwrss=NA,drsum=NA,REML=1,dev=NA,sigmaML=NA,sigmaREML=NA,tolPwrss=NA)),pp=new("merPredD",X=X,Zt=do.call("rbind", sapply(x[,predictors], Matrix::fac2sparse)),Lambdat=Matrix::Matrix(diag(nrandom),sparse=TRUE),Lind=Lind,theta=as.numeric(rep(NA, length(cnms))),n=1),optinfo=list(optimizer="bobyqa",control=list(iprint=0),derivs=list(gradient=NA,Hessian=NA),conv=list(opt=0,lme4=list()),feval=NA,warnings=list(),val=NA))
   return(emptylmerMod)
 }
 
 
 #This function adjusts the names for the factors in a data object
-.adjustNames=function(data, predictors){
-  data_adj <- lapply(data, function(x){
+.adjustNames=function(datalist, predictors){
+  datalist_adj <- lapply(datalist, function(x){
 
     for(i in 1:length(x[,predictors, drop=FALSE]))
     {
@@ -696,16 +810,16 @@ makeFormulaPredictors <- function(input, intercept, effect){
 
     return(x)
   })
-  return(data_adj)
+  return(datalist_adj)
 }
 
 
 #Function for ridge regression
-.ridgeEstM3=function(parsedFormula, k, tolPwrss = 1e-10, verbose=FALSE, ...)
+.ridgeEstM3=function(parsedFormula, k, robustM = robustM, tolPwrss = 1e-10, verbose=FALSE, ...)
 {
 
   #If ridge regression with Huber weights:
-  if(!is.null(parsedFormula$fr$`(weights)`[1]) && parsedFormula$fr$`(weights)`[1]=="Huber"){ridgeFit <- .huberRidgeFit(parsedFormula, k, tolPwrss = tolPwrss, verbose=verbose, ...)
+  if(!is.null(parsedFormula$fr$`(weights)`[1]) && parsedFormula$fr$`(weights)`[1]=="Huber"){ridgeFit <- .huberRidgeFit(parsedFormula, k, robustM = robustM, tolPwrss = tolPwrss, verbose=verbose, ...)
 
   #Additional weighing options could be added here using if else
 
@@ -739,7 +853,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
 }
 
 #Function for Ridge regression with M estimation
-.huberRidgeFit=function(parsedFormula, k, tolPwrss = 1e-10, verbose=FALSE, ...){
+.huberRidgeFit=function(parsedFormula, k, robustM=TRUE, tolPwrss = 1e-10, verbose=FALSE, ...){
 
   #Remove "Huber" from the `(weights)` column
   parsedFormula$fr$`(weights)` <- NULL
@@ -751,13 +865,15 @@ makeFormulaPredictors <- function(input, intercept, effect){
   devianceFunction <- tryCatch(do.call(lme4::mkLmerDevfun, parsedFormula), error=function(e){
     return(NULL)})
 
+  n <- nrow(parsedFormula$X)
+  p <- ncol(parsedFormula$X)
+
   repeat{
     pwrssold <- pwrssnew
 
     #!!!TryCatch aanpasssen enzo!!!
     parsedFormula$start <- start ###NEW!!!
 
-    p <- ncol(parsedFormula$X)
     environment(devianceFunction)$resp <- lme4:::mkRespMod(parsedFormula$fr, REML = p)
 
     #devianceFunction <- lme4:::mkdevfun(environment(devianceFunction), 0L)
@@ -786,19 +902,31 @@ makeFormulaPredictors <- function(input, intercept, effect){
 
     sqrLenU <- pp$sqrL(1)
     wrss    <- resp$wrss()
-    #pwrss
-    pwrssnew <- wrss + sqrLenU
+
+    if(isTRUE(robustM)){
+    #wrss + sqrLenU equals:
+    #sd(test@resp$wtres)^2*(n-1)+mean(test@resp$wtres)^2*n+test@pp$sqrL(1)
+    #Thus: robust version:
+    pwrssnew <- mad(resp$wtres)^2*(n-1)+median(resp$wtres)^2*n+pp$sqrL(1)
+
+    #!!!Important: please note that this is not the true pwrss anymore,
+    #just a robust derivative!
+
+    } else{
+      #pwrss
+      pwrssnew <- wrss + sqrLenU
+    }
 
     if(pwrssold-pwrssnew <= tolPwrss){
       break
     }
 
-    n <- nrow(pp$V)
-    p <- ncol(pp$V)
+    # n <- nrow(pp$V)
+    # p <- ncol(pp$V)
 
-    sigmaML <- pwrssnew/n
+    sigmaML <- pwrssnew/n #Or a robust derivative of sigmaML...!!!
     #sigma
-    sigma <- sqrt(unname(sigmaML*(n/(n-p))))
+    sigma <- sqrt(unname(sigmaML*(n/(n-p)))) #Or a robust derivative of sigma...!!!
     #theta
     theta <- pp$theta
 
@@ -834,7 +962,7 @@ makeFormulaPredictors <- function(input, intercept, effect){
 }
 
 #Function for linear model with M estimation
-.huberLmFit=function(formula,data,k=1.345,tolWrss = 1e-10,verbose=FALSE,...)
+.huberLmFit=function(formula, data, k=1.345, robustM=TRUE, tolWrss = 1e-10, verbose=FALSE,...)
 {
   formula <- as.formula(formula)
   wrssnew <- Inf
@@ -846,11 +974,17 @@ makeFormulaPredictors <- function(input, intercept, effect){
     wrssold <- wrssnew
     lmFit=lm(formula, data=data,weights=.weight.)
     summary <- summary(lmFit)
-    .weight.=MASS::psi.huber(summary$residuals/summary$sigma,k=k)
+    if(isTRUE(robustM)){
+      .weight.=MASS::psi.huber(summary$residuals/(mad(x)*sqrt(length(x)-1))/sqrt(test$df.residual),k=k) #The new, robust implementation
+      #Note:
+      #summary(test)$sigma==(sd(x)*sqrt(length(x)-1))/sqrt(test$df.residual)
+      #Thus: robust alternative: (mad(x)*sqrt(length(x)-1))/sqrt(test$df.residual)
+    } else {.weight.=MASS::psi.huber(summary$residuals/summary$sigma,k=k)} #The old implementation
     #Weighted residual sum of squares
     wrssnew <- sum(summary$residuals^2*.weight.) #136.4315
 
-    if(wrssold-wrssnew <= tolWrss){
+    #The "is.na" is for the cases where some, but not all factors are NA => model fitted but no residual dfs => no sigma
+    if(is.na(wrssold-wrssnew) || (wrssold-wrssnew <= tolWrss)){
       break
     }
   }
