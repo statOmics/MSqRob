@@ -33,6 +33,7 @@ Imports:
     preprocessCore,
     shiny,
     shinyjs,
+    shinythemes,
     statmod,
     svDialogs,
     utils,
