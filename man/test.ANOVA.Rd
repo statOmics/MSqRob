@@ -29,5 +29,5 @@ This function can test an ANOVA for multiple contrasts based on parameter estima
 ....
 }
 \references{
-ANOVA
+....
 }
