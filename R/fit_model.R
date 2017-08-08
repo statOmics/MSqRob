@@ -711,20 +711,20 @@ addZerosQR <- function(Q=NULL, R){
 
 #This function creates an empty lmerMod object
 .emptylmerMod=function(formula,x,y,predictors,response,intercept,intercept_name,n){
-
-  #Initialize variables specifically for ridge models when the model cannot be fit:
-  beta <- as.numeric(NA)
-
-  cnms <- rep(list("(Intercept)"),length(predictors))
-  names(cnms) <- predictors
-  flist <- lapply(as.list(x[,predictors]),"factor")
-  attr(flist, "assign") <- seq(1,length(predictors))
-  nrandom <- sum(sapply(predictors, function(y){return(length(unique(do.call('$',list(x,y)))))}))
-  y <- do.call('$', list(x,response))
-  X <- matrix(1,nrow=length(y), dimnames=list(NULL,intercept_name))
-  Lind <- rep(1:length(predictors),times=sapply(flist, function(y){return(length(unique(y)))}))
-  emptylmerMod <- new("lmerMod", resp=new("lmerResp",Ptr="<externalptr>", mu=rep(NA,n),offset=rep(0,n),sqrtXwt=rep(1,n),sqrtrwt=rep(1,n),weights=rep(1,n),y=y),Gp=as.integer(0),call=call(paste0("lme4::lmer(formula = ","formula",", data = x, weights = weights)")),frame=x,flist=flist,cnms=cnms,lower=as.numeric(NA),theta=as.numeric(rep(NA, length(cnms))),beta=beta,u=rep(as.numeric(NA),nrandom),devcomp=list(dims=c(N=n,n=length(y),p=as.numeric(intercept),nmp=0,nth=1,q=nrandom,nAGQ=NA,compDev=TRUE,useSc=TRUE,reTrms=1,REML=1,GLMM=FALSE,NLMM=FALSE),cmp=c(ldL2=NA,ldRX2=NA,wrss=NA,ussq=NA,pwrss=NA,drsum=NA,REML=1,dev=NA,sigmaML=NA,sigmaREML=NA,tolPwrss=NA)),pp=new("merPredD",X=X,Zt=do.call("rbind", sapply(x[,predictors], Matrix::fac2sparse)),Lambdat=Matrix::Matrix(diag(nrandom),sparse=TRUE),Lind=Lind,theta=as.numeric(rep(NA, length(cnms))),n=1),optinfo=list(optimizer="bobyqa",control=list(iprint=0),derivs=list(gradient=NA,Hessian=NA),conv=list(opt=0,lme4=list()),feval=NA,warnings=list(),val=NA))
-  return(emptylmerMod)
+    
+    #Initialize variables specifically for ridge models when the model cannot be fit:
+    beta <- as.numeric(NA)
+    
+    cnms <- rep(list("(Intercept)"),length(predictors))
+    names(cnms) <- predictors
+    flist <- lapply(as.list(x[,predictors,drop=FALSE]),"factor")
+    attr(flist, "assign") <- seq(1,length(predictors))
+    nrandom <- sum(sapply(predictors, function(y){return(length(unique(do.call('$',list(x,y)))))}))
+    y <- do.call('$', list(x,response))
+    X <- matrix(1,nrow=length(y), dimnames=list(NULL,intercept_name))
+    Lind <- rep(1:length(predictors),times=vapply(flist, function(y){return(length(unique(y)))},0))
+    emptylmerMod <- new("lmerMod", resp=new("lmerResp",Ptr="<externalptr>", mu=rep(NA,n),offset=rep(0,n),sqrtXwt=rep(1,n),sqrtrwt=rep(1,n),weights=rep(1,n),y=y),Gp=as.integer(0),call=call(paste0("lme4::lmer(formula = ","formula",", data = x, weights = weights)")),frame=x,flist=flist,cnms=cnms,lower=as.numeric(NA),theta=as.numeric(rep(NA, length(cnms))),beta=beta,u=rep(as.numeric(NA),nrandom),devcomp=list(dims=c(N=n,n=length(y),p=as.numeric(intercept),nmp=0,nth=1,q=nrandom,nAGQ=NA,compDev=TRUE,useSc=TRUE,reTrms=1,REML=1,GLMM=FALSE,NLMM=FALSE),cmp=c(ldL2=NA,ldRX2=NA,wrss=NA,ussq=NA,pwrss=NA,drsum=NA,REML=1,dev=NA,sigmaML=NA,sigmaREML=NA,tolPwrss=NA)),pp=new("merPredD",X=X,Zt=do.call("rbind", lapply(x[,predictors,drop=FALSE], Matrix::fac2sparse)),Lambdat=Matrix::Matrix(diag(nrandom),sparse=TRUE),Lind=Lind,theta=as.numeric(rep(NA, length(cnms))),n=1),optinfo=list(optimizer="bobyqa",control=list(iprint=0),derivs=list(gradient=NA,Hessian=NA),conv=list(opt=0,lme4=list()),feval=NA,warnings=list(),val=NA))
+    return(emptylmerMod)
 }
 
 
