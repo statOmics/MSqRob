@@ -67,7 +67,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   modellist <- vector("list", length(datalist))
 
   #1. We need a mixed model (lme4 - lmer)
-  if(!is.null(random) || !all(shrinkage.fixed==0)){
+  if(!is.null(random) || !(all(shrinkage.fixed==0) && is.numeric(shrinkage.fixed))){
 
     #Adjust names of predictors to make them similar to those of "lm"
     #In case of factors, the name of the factor is concatenated with the level of the factor
@@ -78,7 +78,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     modellist <- .createRidgeList(datalist = datalist, weights = weights, response = response, fixed = fixed, shrinkage.fixed = shrinkage.fixed, formula_fix = formula_fix, random = random, formula_ran = formula_ran, add.intercept = add.intercept, intercept = intercept, intercept_name = "(Intercept)", k = k, robustM = robustM, tolPwrss = tolPwrss, verbose = verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, ...)
 
     #2. We need a simple linear regression model (lm)
-  } else if(is.null(random) && all(shrinkage.fixed==0)){
+  } else if(is.null(random) && (all(shrinkage.fixed==0) && is.numeric(shrinkage.fixed))){
 
     #Initialize variables specifically for OLS models
     formula <- formula(paste0(response,paste0(as.character(formula_fix), collapse="")))
@@ -90,77 +90,6 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
   protLM <- new("protLM", accession=protdata@accession, model=modellist, annotation=protdata@annotation)
   protLM <- squeezePars(protLM, par_squeeze=par_squeeze, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var, printProgress=printProgress, shiny=shiny, message_thetas=message_thetas, message_squeeze=message_squeeze, message_update=message_update)
-
-  return(protLM)
-
-}
-
-
-#' Fit peptide-based models with a fast 2-stage approach
-#'
-#' @description Fits a model to each protein of a \code{\link[=protdata-class]{protdata}} object and returns a corresponding \code{\link[=protLM-class]{protLM}} object.
-#' In its standard settings, the function returns a \code{\link[=protLM-class]{protLM}} object containing robust ridge models as described in .......
-#' In the first stage, the data is summarized at the run level over different peptides. In a second stage, robust ridge models as described in Goeminne et al. (2016) are fitted to the data.
-#' However, for the second stage, the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
-#' @param protdata A \code{\link[=protdata-class]{protdata}} object to which peptide-based models must be fitted. Note that factors should be coded as factors and numeric variables as numeric in each data slot.
-#' @param response The name of the column in the data slot of the \code{\link[=protdata-class]{protdata}} object that contains the response variable for the model, mostly the column containing the log2 transformed intensity values.
-#' @param stage1 A character vector corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables which should be integrated over in the first stage. Typically these are only the peptide sequence effects.
-#' @param run A character vector corresponding to the column in the data slot of the \code{\link[=protdata-class]{protdata}} object that contains the level to which summarization needs to be done. This should typically be the name of the column that contains the mass spec runs.
-#' @param fixed Either a vector of names corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables, or a right-hand sided fixed effects formula without intercept, which should be indicated in the argument \code{add.intercept}. \code{NULL} (the default) indicates that no fixed effects other than a possible fixed intercept are present in the model.
-#' @param random Either a vector of names corresponding to the columns in the data slot of the \code{\link[=protdata-class]{protdata}} object containing the predictor variables or a right-hand sided random effects formula. Adding the peptide sequences as one of the random effects predictors is highly recommended as individual peptide effects are often quite strong. \code{NULL} (the default) indicates that no random effects are present in the model.
-#' @param add.intercept A logical value indicating whether the fitted models should contain a fixed intercept. If missing, the value is set to \code{TRUE}, indicating the intercept should be present in the model.
-#' @param shrinkage.fixed A numeric vector containing only 0 and/or 1 of length equal to the number of fixed effects, potential intercept included. The nth element in the shrinkage.fixed vector indicates whether the nth fixed effect should be shrunken (value 1) or not (value 0). If \code{add.intercept=TRUE}, the first element of the vector indicates the intercept. \code{shrinkage.intercept = NULL} (default) indicates all fixed effects except the intercept should be shrunken.
-#' @param weights The type of weighing that should be performed. Supported weighing methods incluce \code{"Huber"} (the default) for M estimation with Huber weights and \code{NULL} when no weighing should be applied. One can also supply a list of weights with length equal to the number of proteins in the \code{\link[=protdata-class]{protdata}} object. Each element of the list should either contain \code{"Huber"} or \code{NULL} or a numeric vector containing weights with length equal to the number of observations for that protein.
-#' @param k The tuning constant for the Huber mean when weighing down outliers. The default (\code{k = 1.345}) produces 95 \% efficiency relative to the sample mean when the population is normal but provides substantial resistance to outliers when it is not.
-#' @param par_squeeze A character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.
-#' @param squeezeVar A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.
-#' @param min_df A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}.
-#' @param robust_var A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}. Defaults to \code{TRUE}.
-#' @param tolPwrss A numeric value indicating the maximally tolerated deviation on the penalized weighted residual sum of squares when iteratively estimating the weights by M estimation.
-#' @param verbose A logical value indicating whether the models should be printed out. Defaults to \code{FALSE}.
-#' @param printProgress A logical indicating whether the R should print a message before fitting each model. Defaults to \code{FALSE}.
-#' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
-#' @param message_fitting Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the fitting of the models, or \code{NULL} to hide the current message (if any).
-#' @param message_thetas Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the extraction of the variances, or \code{NULL} to hide the current message (if any).
-#' @param message_squeeze Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the squeezing of the variances, or \code{NULL} to hide the current message (if any).
-#' @param message_update Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user during the updating of the models, or \code{NULL} to hide the current message (if any).
-#' @param ... Other parameters to be passed to the model fitting function internally.
-#' @return A \code{\link[=protLM-class]{protLM}} object containing the names of all proteins in the input \code{\link[=protdata-class]{protdata}} object and their corresponding fitted models.
-#' @examples data(proteinsCPTAC, package="MSqRob")
-#' #Fitting models for the first 10 proteins in the protdata object proteinsCPTAC using the robust ridge approach of Goeminne et al. (2015):
-#' modelRRCPTAC <- fit.model(protdata=proteinsCPTAC[1:10], response="value", fixed="conc", random=c("Sequence","instrlab"), add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, tolPwrss = 1e-10, verbose=FALSE)
-#' #Fitting models for the first 10 proteins in the protdata object proteinsCPTAC using an ordinary least squares approach (i.e. no shrinkage and no M estimation):
-#' modelLmCPTAC <- fit.model(protdata=proteinsCPTAC[1:10], response="value", fixed=c("conc","Sequence","instrlab"), random=NULL, add.intercept=TRUE, shrinkage.fixed=c(0,0,0), weights=NULL, k = 1.345, tolPwrss = 1e-10, verbose=FALSE)
-#' @references Ludger Goeminne, Kris Gevaert and Lieven Clement.
-#' Peptide-level robust ridge regression improves estimation, sensitivity and specificity in data-dependent quantitative label-free shotgun proteomics.
-#'  Molecular & Cellular Proteomics, 2016.
-#' @export
-fit.modelS2=function(protdata, response=NULL, stage1=NULL, run=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, robustM = FALSE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting=NULL, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...)
-{
-
-  fixed1 <- c(run,stage1) #Run must be first because we want each run to have a value (will be like that if there is no intercept)!!!
-
-  sums=fit.model(protdata, fixed=fixed1, response=response, squeezeVar=FALSE, add.intercept=FALSE, shrinkage.fixed=rep(0,length(fixed1)))
-
-  #Make a new datalist!
-
-  datalist <- getData(protdata, simplify=FALSE)
-  datalist <- .adjustNames(datalist, c(run, random))
-
-  datalist2 <- vector("list", length(datalist))
-
-  for(k in 1:length(datalist)){
-    lol <- datalist[[k]][!duplicated(datalist[[k]][[run]]),]
-    lol[[response]] <- getModels(sums[k])$coef[unique(datalist[[k]][[run]])]
-    lol2 <- lol[,(colnames(lol)!=stage1),drop=FALSE]
-    datalist2[[k]] <- lol2
-  }
-
-  protdata2 <- protdata
-
-  protdata2@data <- datalist2
-
-  protLM <- fit.model(protdata2, response=response, fixed=fixed, random=random, add.intercept=add.intercept, shrinkage.fixed=shrinkage.fixed, weights=weights, k=k, par_squeeze=par_squeeze, squeezeVar=squeezeVar, min_df=min_df, robust_var=robust_var, robustM = robustM, tolPwrss = tolPwrss, verbose=verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, message_thetas=message_thetas, message_squeeze=message_squeeze, message_update=message_update, ...)
 
   return(protLM)
 
@@ -573,7 +502,10 @@ makeFormulaPredictors <- function(input, add.intercept, effect){
 
   }
 
-  formula <- formula(paste0(response,"~",paste0(c(fixedUnshrForm,ridgeGroupsForm,"+",formula_ran[[2]]), collapse="")))
+  if(length(formula_ran)==0){part_ran <- NULL
+  } else{part_ran <- paste0("+",formula_ran[[2]], collapse="")}
+
+  formula <- formula(paste0(response,"~",paste0(c(fixedUnshrForm,ridgeGroupsForm,part_ran), collapse="")))
 
   #environment(formula) <- environment(weights)
   .weight. <- y
@@ -798,6 +730,8 @@ addZerosQR <- function(Q=NULL, R){
 
 #This function adjusts the names for the factors in a data object
 .adjustNames=function(datalist, predictors){
+
+  if(!is.null(predictors)){
   datalist_adj <- lapply(datalist, function(x){
 
     for(i in 1:length(x[,predictors, drop=FALSE]))
@@ -810,6 +744,7 @@ addZerosQR <- function(Q=NULL, R){
 
     return(x)
   })
+  } else{datalist_adj <- datalist}
   return(datalist_adj)
 }
 
