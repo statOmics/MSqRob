@@ -127,7 +127,7 @@ shinyServer(function(input, output, session) {
       NULL
     } else{
       # req(input$peptides)
-      as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="")))
+      make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote=""))))
     }
   })
   selectedFilter <- reactive({
@@ -146,7 +146,7 @@ shinyServer(function(input, output, session) {
   #from annotation file
   fixedOptions2 <- reactive({
     if(is.null(input$annotation$name)){
-      NULL
+      exp_annotation <- NULL
     } else{
       if(isTRUE(as.logical(grep(".xlsx[/\\]*$",input$annotation$name)))){
 
@@ -157,13 +157,15 @@ shinyServer(function(input, output, session) {
         #   test <- test[,!colSums(apply(test, 2, is.na))==nrow(test),drop=FALSE]
         #   return(test)
         # } else{
-        openxlsx::read.xlsx(annotationDatapath())
+        exp_annotation <- openxlsx::read.xlsx(annotationDatapath())
         # }
 
       } else{
-        read.table(annotationDatapath(), sep="\t", header=TRUE, row.names = NULL, quote="")
+        exp_annotation <- read.table(annotationDatapath(), sep="\t", header=TRUE, row.names = NULL, quote="")
       }
+      exp_annotation <- makeAnnotation(exp_annotation)
     }
+    return(exp_annotation)
   })
   #from peptides file (filterOptions)
   fixedOptions <- reactive({
