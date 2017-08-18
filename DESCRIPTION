@@ -36,7 +36,6 @@ Imports:
     shinythemes,
     statmod,
     svDialogs,
-    svglite,
     utils,
     vsn,
     miniUI,

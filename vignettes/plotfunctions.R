@@ -72,7 +72,6 @@ plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, 
   dimnames(pAUC)=list(colnames(L),names(resultobjectlist))
 
   library(zoo)
-  library(RSvgDevice)
 
   #Order everything by ordering of truth
   proteins2 <- proteins[names(truth)]
@@ -97,7 +96,7 @@ plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, 
     #YEAST:
     FPtot[[i]] <- sum(allnamespresent & !truth)
 
-    if(isTRUE(plotSVG)){devSVG(file.path(directory,paste0(filenames,i,".svg")), width=10, height=10)}
+    if(isTRUE(plotSVG)){grDevices::svg(file.path(directory,paste0(filenames,i,".svg")), width=10, height=10)}
 
     for(j in 1:length(resultobjectlist)){
 
