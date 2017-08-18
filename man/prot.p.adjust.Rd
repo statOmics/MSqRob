@@ -4,22 +4,27 @@
 \alias{prot.p.adjust}
 \title{Adjust P-values for Multiple Comparisons}
 \usage{
-prot.p.adjust(coefmatlist, method = "fdr", pcol = "pval", qname = "qval")
+prot.p.adjust(coefmatlist, method = "fdr", pcol = "pval", qname = "qval",
+  Tcol = NULL, threshold_excess1 = 1e-90)
 }
 \arguments{
-\item{coefmatlist}{Either a data frame containing a column with p-values or a list of such matrices.}
+\item{coefmatlist}{Either a data frame containing a column with p-values or a list of such matrices. A column with T-values is also necessary when \code{method = "fdrtool"}.}
 
-\item{method}{Correction method. Can be abbreviated. Defaults to "fdr". To get all available methods, type \code{p.adjust.methods}. For more information on these methods, see the \code{\link{p.adjust}} function.}
+\item{method}{Correction method. Can be abbreviated. Defaults to \code{"fdr"}. To get all available methods, type \code{c("fdrtool", p.adjust.methods)}. For more information on the "fdrtool" method, check out the package \code{fdrtool} by Bernd Klaus and Korbinian Strimmer. For more information on the other methods, see the \code{\link{p.adjust}} function.}
 
-\item{pcol}{A character string or numeric index indicating the column containing the p-values. Defaults to "pval".}
+\item{pcol}{A character string or numeric index indicating the column containing the p-values. Defaults to \code{"pval"}.}
 
-\item{qname}{A character string indicating the name that will be given to the column containing the q-values. Defaults to "qval".}
+\item{qname}{A character string indicating the name that will be given to the column containing the q-values. Defaults to \code{"qval"}.}
+
+\item{Tcol}{Only needed when \code{method = "fdrtool"}. A character string or numeric index indicating the column containing the T-values. Defaults to \code{NULL}.}
+
+\item{threshold_excess1}{A numeric value between 0 and 1 indicating the threshold at which correcting for an excess in p-values close to 1 should be performed. This is sometimes needed when a null distribution needs to be fitted. Note that the method still accounts for the total number of p-values when performing this correction. Only if there is, according to a binomial test, a significant enrichment of p-values above an automatically determined cut-off at the \code{threshold_excess1} significance level, a correction for enrichment in  p-values close to 1 will be performed. If you never want to correct for an excess in p-values close to 1, set \code{threshold_excess1} to \code{0}. If you always want to correct for an excess in p-values close to 1, set \code{threshold_excess1} to \code{1}. Defaults to \code{1e-90}.}
 }
 \value{
 Depending on the input, either a data frame or a list of data frames with an extra numeric column containing corrected p-values.
 }
 \description{
-Given data frame or a list of matrices with a column containing p-values, adds a column containing p-values adjusted using one of several methods.
+Given data frame or a list of matrices with a column containing p-values, adds one or more columns containing p-values adjusted using one or more methods.
 }
 \examples{
 #Create a contrast matrix L for investigating whether all 10 pairwise contrasts between conditions conc6A, conc6B, conc6D and conc6E differ from zero:

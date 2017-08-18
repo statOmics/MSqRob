@@ -18,4 +18,3 @@ A reduced \code{\link[=protLM-class]{protLM}} object containing only the element
 \description{
 Select certain elements from a \code{\link[=protLM-class]{protLM}} object based on one or more accession and/or numeric indices.
 }
-

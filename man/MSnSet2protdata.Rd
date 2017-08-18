@@ -4,7 +4,7 @@
 \alias{MSnSet2protdata}
 \title{MSnSet to protein data}
 \usage{
-MSnSet2protdata(MSnSet, accession, annotations = NULL,
+MSnSet2protdata(MSnSet, accession = NULL, annotations = NULL,
   quant_name = "quant_value", printProgress = FALSE, shiny = FALSE,
   message = NULL)
 }

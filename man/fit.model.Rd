@@ -7,7 +7,7 @@
 fit.model(protdata, response = NULL, fixed = NULL, random = NULL,
   add.intercept = TRUE, shrinkage.fixed = NULL, weights = "Huber",
   k = 1.345, par_squeeze = NULL, squeezeVar = TRUE, min_df = 1,
-  robust_var = TRUE, tolPwrss = 1e-10, verbose = FALSE,
+  robust_var = TRUE, robustM = FALSE, tolPwrss = 1e-10, verbose = FALSE,
   printProgress = FALSE, shiny = FALSE, message_fitting = NULL,
   message_thetas = NULL, message_squeeze = NULL, message_update = NULL,
   ...)
@@ -29,7 +29,7 @@ fit.model(protdata, response = NULL, fixed = NULL, random = NULL,
 
 \item{k}{The tuning constant for the Huber mean when weighing down outliers. The default (\code{k = 1.345}) produces 95 \% efficiency relative to the sample mean when the population is normal but provides substantial resistance to outliers when it is not.}
 
-\item{par_squeeze}{Character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.}
+\item{par_squeeze}{A character vector indicating which model parameters need to be squeezed. When squeezing random effects, provide their names. Fixed effects are present in shrinkage groups, e.g. ridgeGroup.1. If you want them to be squeezed as well, provide the names of the shrinkage groups that need to be squeezed. The default \code{NULL} indicates that no parameters will be squeezed.}
 
 \item{squeezeVar}{A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.}
 
@@ -61,7 +61,7 @@ A \code{\link[=protLM-class]{protLM}} object containing the names of all protein
 \description{
 Fits a model to each protein of a \code{\link[=protdata-class]{protdata}} object and returns a corresponding \code{\link[=protLM-class]{protLM}} object.
 In its standard settings, the function returns a \code{\link[=protLM-class]{protLM}} object containing robust ridge models as described in Goeminne et al. (2015).
-However, the the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
+However, the user can also specify to turn off the ridge regression and fit the models by ordinary least squares (OLS) and/or to turn off the down-weighing of outliers by M estimation with Huber weights and/or to turn off the Empirical Bayes squeezing of variances.
 }
 \examples{
 data(proteinsCPTAC, package="MSqRob")

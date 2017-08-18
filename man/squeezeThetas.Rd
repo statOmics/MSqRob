@@ -46,4 +46,3 @@ This can be done for residual variances, random effects or shrunken fixed effect
 \references{
 ....
 }
-

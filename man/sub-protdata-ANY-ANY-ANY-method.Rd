@@ -18,4 +18,3 @@ A reduced \code{\link[=protdata-class]{protdata}} object containing only the ele
 \description{
 Select certain elements from a \code{\link[=protdata-class]{protdata}} object based on one or more accession and/or numeric indices.
 }
-
