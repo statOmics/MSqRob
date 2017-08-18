@@ -31,54 +31,14 @@ Imports:
     openxlsx,
     plyr,
     preprocessCore,
+    RSvgDevice,
     shiny,
     shinyjs,
     shinythemes,
     statmod,
     svDialogs,
-    svglite,
     utils,
-    vsn,
-    miniUI,
-    htmltools,
-    mzR,
-    ProtGenerics,
-    BiocInstaller,
-    BiocParallel,
-    snow,
-    httpuv,
-    xtable,
-    htmlwidgets,
-    colorspace,
-    RColorBrewer,
-    dichromat,
-    munsell,
-    labeling,
-    affyio,
-    zlibbioc,
-    doParallel,
-    gtable,
-    scales,
-    tibble,
-    lazyeval,
-    reshape2,
-    affy,
-    impute,
-    pcaMethods,
-    mzID,
-    MALDIquant,
-    ggplot2,
-    XML,
-    minqa,
-    nloptr,
-    magrittr,
-    yaml,
-    stringr,
-    stringi,
-    foreach,
-    iterators,
-    Rcpp,
-    BiocGenerics
+    vsn
 Suggests:
     LFQbench,
     zoo,
@@ -110,24 +70,28 @@ Description: The MSqRob package allows a user to do quantitative protein-level
     A tutorial with MSqRob. Journal of Proteomics (in press).
 License: LGPL (>= 3)
 LazyData: TRUE
-URL: http://www.r-project.org, http://www.another.url, http://cran.r-
+URL: https://github.com/ludgergoeminne/MSqRob, http://cran.r-
     project.org/package=MSqRob
-BugReports: http://pkgname.bugtracker.url
-Collate:
+BugReports: https://github.com/ludgergoeminne/MSqRob, http://pkgname.bugtracker.url
+Collate: 
     'updateProgress.R'
     'preprocess_hlpFunctions.R'
     'preprocess_MaxQuant.R'
     'protdata.R'
     'MSnSet2protdata.R'
+    'addFactorInterations.R'
     'addVarFromVar.R'
     'countPeptides.R'
     'df2protdata.R'
     'dummyVars_MSqRob.R'
+    'fdrtool_subset.R'
     'protLM.R'
     'fit_model.R'
+    'fit_modelCounts.R'
     'getBetaVcovDf.R'
     'squeezeVarRob.R'
     'getBetaVcovDfList.R'
+    'importDIAData.R'
     'makeContrast.R'
     'preprocess_long.R'
     'preprocess_wide.R'
@@ -145,4 +109,4 @@ Collate:
     'test_contrast_adjust.R'
     'test_contrast_stagewise.R'
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
