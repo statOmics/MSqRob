@@ -8,7 +8,7 @@ Authors@R: c(
     "lieven.clement@UGent.be"),
     person("Lieven", "Clement", role = c("aut", "cre"), email =
     "lieven.clement@UGent.be"))
-Version: 0.6.4
+Version: 0.7.0
 Date: 2015-07-07
 Author: Ludger Goeminne [aut],
     Kris Gevaert [ctb],
@@ -31,6 +31,7 @@ Imports:
     openxlsx,
     plyr,
     preprocessCore,
+    RSvgDevice,
     shiny,
     shinyjs,
     shinythemes,
