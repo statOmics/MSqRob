@@ -65,6 +65,10 @@ df2protdata <- function(df, acc_col, quant_cols, quant_name="quant_value", run_n
   #Error checks
   check_expAnn(pData=pData, annotation_run=run_col_annot)
 
+
+  #Idee: samen pasten zoals bij annotations bij protdata
+  #annotation_matrix[i,] <- matrix(as.character(unlist(lapply(properties[,annotations, drop=FALSE], function(x){paste0(unique(x), collapse="")}))),nrow=1)
+
   for(i in 1:length(proteins)){
 
     #Select the rows that correspond to protein i
@@ -73,7 +77,7 @@ df2protdata <- function(df, acc_col, quant_cols, quant_name="quant_value", run_n
     intensities <- df[sel, quant_cols, drop=FALSE]
     #All that is not intensities nor proteins is properties
     properties <- df[sel,, drop=FALSE]
-    annotation_matrix[i,] <- apply(properties[,annotations, drop=FALSE], 2, function(x){paste0(unique(x))})
+    annotation_matrix[i,] <- apply(properties[,annotations, drop=FALSE], 2, function(x){paste0(unique(x), collapse="")})
     properties <- properties[,-which(colnames(properties) %in% c(colnames(df[,acc_col,drop=FALSE]),colnames(df[,annotations,drop=FALSE]),colnames(df[,quant_cols,drop=FALSE]))), drop=FALSE]
 
     #If there are multiple intensity columns, put them under each other.
@@ -103,6 +107,8 @@ df2protdata <- function(df, acc_col, quant_cols, quant_name="quant_value", run_n
     datalist[[i]] <- frame3
   }
 
-  protdata <- new("protdata", accession=proteins, data=datalist, annotation=annotation_matrix)
+  colnames(pData)[colnames(pData)==run_col_annot] <- run_name
+  protdata <- new("protdata", accession=proteins, data=datalist, annotation=annotation_matrix, pData=pData)
+
   return(protdata)
 }

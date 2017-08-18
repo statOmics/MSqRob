@@ -6,8 +6,8 @@
 #' @slot data A list of length \code{k} containing data frames with preprocessed intensity values in a single column and other covariates of interest in the other columns.
 
 setClass("protdata",
-         slots = list(accession="factor", data="list", annotation="matrix"),
-         prototype = list(accession=factor(), data=list(), annotation=matrix(nrow=0,ncol=0)))
+         slots = list(accession="factor", data="list", annotation="matrix", pData="data.frame"),
+         prototype = list(accession=factor(), data=list(), annotation=matrix(nrow=0,ncol=0), pData=data.frame()))
 
 #Validity check
 
@@ -147,6 +147,26 @@ setMethod("getAnnotations", "protdata",
 
           })
 
+setGeneric (
+  name= "getPData",
+  def=function(object,...){standardGeneric("getPData")}
+)
+
+#' Extract the annotation slot of a protdata object
+#'
+#' \code{getPData} extracts the \code{pData} slot from a \code{\link[=protdata-class]{protdata}} object.
+#' @param object A \code{\link[=protdata-class]{protdata}} object of which the \code{pData} slot needs to be extracted.
+#' @return A data frame containing the experimental annotation of the \code{\link[=protdata-class]{protdata}} object.
+#' @export
+setMethod("getPData", "protdata",
+          function(object){
+
+            pData <- object@pData
+            rownames(pData) <- rownames(object@pData)
+            return(pData)
+
+          })
+
 
 #' Select elements from a protdata object
 #'
@@ -162,7 +182,7 @@ setMethod("[", "protdata",
             }
             i <- index2Numeric(i,x@accession)
             #initialize(x, accessions=x@accessions[i], intensities=x@intensities[i,,drop=FALSE], properties=x@properties[i,])
-            new("protdata", accession=x@accession[i], data=x@data[i,drop = FALSE], annotation=x@annotation[i,,drop = FALSE])
+            new("protdata", accession=x@accession[i], data=x@data[i,drop = FALSE], annotation=x@annotation[i,,drop = FALSE], pData=x@pData)
           })
 
 
@@ -264,7 +284,7 @@ setMethod("selectAccessions", "protdata",
 #' @param accessions A character or factor vector containing accessions.
 #' @return A numeric vector containing either the original numeric values or the numeric values corresponding to the position of each element of \code{i} in the \code{accessions} vector.
 index2Numeric <- function(i, accessions){
-  i[i %in% accessions] <- which(accessions %in% i)
+  i[i %in% accessions] <- match(i,accessions) #->this gives the right order, also for character vectors! #OLD: which(accessions %in% i)
   i <- as.numeric(i)
   if(anyDuplicated(i)){warning("Some accessions are selected multiple times!")}
   if(anyNA(i)){stop("You tried to select some accessions that were not present in the \"Accessions\" slot or you tried to select out of bounds indices.")}

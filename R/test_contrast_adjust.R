@@ -4,7 +4,11 @@
 #' @param protLM An object of class \code{\link[=protLM-class]{protLM}}.
 #' @param L A contrast matrix with the parameter levels as rows and a column for each contrast.
 #' @param level	The significance level at which the q-value needs to be controlled. Defaults to 5\%.
-#' @param method Correction method. Can be abbreviated. Defaults to "fdr". To get all available methods, type \code{p.adjust.methods}. For more information on these methods, see the \code{\link{p.adjust}} function.
+#' @param method	Correction method. Can be abbreviated. Defaults to \code{"fdr"}. To get all available methods, type \code{c("fdrtool", p.adjust.methods)}. For more information on the "fdrtool" method, check out the package \code{fdrtool} by Bernd Klaus and Korbinian Strimmer. For more information on the other methods, see the \code{\link{p.adjust}} function.
+#' @param pcol A character string or numeric index indicating the column containing the p-values. Defaults to \code{"pval"}.
+#' @param qname A character string indicating the name that will be given to the column containing the q-values. Defaults to \code{"qval"}.
+#' @param Tcol Only needed when \code{method = "fdrtool"}. A character string or numeric index indicating the column containing the T-values. Defaults to \code{NULL}.
+#' @param threshold_excess1 A numeric value between 0 and 1 indicating the threshold at which correcting for an excess in p-values close to 1 should be performed. This is sometimes needed when a null distribution needs to be fitted. Note that the method still accounts for the total number of p-values when performing this correction. Only if there is, according to a binomial test, a significant enrichment of p-values above an automatically determined cut-off at the \code{threshold_excess1} significance level, a correction for enrichment in  p-values close to 1 will be performed. If you never want to correct for an excess in p-values close to 1, set \code{threshold_excess1} to \code{0}. If you always want to correct for an excess in p-values close to 1, set \code{threshold_excess1} to \code{1}. Defaults to \code{1e-90}.
 #' @param add.annotations A logical indicating whether the \code{annotations} slot of the \code{\link[=protLM-class]{protLM}} object should be added as extra columns to each matrix in the returned list of matrices. Defaults to \code{TRUE}.
 #' @param simplify A logical indicating wheter, if there is only one contrast, a matrix should be returned instead of a list containing one matrix. Defaults to \code{TRUE}.
 #' @param lfc The minimum (log2) fold-change that is considered scientifically meaningful. Defaults to \code{0}. Ignored when \code{anova = TRUE}.
@@ -31,18 +35,18 @@
 #' The \code{estimate} column contains the size estimate of the contrast, the \code{se} column contains the estimated standard error on the contrast, the \code{Tval} column contains the T-value corresponding to the contrast, the \code{pval} column holds the p-value corresponding to the contrast and the \code{qval} column holds the corrected p-values.
 #' Each matrix is sorted from smalles to largest \code{pval} with \code{NA} values at the bottom of the matrices.
 #' If \code{simplify=TRUE} and the \code{\link[=protLM-class]{protLM}} object contains only one element, the matrix is not present in a list.
-#' @references F. E. Satterthwaite.
-#' An Approximate Distribution of Estimates of Variance Components.
-#' Biometrics Bulletin, 1946.
+#' @references F. E. Satterthwaite. An Approximate Distribution of Estimates of Variance Components. Biometrics Bulletin, 1946.
+#' @references Strimmer, K. (2008a). A unified approach to false discovery rate estimation. BMC Bioinformatics 9: 303. Available from \url{http://www.biomedcentral.com/1471-2105/9/303/}.
+#' @references Strimmer, K. (2008b). fdrtool: a versatile R package for estimating local and tail area- based false discovery rates. Bioinformatics 24: 1461-1462. Available from \url{http://bioinformatics.oxfordjournals.org/cgi/content/abstract/24/12/1461}.
 #' @include testProtLMContrast.R
 #' @include updateProgress.R
 #' @include prot_p_adjust.R
 #' @include prot_signif.R
 #' @export
-test.contrast_adjust <- function(protLM, L, level = 0.05, method = "fdr", add.annotations = TRUE, simplify = TRUE, lfc = 0, anova = FALSE, anova.na.ignore = TRUE, type_dfs = "residual", custom_dfs = NULL, exp_unit = NULL, pars_between = NULL, lmerModFun = NULL, gradMethod = "simple", printProgress = FALSE, shiny = FALSE, message_extract = NULL, message_test = NULL)
+test.contrast_adjust <- function(protLM, L, level = 0.05, method = "fdr", pcol="pval", qname="qval", Tcol=NULL, threshold_excess1=1e-90, add.annotations = TRUE, simplify = TRUE, lfc = 0, anova = FALSE, anova.na.ignore = TRUE, type_dfs = "residual", custom_dfs = NULL, exp_unit = NULL, pars_between = NULL, lmerModFun = NULL, gradMethod = "simple", printProgress = FALSE, shiny = FALSE, message_extract = NULL, message_test = NULL)
 {
   contrasts <- test.protLMcontrast(protLM, L, add.annotations=add.annotations, simplify=simplify, lfc=lfc, anova=anova, anova.na.ignore=anova.na.ignore, type_dfs=type_dfs, custom_dfs=custom_dfs, exp_unit=exp_unit, pars_between=pars_between, lmerModFun = lmerModFun, gradMethod = gradMethod, printProgress=printProgress, shiny=shiny, message_extract=message_extract, message_test=message_test)
-  contrasts <- prot.p.adjust(contrasts, method=method)
-  contrasts <- prot.signif(contrasts, level=level)
+  contrasts <- prot.p.adjust(contrasts, method=method, pcol=pcol, qname=qname, Tcol=Tcol, threshold_excess1=threshold_excess1)
+  contrasts <- prot.signif(contrasts, level=level, qcol=qname, pcol=pcol)
   return(contrasts)
 }
