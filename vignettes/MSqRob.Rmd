@@ -136,7 +136,7 @@ pData(peptidesFranc)
 
 Now, we are going to create a data frame that contains the experimental annotation. This data frame should contain all explanatory variables that groups different runs together. This is important in order to be able to include factors on which you will do inference (such as treatment effects or effects over time, or, in our case: the effect of the genetic knock-out) as well as other factors that might have an influence (such as biological repeats, technical repeats and potential confounders such as batch effects).
 
-**Note that the "experimental annotation" can also be given as an Excel file or a tab delimited file!** This file should have the column names as a header (i.e. the first row in the file) and the same structure as the `exp_annotation` data frame we create below. If you have your experimental annotation in a file, just provide the filepath to this annotation file in the preprocess_MaxQuant function.
+**Note that the "experimental annotation" can also be given as an Excel file or a tab delimited file!** This file should have the column names as a header (i.e. the first row in the file) and the same structure as the `exp_annotation` data frame we create below. If you have your experimental annotation in a file, just provide the filepath to this annotation file in the `preprocess_MaxQuant` function.
 
 Also note that exactly one column in the experimental annotation should contain the names of the mass spec runs. These names should be equal to the names you entered in the "Experiment" column in MaxQuant (i.e. the column names of the `exprs` slot of the peptidesFranc `MSnSet` object). In our case, we will call this column "run" (see below). By default, MSqRob guesses this column by taking the only column of which its elements correspond to the column names of the `exprs` slot. If there is no such a column, or there are multiple such columns, MSqRob throws an error.
 
@@ -220,7 +220,7 @@ peptidesFranc2 <- preprocess_MaxQuant(peptidesFranc, accession="Proteins", exp_a
 
 1. Peptide intensities are (log2-)transformed (`logtransform=TRUE, base=2`).
 
-2. As a normalization approach, we choose to quantile normalize the peptide intensities (`normalisation="quantiles"`). Other options are `"sum"`, `"max"`, `"center.mean"`, `"center.median"`, `"quantiles.robust"`, `"vsn"` or `"none"` (see `MSnbase::normalise` for more information).
+2. As a normalization approach, we choose to quantile normalize the peptide intensities (`normalisation="quantiles"`). Other options are `"sum"`, `"max"`, `"center.mean"`, `"center.median"`, `"quantiles.robust"`, `"vsn"` or `"none"` (see `MSnbase::normalize` for more information).
 
 3. Handling overlapping protein groups (`smallestUniqueGroups=TRUE`): in our approach a peptide can map to multiple accessions (`accession="Proteins"`), as long as there is none of these proteins present in a smaller subgroup. Peptides that map to protein groups for wich also subgroups are present in the dataset are removed from the dataset. (Proteins in a protein group are separated by a `;`).
 
@@ -265,7 +265,7 @@ proteinsFranc2 <- addVarFromVar(proteinsFranc, basecol="run", name="techrep", ve
 proteinsFranc2
 ```
 
-###4. Fit the model and squeeze residual the variances
+###4. Fit the model
 
 Fit the robust ridge models for each protein. The `fit.model` function will fit a model to each protein in the `protdata` object `proteinsFranc`. The default setting `reg="ridge"` indicates that ridge regression should be used. The default setting `weights="Huber"` indicates that an M estimation algorithm should be used that assigns Huber weights to each peptide observation based on their residuals.
 
@@ -368,8 +368,8 @@ result_files_new$models <- protLMFranc
 result_files_new$levelOptions <- c("genotypeWT","genotypeKO")
 #Should contain all random effects
 result_files_new$random <- c("Sequence","biorep","run")
-#Should contain all fixed effects
-result_files_new$fixed <- c("genotype")
+#Should contain a list with all fixed and random effects
+result_files_new$plot2DependentVars <- as.list(c("genotype","Sequence","biorep","run"))
 
 #############################################################################################
 
@@ -648,7 +648,7 @@ The following preprocessing steps are executed in this order:
 
 1. Peptide intensities are log2-transformed (`logtransform=TRUE, base=2`).
 
-2. As a normalization approach, we choose to quantile normalize the peptide intensities (`normalisation="quantiles"`). Other options are `"sum"`, `"max"`, `"center.mean"`, `"center.median"`, `"quantiles.robust"`, `"vsn"` or `"none"` (see `MSnbase::normalise` for more information).
+2. As a normalization approach, we choose to quantile normalize the peptide intensities (`normalisation="quantiles"`). Other options are `"sum"`, `"max"`, `"center.mean"`, `"center.median"`, `"quantiles.robust"`, `"vsn"` or `"none"` (see `MSnbase::normalize` for more information).
 
 3. Handling overlapping protein groups (`smallestUniqueGroups=TRUE`): in our approach a peptide can map to multiple proteins, as long as there is none of these proteins present in a smaller subgroup. Peptides that map to protein groups for wich also subgroups are present in the dataset are removed from the dataset.
 
@@ -682,7 +682,7 @@ exprs(peptidesCPTAC3) <- exprs
 
 2. As a normalization approach, we choose to quantile normalize the peptide intensities.
 ```{r eval=TRUE}
-peptidesCPTAC3 <- normalise(peptidesCPTAC3, "quantiles")
+peptidesCPTAC3 <- normalize(peptidesCPTAC3, "quantiles")
 ```
 
 3. Handling overlapping protein groups: in our approach a peptide can map to multiple proteins,
@@ -757,7 +757,7 @@ all(pData(peptidesCPTAC2)==pData(peptidesCPTAC3), na.rm=TRUE)
 
 ###3. Convert the MSnSet object peptidesCPTAC2 into a protdata object proteinsCPTAC.
 
-**Caution:** this step might take some time! (5 - 10 minutes on our system).
+**Caution:** this step might take some time! (about 5 minutes on our system).
 The accession element denotes by which column the individual peptide observations should be grouped.
 
 ```{r eval=TRUE}
@@ -774,7 +774,7 @@ When your goal is to analyze the CPTAC data in the recommended way (i.e. a robus
 system.time(modelCPTAC_RR <- fit.model(protdata=proteinsCPTAC, response="quant_value", fixed=c("condition","lab"), random=c("Sequence","run"), shrinkage.fixed=NULL, weights="Huber", squeezeVar=TRUE))
 ```
 
-Caution: model fitting takes some time with large datasets! On our computer, fitting the robust ridge model took about 13 minutes.
+Caution: model fitting takes some time with large datasets! On our computer, fitting the robust ridge model took about 13 - 18 minutes.
 
 ###4.2. Save your results
 
@@ -933,94 +933,28 @@ ridgeSqM_custom <- prot.p.adjust(ridgeSqM_custom)
 ridgeSqM_custom <- prot.signif(ridgeSqM_custom)
 ```
 
+###6. Diagnostic plots and tables
 
-Extra: add a column containing 1 if the corresponding protein is a spiked-in UPS1 protein and 0 if it is a yeast protein.
-
-```{r eval=TRUE}
-lm_normal <- lapply(lm_normal, function(x){
-  x <- cbind(x,"ups"=grepl("UPS",rownames(x)))
-  return(x)
-  })
-
-lm_Sq <- lapply(lm_Sq, function(x){
-  x <- cbind(x,"ups"=grepl("UPS",rownames(x)))
-  return(x)
-})
-
-lm_SqM <- lapply(lm_SqM, function(x){
-  x <- cbind(x,"ups"=grepl("UPS",rownames(x)))
-  return(x)
-})
-
-ridge <- lapply(ridge, function(x){
-  x <- cbind(x,"ups"=grepl("UPS",rownames(x)))
-  return(x)
-})
-
-ridgeSq <- lapply(ridgeSq, function(x){
-  x <- cbind(x,"ups"=grepl("UPS",rownames(x)))
-  return(x)
-})
-
-ridgeSqM <- lapply(ridgeSqM, function(x){
-  x <- cbind(x,"ups"=grepl("UPS",rownames(x)))
-  return(x)
-})
-```
-
-###6. Create the summary tables "summary_lm" and the like
-
-Custom function for evaluating the performance of all methods on the CPTAC dataset.
+In order to be able to make diagnostic plots and tables, load the required functions from our GitHub page.
 
 ```{r eval=TRUE}
-makeSummary <- function(CPTACobject, upratio){
-
-  summary_object <- data.frame(bias0=rep(NA, 10),bias1=rep(NA, 10),sd0=rep(NA, 10),sd1=rep(NA, 10),mad0=rep(NA, 10),mad1=rep(NA, 10),RMSE0=rep(NA, 10),RMSE1=rep(NA, 10),TP5proc=rep(NA, 10),FP5proc=rep(NA, 10),TN5proc=rep(NA, 10),FN5proc=rep(NA, 10))
-
-  for(i in 1:10)
-  {
-
-    significante <- subset(CPTACobject[[i]], CPTACobject[[i]][,"qval"]<=0.05)
-    nonsignificante <- subset(CPTACobject[[i]], CPTACobject[[i]][,"qval"]>0.05)
-
-    waarden3 <- na.omit(CPTACobject[[i]])
-
-    #RMSE
-    summary_object$RMSE0[i] <- sqrt(mean(((subset(waarden3, waarden3[,"ups"]==0)[,"estimate"])-0)^2, na.rm=TRUE))
-    #bias:
-    summary_object$bias0[i] <- mean((subset(waarden3, waarden3[,"ups"]==0)[,"estimate"])-0, na.rm=TRUE)
-    #standard deviation:
-    summary_object$sd0[i] <- sd((subset(waarden3, waarden3[,"ups"]==0)[,"estimate"]), na.rm=TRUE)
-    #mad:
-    summary_object$mad0[i] <- mad((subset(waarden3, waarden3[,"ups"]==0)[,"estimate"]), na.rm=TRUE)
-
-    #RMSE
-    summary_object$RMSE1[i] <- sqrt(mean(((subset(waarden3, waarden3[,"ups"]==1)[,"estimate"])-upratio[i])^2, na.rm=TRUE))
-    #bias:
-    summary_object$bias1[i] <- mean((subset(waarden3, waarden3[,"ups"]==1)[,"estimate"])-upratio[i], na.rm=TRUE)
-    #standard deviation:
-    summary_object$sd1[i] <- sd((subset(waarden3, waarden3[,"ups"]==1)[,"estimate"]), na.rm=TRUE)
-    #standard deviation:
-    summary_object$mad1[i] <- mad((subset(waarden3, waarden3[,"ups"]==1)[,"estimate"]), na.rm=TRUE)
-
-    #TP:
-    summary_object$TP5proc[i] <- sum(significante[,"ups"])
-    #FP:
-    summary_object$FP5proc[i] <- length(significante[,"ups"])-sum(significante[,"ups"])
-    #FN:
-    summary_object$FN5proc[i] <- sum(nonsignificante[,"ups"])
-    #TN:
-    summary_object$TN5proc[i] <- length(nonsignificante[,"ups"])-sum(nonsignificante[,"ups"])
-
-  }
-
-  rownames(summary_object) <- names(CPTACobject)
-  
-  return(summary_object)
-}
+source("https://raw.githubusercontent.com/statOmics/MSqRob/master/vignettes/plotfunctions.R")
 ```
 
-Create a vector that contains the theoretical log2 fold changes of the spiked-in UPS1 proteins.
+### 6.1. Make diagnostic tables
+
+Extra: add a column containing TRUE if the corresponding protein is a spiked-in UPS1 protein and FALSE if it is a yeast protein. For this, we use the `addTPcol` function. `pattern` indicates for the pattern in the protein name that points to a true positive and `TPcolname` is the name to be given to the added column.
+
+```{r eval=TRUE}
+lm_normal <- addTPcol(lm_normal, pattern="UPS", TPcolname="ups")
+lm_Sq <- addTPcol(lm_Sq, pattern="UPS", TPcolname="ups")
+lm_SqM <- addTPcol(lm_SqM, pattern="UPS", TPcolname="ups")
+ridge <- addTPcol(ridge, pattern="UPS", TPcolname="ups")
+ridgeSq <- addTPcol(ridgeSq, pattern="UPS", TPcolname="ups")
+ridgeSqM <- addTPcol(ridgeSqM, pattern="UPS", TPcolname="ups")
+```
+
+The `makeSummary` function allows to evaluate the performance of all methods on the CPTAC dataset. For this, we need to create a vector that contains the theoretical log2 fold changes of the spiked-in UPS1 proteins.
 
 ```{r eval=TRUE}
 upratio <- c(1.565597,3.137504,4.744161,6.321928,1.571906,
@@ -1030,12 +964,12 @@ upratio <- c(1.565597,3.137504,4.744161,6.321928,1.571906,
 Create the summary objects.
 
 ```{r eval=TRUE}
-summary_lm <- makeSummary(lm_normal, upratio)
-summary_lmSq <- makeSummary(lm_Sq, upratio)
-summary_lmSqM <- makeSummary(lm_SqM, upratio)
-summary_ridge <- makeSummary(ridge, upratio)
-summary_ridgeSq <- makeSummary(ridgeSq, upratio)
-summary_ridgeSqM <- makeSummary(ridgeSqM, upratio)
+summary_lm <- makeSummary(lm_normal, upratio, TPcol="ups")
+summary_lmSq <- makeSummary(lm_Sq, upratio, TPcol="ups")
+summary_lmSqM <- makeSummary(lm_SqM, upratio, TPcol="ups")
+summary_ridge <- makeSummary(ridge, upratio, TPcol="ups")
+summary_ridgeSq <- makeSummary(ridgeSq, upratio, TPcol="ups")
+summary_ridgeSqM <- makeSummary(ridgeSqM, upratio, TPcol="ups")
 ```
 
 Results
@@ -1049,7 +983,22 @@ summary_ridgeSq
 summary_ridgeSqM
 ```
 
+### 6.2. Make ROC curves
+
+```{r eval=TRUE}
+colors <- c(1,2,3,4,5,6)
+resultobjectlist <- list(lm_normal,lm_Sq,lm_SqM,ridge,ridgeSq,ridgeSqM)
+
+truth <- summary_lm[[1]][,"ups"]
+names(truth) <- rownames(summary_lm[[1]])
+summary_objectlist <- lapply(resultobjectlist, function(x){return(makeSummary(x, upratio))})
+
+plotROC(resultobjectlist, summary_objectlist=summary_objectlist, proteins=proteinsCPTAC, truth=truth, colors=colors, plotSVG=FALSE)
+```
+
 ## References
+
+Gillet, L. C., Navarro, P., Tate, S., Röst, H., Selevsek, N., Reiter, L., Bonner, R., and Aebersold, R. (2012) Targeted Data Extraction of the MS/MS Spectra Generated by Data-independent Acquisition: A New Concept for Consistent and Accurate Proteome Analysis. Molecular & Cellular Proteomics 11(6), O111.016717.
 
 Goeminne, L. J. E., Argentini, A., Martens, L., and Clement, L. (2015) Summarization vs Peptide-Based Models in Label-Free Quantitative Proteomics: Performance, Pitfalls, and Data Analysis Guidelines. Journal of Proteome Research 14(6), pp 2457-2465.
 

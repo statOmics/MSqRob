@@ -2,10 +2,11 @@
 ###This file contains functions that allow for quick plotting of ROC curves!###
 ### .pfd, .png are unnecessary because we save in .svg => easily transferable to other formats!###
 
-addUPS <- function(result, pattern="UPS"){
+addTPcol <- function(result, pattern="UPS", TPcolname="ups"){
   result <- lapply(result, function(x){
     attr <- attr(x,"MSqRob_fdrtool")
-    x <- cbind(x,"ups"=grepl(pattern,rownames(x)))
+    x <- cbind(x,grepl(pattern,rownames(x)))
+    names(x)[ncol(x)] <- TPcolname
     attr(x,"MSqRob_fdrtool") <- attr
     return(x)
   })
@@ -131,12 +132,41 @@ plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, 
   return(list(AUC=AUC, pAUC=pAUC))
 }
 
-# plotMA_MSqRob=function(resultobject, proteins, directory=getwd(), filenames="MA_plots", main_names=NULL, plotSVG=FALSE){
-#
-#   for(i in 1:length(resultobject)){
-#
-#   }
-#
+plotMA_MSqRob=function(resultobject, proteins, quant_name="quant_value", qname="qval", level=0.05, addNames=FALSE, directory=getwd(), filenames="MA_plots", main_names=NULL, plotSVG=FALSE){
+
+  for(i in 1:length(resultobject)){
+  resultsSorted <- resultobject[[i]][as.character(getAccessions(proteins)),]
+
+  A = vapply(getData(proteins), function(x) mean(x[[quant_name]]),0)
+  names(A) = as.character(getAccessions(proteins))
+
+  #Extract the log2 fold change estimate from the contrastHeLa object
+  M = resultsSorted[,"estimate"]
+  names(M) = as.character(getAccessions(proteins))
+
+  plot(A,M, xlab="Average log2-expression", ylab="log2-fold-change")
+
+  #Plots a horizontal line at 0
+  abline(h=0, col="green", lwd=2)
+
+  #Plot the significant proteins in red
+  topProt = as.character(getAccessions(proteins)[which(resultsSorted[,qname]<level)])
+  points(A[topProt], M[topProt],col="red")
+
+  #Add the protein labels
+  if(isTRUE(addNames)){
+  text(A[topProt],M[topProt],labels=topProt,col="red",pos=4)
+  }
+
+  }
+
+}
+
+# plotVolcano_MSqRob <- function(){
+#   #Make the volcano plot
+#   plot(contrastHeLa[,"estimate"],-log10(contrastHeLa[,"pval"]), cex=0.3, main="MSqRob",xlab="log2 FC",ylab="-log10(p-value)")
+#   #Draw a red circle around the significant proteins
+#   points(contrastHeLa[topProt,"estimate"],-log10(contrastHeLa[topProt,"pval"]), col=2)
+#   #Add labels
+#   text(contrastHeLa[topProt,"estimate"],-log10(contrastHeLa[topProt,"pval"]),labels=topProt,col="red",pos=2)
 # }
-
-
