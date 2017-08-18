@@ -171,7 +171,7 @@ return(L2)
 }
 
 getXlevels=function(model, class){
-  if(class=="lm"){
+  if(class %in% c("lm")){
 
     xlevels <- vector()
     for(k in 1:length(model$xlevels))
@@ -187,7 +187,7 @@ getXlevels=function(model, class){
     #Alternatief: van de moment dat er een NA is, alles op NA zetten; nadeel: sommige modellen werken dan niet terwijl als je 1 observatie zou weglaten, ze wel zouden werken...
     #lmer does this automatically with its unshrunken fixed effects
 
-  } else if(class=="lmerMod"){
+  } else if(class %in% c("lmerMod")){
     xlevels <- unlist(attr(model,"MSqRob_levels"))
   }
 
@@ -309,7 +309,9 @@ devFun=function(lmerMod)
   #                                          "lower","flist","cnms","Gp")))
 
   reTrmsHlp=list(Zt=lmerMod3@pp$Zt,theta= lmerMod3@pp$theta,Lambdat= lmerMod3@pp$Lambdat, Lind=lmerMod3@pp$Lind,Gp=lmerMod3@Gp,lmerMod3@lower,flist=lmerMod3@flist, cnms=lmerMod3@cnms)
+
   return(lme4::mkLmerDevfun(lmerMod3@frame, lmerMod3@pp$X, reTrmsHlp, REML = TRUE, start = NULL))
+
 }
 
 

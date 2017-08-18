@@ -4,7 +4,36 @@ setGeneric (
   def=function(model, exp_unit=NULL, pars_between=NULL, ...){standardGeneric("getBetaVcovDf")}
 )
 
-#' Get beta, vcov, df and sigma from a general linear model
+.getBetaVcovDfLm <- function(model, exp_unit=NULL, pars_between=NULL){
+  beta <- as.matrix(model$coefficients,ncol=1)
+  vcov <- summary(model)$cov.unscaled
+  df <- getDf(model) #model$df.residual
+  sigma <- getSigma(model) #We use the MSqRob-defined sigma function instead of #summary(model)$sigma
+
+  #If you declare the experimental units, you can use a more conservative way to estimate the df, which we will give as df_exp
+  df_exp <- NULL
+  if(!is.null(exp_unit)){
+
+    #If the effects that consume dfs are not given, all effects are used
+    #This is not really advisable, mostly within-treatment effects (such as a Sequence effect) are present in the model:
+    if(is.null(pars_between)){
+      #Number of experimental units minus total number of parameters
+      df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-length(model$assign),0)
+
+      #Else, use the given pars_between
+    } else{
+      #Number of experimental units minus total number of parameters between treatments "pars_between" (to be declared by the user!)
+      #Zal afhangen van L => overweeg verplaatsen!!!
+      df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-sum(model$assign %in% which(names(model$xlevels) %in% pars_between) | model$assign==0),0)
+    }
+  }
+
+  returnlist <- list(beta=beta,vcov=vcov,df=df,sigma=sigma,df_exp=df_exp)
+
+  return(returnlist)
+}
+
+#' Get beta, vcov, df and sigma from an ordinary linear model
 #'
 #' @description This function returns a list containing the parameter estimates \code{beta}, the variance-covariance matrix \code{vcov},
 #' the residual degrees of freedom \code{df} and the residual standard deviation \code{sigma} based on a general linear model fitted by the \code{lm} function from the stats package.
@@ -21,60 +50,9 @@ setGeneric (
 #' @include protdata.R
 #' @include protLM.R
 #' @export
-setMethod("getBetaVcovDf", "lm", function(model, exp_unit=NULL, pars_between=NULL){
-  beta <- as.matrix(model$coefficients,ncol=1)
-  vcov <- summary(model)$cov.unscaled
-  df <- getDf(model) #model$df.residual
-  sigma <- getSigma(model) #We use the MSqRob-defined sigma function instead of #summary(model)$sigma
+setMethod("getBetaVcovDf", "lm", .getBetaVcovDfLm)
 
-  #If you declare the experimental units, you can use a more conservative way to estimate the df, which we will give as df_exp
-  df_exp <- NULL
-  if(!is.null(exp_unit)){
-
-    #If the effects that consume dfs are not given, all effects are used
-    #This is not really advisable, mostly within-treatment effects (such as a Sequence effect) are present in the model:
-    if(is.null(pars_between)){
-      #Number of experimental units minus total number of parameters
-      df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-length(model$assign),0)
-
-    #Else, use the given pars_between
-    } else{
-      #Number of experimental units minus total number of parameters between treatments "pars_between" (to be declared by the user!)
-      #Zal afhangen van L => overweeg verplaatsen!!!
-      df_exp <- pmax(length(unique(eval(model$call$data)[,exp_unit]))-sum(model$assign %in% which(names(model$xlevels) %in% pars_between) | model$assign==0),0)
-    }
-  }
-
-  returnlist <- list(beta=beta,vcov=vcov,df=df,sigma=sigma,df_exp=df_exp)
-
-  return(returnlist)
-})
-
-
-#' Get beta, vcov, df and sigma from a mixed model
-#'
-#' @description This function returns a list containing the parameter estimates \code{beta}, the variance-covariance matrix \code{vcov},
-#' the residual degrees of freedom \code{df} and the residual standard deviation \code{sigma} based on a mixed effects model fitted by the \code{lmer} function from the lme4 package.
-#' This function will only rarely be called by the end-user. When calculating these values for \code{\link[=protLM-class]{protLM}} objects, we recommend using the function \code{\link{getBetaVcovDfList}}.
-#' The variance covariance matrix is bias-adjusted, the degrees of freedom are calculated as the trace of the Hat matrix (Ruppert et al., 2003).
-#' @param model A linear mixed effects model object of class \code{\link[=lmerMod-class]{lmerMod}}.
-#' @param exp_unit The effect in the model that corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
-#' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_between}) from the number of treatments.
-#' @param pars_between Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
-#' @param Ginvoffset A numeric value indicating the offset added the the diagonal of the G matrix to prevent near-singularity. Defaults to \code{1e-18}.
-#' @return A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom and (4) a numeric value equal to the residual standard deviation of the model.
-#' @examples
-#' data(proteinsCPTAC, package="MSqRob")
-#' mixedmodel <- lmer(formula="value ~ 1 + (1|conc) + (1|instrlab) + (1|Sequence)",data=getData(proteinsCPTAC[2]))
-#' getBetaVcovDf(mixedmodel)
-#' @references David Ruppert, M.P. Want and R.J. Carroll.
-#' Semiparametric Regression.
-#'  Cambridge University Press, 2003.
-#' @include protdata.R
-#' @include protLM.R
-#' @export
-setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_between=NULL, Ginvoffset = 1e-18)
-{
+.getBetaVcovDfMermod <- function(model, exp_unit=NULL, pars_between=NULL, Ginvoffset = 1e-18){
   # condVar <- function(model) {
   #   s2 <- sigma(model)^2
   #   Lamt <- getME(model, "Lambdat")
@@ -227,8 +205,28 @@ setMethod("getBetaVcovDf", "lmerMod", function(model, exp_unit=NULL, pars_betwee
   returnlist <- list(beta=beta, vcov=vcov, df=df, sigma=sigma, df_exp=df_exp, df_pars=df_pars)
 
   return(returnlist)
-})
+}
 
-
-
-
+#' Get beta, vcov, df and sigma from a linear mixed model
+#'
+#' @description This function returns a list containing the parameter estimates \code{beta}, the variance-covariance matrix \code{vcov},
+#' the residual degrees of freedom \code{df} and the residual standard deviation \code{sigma} based on a mixed effects model fitted by the \code{lmer} function from the lme4 package.
+#' This function will only rarely be called by the end-user. When calculating these values for \code{\link[=protLM-class]{protLM}} objects, we recommend using the function \code{\link{getBetaVcovDfList}}.
+#' The variance covariance matrix is bias-adjusted, the degrees of freedom are calculated as the trace of the Hat matrix (Ruppert et al., 2003).
+#' @param model A linear mixed effects model object of class \code{\link[=lmerMod-class]{lmerMod}}.
+#' @param exp_unit The effect in the model that corresponds to the experimental unit. Only needed when one would like to calculate a more conservative way of estimating the degrees of freedom.
+#' The default way of estimating the degrees of freedom (\code{exp_unit=NULL}) subtracts the total number of observations by the trace of the Hat matrix. However, often, observations are not completely independent. A more conservative way (\code{df_exp}) is defining on which level the treatments were executed and substracting all degrees of freedom lost due to between-treatement effects (\code{pars_between}) from the number of treatments.
+#' @param pars_between Only used if exp_unit is not \code{NULL}. Character vector indicating all parameters in the model that are between-treatment effects in order to calculate a more conservative degrees of freedom (\code{df_exp}). If left to default (\code{NULL}), all parameters in the model will be asumed to be between-treatment effects (this is not adviced as the result will mostly be too conservative).
+#' @param Ginvoffset A numeric value indicating the offset added the the diagonal of the G matrix to prevent near-singularity. Defaults to \code{1e-18}.
+#' @return A list containing (1) a named column matrix beta containing the parameter estimates, (2) a named square variance-covariance matrix, (3) a numeric value equal to the residual degrees of freedom and (4) a numeric value equal to the residual standard deviation of the model.
+#' @examples
+#' data(proteinsCPTAC, package="MSqRob")
+#' mixedmodel <- lmer(formula="value ~ 1 + (1|conc) + (1|instrlab) + (1|Sequence)",data=getData(proteinsCPTAC[2]))
+#' getBetaVcovDf(mixedmodel)
+#' @references David Ruppert, M.P. Want and R.J. Carroll.
+#' Semiparametric Regression.
+#'  Cambridge University Press, 2003.
+#' @include protdata.R
+#' @include protLM.R
+#' @export
+setMethod("getBetaVcovDf", "lmerMod", .getBetaVcovDfMermod)

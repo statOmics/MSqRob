@@ -18,6 +18,8 @@
 #' protvalues <- prot.p.adjust(protvalues)
 #' #Assess the significance of the q-values:
 #' protvalues <- prot.signif(protvalues)
+#' @include fdrtool_subset.R
+#' @include prot_p_adjust.R
 #' @export
 prot.signif <- function(coefmatlist, level=0.05, qcol="qval", pcol="pval")
 {
@@ -35,6 +37,7 @@ prot.signif <- function(coefmatlist, level=0.05, qcol="qval", pcol="pval")
       if(!is.null(pcol)){y <- y[order(abs(y[,pcol]), decreasing = FALSE),]}
       #If there is a column with q-values, sort then on q-values (sometimes the order changes when performing stage-wise tests, e.g. different number of contrasts in first-stage ANOVA)
       if(!is.null(qcol)){y <- y[order(abs(y[,qcol]), decreasing = FALSE),]}
+      attr(y, "MSqRob_fdrtool") <- attr(x, "MSqRob_fdrtool")
       return(y)
     })
 

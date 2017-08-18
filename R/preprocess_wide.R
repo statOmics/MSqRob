@@ -43,6 +43,8 @@ preprocess_wide <- function(df, accession, split, exp_annotation = NULL, type_an
     progress$set(message = message, value = 0)
   }
 
+  ###!!!!!ADD PATTERN, niet "Intensity."!!!!!!!####
+
   #If quant_cols has length one => it is a pattern => select all columns corresponding to this pattern
   if(is.character(quant_cols) & length(quant_cols==1)){quant_cols <- colnames(df)[grepl("Intensity.",colnames(df))]}
 

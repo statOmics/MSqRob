@@ -42,7 +42,7 @@ getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_between=NULL, printPro
   #List of models:
   models <- getModels(protLM, simplify=FALSE)
   #Types of models: either "lmerMod" or "lm":
-  classes <- sapply(models, "class")
+  classes <- vapply(models, function(x){return(class(x)[1])},"class")
 
   if(length(models)!=length(classes)){stop("models and classes vectors should be of the same length.")}
 
@@ -55,7 +55,7 @@ getBetaVcovDfList <- function(protLM, exp_unit=NULL, pars_between=NULL, printPro
     if(classes[i] %in% c("lm","lmerMod"))  {
       betaVcovDfList[[i]] <- getBetaVcovDf(models[[i]], exp_unit=exp_unit, pars_between=pars_between)
     } else{
-      betaVcovDfList[[i]] <- NULL
+      #betaVcovDfList[[i]] <- NULL -> don't do this! This removes this level in the list completely!!! Just keep it at NULL!
       warning(paste0("classes[",i,"] is not equal to \"lm\" or \"lmerMod\". Returning NULL."))
     }
   }
