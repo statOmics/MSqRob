@@ -288,7 +288,7 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 {
 
   #Some older versions of MaxQuant use "Contaminant" instead of "Potential.contaminant"
-  if(!("Potential.contaminant" %in% colnames(Biobase::fData(MSnSet)))){filter[filter=="Potential.contaminant"] <- "Contaminant"}
+    if("Potential.contaminant" %in% filter && !("Potential.contaminant" %in% colnames(Biobase::fData(MSnSet)))){filter[filter=="Potential.contaminant"] <- "Contaminant"}
 
   details <- c("Log-transforming data",
                "Normalizing data",
