@@ -94,6 +94,7 @@ read_moFF <- function(file, pattern="sumIntensity_", remove_pattern=TRUE, shiny=
 #' @param logtransform A logical value indicating whether the intensities should be log-transformed. Defaults to \code{TRUE}.
 #' @param base A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.
 #' @param normalisation A character vector of length one that describes how to normalise the \code{\link[=MSnSet-class]{MSnSet}} object. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.
+#' @param weights Only used when \code{normalisation} is set to or "rlr", "loess.fast", "loess.affy" or "loess.pairs". A numeric vector of weights for each row in the MSnSet object to be used for the fitting during the normalisation step. Defaults to \code{NULL}.
 #' @param smallestUniqueGroups A logical indicating whether protein groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.
 #' @param split A character string that indicates the separator between protein groups. Only used when \code{smallestUniqueGroups} is set to \code{TRUE}.
 #' @param useful_properties The columns of the \code{\link{featureData}} slot that are useful in the further analysis and/or inspection of the data and should be retained. Defaults to \code{NULL}, in which case no additional columns will be retained.
@@ -115,7 +116,7 @@ read_moFF <- function(file, pattern="sumIntensity_", remove_pattern=TRUE, shiny=
 #' @include preprocess_hlpFunctions.R
 #' @include updateProgress.R
 #' @export
-preprocess_MSnSet <- function(MSnSet, accession="prot", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, split=NULL, useful_properties=NULL, filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL, details=NULL)
+preprocess_MSnSet <- function(MSnSet, accession, exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, split=NULL, useful_properties=NULL, filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL, details=NULL)
 {
   #Error control
 
@@ -161,9 +162,7 @@ preprocess_MSnSet <- function(MSnSet, accession="prot", exp_annotation=NULL, typ
   #Normalisation
   if(normalisation!="none"){
     updateProgress(progress=progress, detail=details[2], n=n, shiny=shiny, print=isTRUE(printProgress & (normalisation!="none")))
-
-    MSnSet <- tryCatch(
-      MSnbase::normalise(MSnSet, normalisation), error=function(e){stop("\"normalisation\" argument should be one of \"none\", \"sum\", \"max\", \"center.mean\", \"center.median\", \"quantiles\", \"quantiles.robust\", \"vsn\"")})
+    MSnSet <- .normaliseMSnSet(MSnSet, normalisation, weights)
   }
 
   #Our approach: a peptide can map to multiple proteins,
@@ -265,6 +264,7 @@ preprocess_MSnSet <- function(MSnSet, accession="prot", exp_annotation=NULL, typ
 #' @param logtransform A logical value indicating whether the intensities should be log-transformed. Defaults to \code{TRUE}.
 #' @param base A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.
 #' @param normalisation A character vector of length one that describes how to normalise the \code{\link[=MSnSet-class]{MSnSet}} object. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.
+#' @param weights Only used when \code{normalisation} is set to or "rlr", "loess.fast", "loess.affy" or "loess.pairs". A numeric vector of weights for each row in the MSnSet object to be used for the fitting during the normalisation step. Defaults to \code{NULL}.
 #' @param smallestUniqueGroups A logical indicating whether protein groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.
 #' @param useful_properties The columns of the \code{\link{featureData}} slot that are useful in the further analysis and/or inspection of the data and should be retained. Defaults to \code{c("Proteins","Sequence","PEP")}.
 #' @param filter A vector of names corresponding to the columns in the \code{\link{featureData}} slot of the \code{\link[=MSnSet-class]{MSnSet}} object that contain a \code{filtersymbol} that indicates which rows should be removed from the data.
@@ -284,11 +284,12 @@ preprocess_MSnSet <- function(MSnSet, accession="prot", exp_annotation=NULL, typ
 #' @include preprocess_hlpFunctions.R
 #' @include updateProgress.R
 #' @export
-preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties=c("Proteins","Sequence","PEP"), filter=c("Potential.contaminant","Reverse"), filter_symbol="+", minIdentified=2, remove_only_site=FALSE, file_proteinGroups=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL)
+preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, useful_properties=c("Proteins","Sequence","PEP"), filter=c("Potential.contaminant","Reverse"), filter_symbol="+", minIdentified=2, remove_only_site=FALSE, file_proteinGroups=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL)
 {
 
   #Some older versions of MaxQuant use "Contaminant" instead of "Potential.contaminant"
-    if("Potential.contaminant" %in% filter && !("Potential.contaminant" %in% colnames(Biobase::fData(MSnSet)))){filter[filter=="Potential.contaminant"] <- "Contaminant"}
+  #Condition "Potential.contaminant" %in% filter added to prevent filter=NULL turn into character(0)!!!
+  if("Potential.contaminant" %in% filter && !("Potential.contaminant" %in% colnames(Biobase::fData(MSnSet)))){filter[filter=="Potential.contaminant"] <- "Contaminant"}
 
   details <- c("Log-transforming data",
                "Normalizing data",
@@ -304,7 +305,7 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 
   if(!isTRUE(remove_only_site)){file_proteinGroups <- NULL}
 
-  MSnSet <- preprocess_MSnSet(MSnSet=MSnSet, accession=accession, exp_annotation=exp_annotation, type_annot=type_annot, logtransform=logtransform, base=base, normalisation=normalisation, smallestUniqueGroups=smallestUniqueGroups, split=";", useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified,
+  MSnSet <- preprocess_MSnSet(MSnSet=MSnSet, accession=accession, exp_annotation=exp_annotation, type_annot=type_annot, logtransform=logtransform, base=base, normalisation=normalisation, weights=weights, smallestUniqueGroups=smallestUniqueGroups, split=";", useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified,
                               external_filter_file=file_proteinGroups, external_filter_accession=external_filter_accession, external_filter_column=external_filter_column, colClasses=colClasses, printProgress=printProgress, shiny=shiny, message=message, details=details)
 
   #If pData is completely empty due to a lack of annotation, at least add the runs
@@ -332,6 +333,7 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 #' @param logtransform A logical value indicating whether the intensities should be log-transformed. Defaults to \code{TRUE}.
 #' @param base A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.
 #' @param normalisation A character vector of length one that describes how to normalise the \code{\link[=MSnSet-class]{MSnSet}} object. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.
+#' @param weights Only used when \code{normalisation} is set to or "rlr", "loess.fast", "loess.affy" or "loess.pairs". A numeric vector of weights for each row in the MSnSet object to be used for the fitting during the normalisation step. Defaults to \code{NULL}.
 #' @param smallestUniqueGroups A logical indicating whether protein groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.
 #' @param useful_properties The columns of the \code{\link{featureData}} slot that are useful in the further analysis and/or inspection of the data and should be retained. Defaults to \code{NULL}, in which case no additional columns will be retained.
 #' @param filter A vector of names corresponding to the columns in the \code{\link{featureData}} slot of the \code{\link[=MSnSet-class]{MSnSet}} object that contain a \code{filtersymbol} that indicates which rows should be removed from the data.
@@ -353,7 +355,7 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 #' @include preprocess_hlpFunctions.R
 #' @include updateProgress.R
 #' @export
-preprocess_moFF <- function(MSnSet, accession="prot", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", smallestUniqueGroups=TRUE, useful_properties="peptide", filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL){
+preprocess_moFF <- function(MSnSet, accession="prot", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, useful_properties="peptide", filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL){
 
   details <- c("Log-transforming data",
                "Normalizing data",
@@ -364,7 +366,7 @@ preprocess_moFF <- function(MSnSet, accession="prot", exp_annotation=NULL, type_
                paste0("Removing peptides identified less than ", minIdentified," times"),
                "Adding experimental annotation")
 
-  MSnSet <- preprocess_MSnSet(MSnSet=MSnSet, accession=accession, exp_annotation=exp_annotation, type_annot=type_annot, logtransform=logtransform, base=base, normalisation=normalisation, smallestUniqueGroups=smallestUniqueGroups, split=", ", useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified,
+  MSnSet <- preprocess_MSnSet(MSnSet=MSnSet, accession=accession, exp_annotation=exp_annotation, type_annot=type_annot, logtransform=logtransform, base=base, normalisation=normalisation, weights=weights, smallestUniqueGroups=smallestUniqueGroups, split=", ", useful_properties=useful_properties, filter=filter, filter_symbol=filter_symbol, minIdentified=minIdentified,
                               external_filter_file=external_filter_file, external_filter_accession=external_filter_accession, external_filter_column=external_filter_column, colClasses=colClasses, printProgress=printProgress, shiny=shiny, message=message, details=details)
 
   #If pData is completely empty due to a lack of annotation, at least add the runs
@@ -377,5 +379,53 @@ preprocess_moFF <- function(MSnSet, accession="prot", exp_annotation=NULL, type_
 
   return(MSnSet)
 }
+
+
+.normaliseMSnSet <- function(MSnSet, normalisation, weights=NULL){
+
+  if(!(normalisation) %in% c("none", "sum", "max", "center.mean", "center.median", "quantiles", "quantiles.robust", "vsn", "rlr", "loess.fast", "loess.affy", "loess.pairs")){
+    stop("\"normalisation\" argument should be one of \"none\", \"sum\", \"max\", \"center.mean\", \"center.median\", \"quantiles\", \"quantiles.robust\", \"vsn\", \"rlr\", \"loess.fast\", \"loess.affy\", \"loess.pairs\"")
+  } else if(normalisation %in% c("rlr", "loess.fast", "loess.affy", "loess.pairs")){ #WARNING: "loess.affy" and "loess.pairs" are deprecated because they remove all the NA values!!!
+
+    exprs <- exprs(MSnSet)
+
+    loess_choices <- c("fast", "affy", "pairs")
+    names(loess_choices) <- c("loess.fast", "loess.affy", "loess.pairs")
+
+    if(normalisation %in% names(loess_choices)){
+      exprsNorm <- limma::normalizeCyclicLoess(exprs, method = loess_choices[normalisation], weights=weights)
+    } else{ #if rlr
+      exprsNorm <- .normalizeRLR(exprs)
+    }
+
+    dimnames(exprsNorm) <- dimnames(exprs)
+
+    Biobase::exprs(MSnSet) <- exprsNorm
+
+  } else{
+    MSnSet <- MSnbase::normalise(MSnSet, normalisation)
+  }
+  return(MSnSet)
+}
+
+.normalizeRLR <- function(exprs, weights=NULL){
+  mediandata <- apply(exprs, 1, "median", na.rm = TRUE)
+  flag1 = 1
+  for (j in 1:ncol(exprs)) {
+    LRfit <- rlm(as.matrix(exprs[, j]) ~ mediandata, weights=weights, na.action = na.exclude)
+    Coeffs <- LRfit$coefficients
+    a <- Coeffs[2]
+    b <- Coeffs[1]
+    if (flag1 == 1) {
+      globalfittedRLR <- (exprs[, j] - b)/a
+      flag1 = 2
+    }
+    else {
+      globalfittedRLR <- cbind(globalfittedRLR, (exprs[, j] - b)/a)
+    }
+  }
+  return(globalfittedRLR)
+}
+
 
 
