@@ -233,10 +233,13 @@ shinyServer(function(input, output, session) {
   #   verbatimTextOutput(fixedOptions())
   # })
 
+  #Check waarom er nog altijd "Select accession" staat en niet "prot"!!!!
   selectedProteins <- reactive({
-    if(!c("Proteins") %in% filterOptions()) {
-      NULL
-    }else{"Proteins"}
+    if(!any(c("Proteins","prot") %in% filterOptions())) {
+      ""
+    }else{
+      c("Proteins","prot")[which(c("Proteins","prot") %in% filterOptions())[1]]
+      }
   })
 
   output$selectProteins <- renderUI({
