@@ -47,32 +47,32 @@ choose.dir2 <- function(default = NA, caption = NA) {
 }
 
 choose.dir_Linux <- function(default = NA, caption = NA) {
-  
+
   command = "zenity"
-  
+
   args1 = "--file-selection --directory"
-  
+
   if (!is.null(caption) && !is.na(caption) && nzchar(caption)) {
     prompt = sprintf(' with prompt \\"%s\\"', caption)
   } else {
     prompt = ''
   }
-  
+
   if (!is.null(default) && !is.na(default) && nzchar(default)) {
     default = path.expand(default) #sprintf(' default location \\"%s\\"', path.expand(default))
   } else {
     default = "/dev/null"
   }
-  
+
   suppressWarnings({
     path = system2(command, args = args1, stderr = default, stdout=TRUE)
   })
-  
+
   if (!is.null(attr(path, 'status')) && attr(path, 'status')) {
     # user canceled
     path = NA
   }
-  
+
   return(path)
 }
 
@@ -105,9 +105,13 @@ processInput <- function(input){
 
     if(isTRUE(as.logical(grep(".xlsx[/\\]*$",input$annotation$name)))){type_annot <- "xlsx"}
 
-    proteins <- gsub(" ",".",input$proteins)
-    annotations <- gsub(" ",".",input$annotations)
-    filter <- gsub(" ",".",input$filter)
+    proteins <- input$proteins
+    annotations <- input$annotations
+    filter <- input$filter
+
+    if(!is.null(proteins)){proteins <- gsub(" ",".",proteins)}
+    if(!is.null(annotations)){annotations <- gsub(" ",".",annotations)}
+    if(!is.null(filter)){filter <- gsub(" ",".",filter)}
 
     peptides <- input$peptides
 

@@ -27,7 +27,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 ############################################################################
 #Navigation bar with 3 panel:Input, preprocessing, quantification
 ############################################################################
-   navbarPage("MSqRob for MaxQuant data v 0.6.5", inverse=TRUE,
+   navbarPage("MSqRob Shiny App v 0.7.0", inverse=TRUE,
 
 
     ####################################
@@ -39,9 +39,9 @@ shinyUI(fluidPage(theme = "MSqRob.css",
     sidebarLayout(
     #Project name
   	sidebarPanel(
-  	  
+
   	  h3("Settings", class="MSqRob_topheader"),
-  	  
+
   	  div(class="MSqRob_input_container",
   	      list(
   	  tags$label("Project name", `for`="project_name", class="MSqRob_label"),
@@ -54,6 +54,17 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	      )
   	  ),
 
+  	div(class="MSqRob_input_container",
+  	    list(
+  	      tags$label("Input type", `for`="input_type", class="MSqRob_label"),
+  	      tags$button(id="button_input_type", tags$sup("[?]"), class="MSqRob_tooltip"),
+  	      selectInput("input_type", NULL, c("MaxQuant", "moFF", "tab-delimited", "xlsx"), width = '100%'),
+  	      hidden(helpText(id="tooltip_input_type",
+  	                      "Select the type of input.
+  	                      "))
+  	           )
+  	     ),
+
   	#Folder where everything will be saved
   	div(class="MSqRob_input_container",
   	    list(
@@ -64,7 +75,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	hidden(helpText(id="tooltip_outputFolder","Specify the folder where your output will be saved."))
   	    )
   	),
-  	
+
   	#Peptides.txt file
   	div(class="MSqRob_input_container",
   	    list(
@@ -74,7 +85,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	hidden(helpText(id="tooltip_peptides","Specify the location of your peptides.txt file."))
   	    )
   	),
-  	
+
   	#Annotation file
   	div(class="MSqRob_input_container",
   	    list(
@@ -85,7 +96,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 		)
 		)
   	),
-		
+
 		#Main panel with number of output and plots
 		mainPanel(width = 5,
 		          h3("Frequently asked questions", class="MSqRob_topheader"),
@@ -97,9 +108,9 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 		          )
 		          ),
               hidden(helpText(id="tooltip_newExpAnnText",
-                "An experimental annotation file contains the description of your experiment. 
+                "An experimental annotation file contains the description of your experiment.
                 Indeed, each mass spec run corresponds to e.g. a certain treatment, biological repeat, etc.
-                This should be told to MSqRob via an Excel file or a tab delimited file wherein the first column contains all run names 
+                This should be told to MSqRob via an Excel file or a tab delimited file wherein the first column contains all run names
                 and the other columns contain all predictors of interest.
                 Examples of experimental annotation files for the Francisella and CPTAC experiments can be found ",
                 a("here", href="https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/label-free_Francisella_annotation.xlsx"),
@@ -117,7 +128,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 		          )
 		          ),
 		          hidden(helpText(id="tooltip_cite",
-		          "MSqRob is free for you to use and completely open source. 
+		          "MSqRob is free for you to use and completely open source.
 		          When making use of MSqRob, we would appreciate it if you could cite our two published articles.",
 		          br(),
 		          span("(1) The MSqRob algorithm: ", class="bold"),
@@ -129,8 +140,8 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 		          span("(2) The MSqRob GUI tutorial article:", class="bold"),
 		          br(),
 		          "
-		          Goeminne, L. J. E., Gevaert, K. and Clement, L. (2017). 
-		          Experimental design and data-analysis in label-free quantitative LC/MS proteomics: 
+		          Goeminne, L. J. E., Gevaert, K. and Clement, L. (2017).
+		          Experimental design and data-analysis in label-free quantitative LC/MS proteomics:
     		      A tutorial with MSqRob. Journal of Proteomics (in press).")),
 		          div(class="MSqRob_h4_container",
 		          list(
@@ -142,7 +153,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 		          "We are always ready to help you with any kind of issue that you might encounter!
 		          If for some reason, using MSqRob is hard or counter-intuitive to you,
 		          or you encounter some weird and unexpected results,
-		          please do not hesitate to contact us at", a("ludger.goeminne@vib-ugent.be.", href="mailto:ludger.goeminne@vib-ugent.be"), 
+		          please do not hesitate to contact us at", a("ludger.goeminne@vib-ugent.be.", href="mailto:ludger.goeminne@vib-ugent.be"),
 		          strong("User feedback is very important to us in order to improve MSqRob's user-friendliness.")
 		          ))
 		)
@@ -161,11 +172,11 @@ shinyUI(fluidPage(theme = "MSqRob.css",
     sidebarLayout(
 	#Sidebar with input
         sidebarPanel(
-          
+
         h3("Settings", class="MSqRob_topheader"),
-          
+
         h4("Transformation", class=c("MSqRob_sidebar")),
-        
+
         div(class="MSqRob_input_container",
             list(
         checkboxInput("logtransform", label="Log-transform data", value=TRUE),
@@ -177,7 +188,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
         ))
             )
         ),
-        
+
         div(class="MSqRob_input_container",
             list(
           conditionalPanel(
@@ -195,41 +206,44 @@ shinyUI(fluidPage(theme = "MSqRob.css",
         ),
 
         h4("Normalization", class="MSqRob_sidebar"),
-        
+
         div(class="MSqRob_input_container",
             list(
         tags$label("Normalization", `for`="normalisation", class="MSqRob_label"),
         tags$button(id="button_normalisation", tags$sup("[?]"), class="MSqRob_tooltip"),
-        selectInput("normalisation", NULL, c("quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none"), width = '100%'),
+        selectInput("normalisation", NULL, c("loess.fast", "rlr", "quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none"), width = '100%'), #"loess.affy" and "loess.pairs" left out on purpose because they remove everything with at least 1 NA!
         hidden(helpText(id="tooltip_normalisation",
                         "Select the type of normalization from the dropdown menu.
                         By default, we suggest to use quantile normalization (\"quantiles\").
-                        Choose \"none\" if no normalization should be performed 
+                        Choose \"none\" if no normalization should be performed
                         or if the data has already been normalised.
                         "))
             )
         ),
 
       	h4("Filtering", class="MSqRob_sidebar"),
-        
-      	#Filter on peptides only modified by site
-        div(class="MSqRob_input_container",
-            list(
-        checkboxInput("onlysite", "Remove only identified by site", value=TRUE),
-        tags$button(id="button_onlysite", tags$sup("[?]"), class="MSqRob_tooltip"),
-        hidden(helpText(id="tooltip_onlysite",
+
+      #Filter on peptides only modified by site
+       div(class="MSqRob_input_container",
+             list(
+       conditionalPanel(
+         condition = "input.input_type == \"MaxQuant\"",
+         checkboxInput("onlysite", "Remove only identified by site", value=TRUE),
+         tags$button(id="button_onlysite", tags$sup("[?]"), class="MSqRob_tooltip"),
+         hidden(helpText(id="tooltip_onlysite",
                         "Keep this box ticked to remove proteins that are exclusively identified
                         by peptides that carry a modification site.
                         This filtering step that is by default performed in a standard Perseus analysis
                         requires you to upload the proteinGroups.txt file.
                         "))
+              )
             )
         ),
-        
+
         div(class="MSqRob_input_container",
             list(
       	conditionalPanel(
-        	condition = "input.onlysite == true",
+        	condition = "input.input_type == \"MaxQuant\" && input.onlysite == true",
         	tags$label("proteinGroups.txt file", `for`="proteingroups", class="MSqRob_label"),
         	tags$button(id="button_proteingroups", tags$sup("[?]"), class="MSqRob_tooltip"),
         	fileInput(inputId="proteingroups", label=NULL, multiple = FALSE, accept = NULL, width = '100%'),
@@ -251,7 +265,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                         "))
             )
         ),
-        
+
         #Filter on peptides number of occurances
         div(class="MSqRob_input_container",
             list(
@@ -261,12 +275,12 @@ shinyUI(fluidPage(theme = "MSqRob.css",
       	hidden(helpText(id="tooltip_minIdentified","
       	                The minimal number of times a peptide sequence should be identified over all samples.
       	                Peptide sequences that are identified less than this number will be removed from the dataset.
-      	                The default of 2 has the rationale that it is impossible to discern between the peptide-specific effect and 
+      	                The default of 2 has the rationale that it is impossible to discern between the peptide-specific effect and
       	                any other effects for a peptide that has only been identified once.
       	                "))
       	)
         ),
-        
+
         div(class="MSqRob_input_container",
             list(
               tags$label("Filter columns", `for`="filter", class="MSqRob_label"),
@@ -283,9 +297,9 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 	),
 	#Main panel with number of output and plots
         mainPanel(width = 5,
-                  
+
                   h3("Diagnostic plots", class="MSqRob_topheader"),
-                  
+
                   div(class="MSqRob_input_container MSqRob_h4_checkbox",
                       list(
                         checkboxInput("evalnorm", "Evaluate preprocessing", value=TRUE),
@@ -297,8 +311,21 @@ shinyUI(fluidPage(theme = "MSqRob.css",
         strong('Number of peptides before preprocessing:'),textOutput('npeptidesRaw',container = span),div(),
         strong('Number of peptides after preprocessing:'),textOutput('npeptidesNormalized',container = span),div(),
         htmlOutput("selectColPlotNorm1"),
-        
-        
+
+        div(class="MSqRob_input_container",
+            list(
+              tags$label("File type", `for`="preprocessing_extension", class="MSqRob_label"),
+              tags$button(id="button_preprocessing_extension", tags$sup("[?]"), class="MSqRob_tooltip"),
+              selectInput("preprocessing_extension", NULL, c("png", "pdf", "svg", "tiff", "jpeg", "bmp", "postscript", "xfig"), width = '100%'),
+              hidden(helpText(id="tooltip_preprocessing_extension",
+                              "When you click the button, you can save the diagnostic plots.
+                              Here you can select the file extension that you want to use when saving the images.
+                              "))
+              )
+            ),
+
+        actionButton(inputId="downloadPreprocessingPlots", label="Save the diagnostic plots"),
+
         div(class="MSqRob_h4_container",
             list(
               h4("Intensities after transformation"),
@@ -306,13 +333,13 @@ shinyUI(fluidPage(theme = "MSqRob.css",
             )
         ),
         hidden(helpText(id="tooltip_h4_int_transformation","
-                        A density plot showing the distribution of the peptide intensities when only 
-                        the transformation is executed. 
-                        Transformation is included because a density plot of untransformed intensities is often uninformative 
+                        A density plot showing the distribution of the peptide intensities when only
+                        the transformation is executed.
+                        Transformation is included because a density plot of untransformed intensities is often uninformative
                         due to a strong skew to the right.
-                        Brush and double-click on a selected area to zoom in. 
+                        Brush and double-click on a selected area to zoom in.
                         Double click outside a selected area to zoom out.")),
-        
+
         plotOutput('plotRaw',
                    click = "plotRaw_click",
                    dblclick = "plotRaw_dblclick",
@@ -321,7 +348,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                      resetOnNew = TRUE
                    )
                    ),
-        
+
         div(class="MSqRob_h4_container",
             list(
               h4("Intensities after full preprocessing"),
@@ -329,12 +356,12 @@ shinyUI(fluidPage(theme = "MSqRob.css",
             )
         ),
         hidden(helpText(id="tooltip_h4_full_preprocessing","
-                        A density plot showing the distribution of the peptide intensities 
-                        after execution of all preprocessing steps. 
+                        A density plot showing the distribution of the peptide intensities
+                        after execution of all preprocessing steps.
                         This allows you to evaluate the effect of the preprocessing.
-                        Brush and double-click on a selected area to zoom in. 
+                        Brush and double-click on a selected area to zoom in.
                         Double click outside a selected area to zoom out.")),
-        
+
         plotOutput('plotNorm1',
                    click = "plotNorm1_click",
                    dblclick = "plotNorm1_dblclick",
@@ -343,20 +370,20 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                      resetOnNew = TRUE
                    )
                    ),
-        
+
         div(class="MSqRob_h4_container",
             list(
               h4("MDS plot after full preprocessing"),
               tags$button(id="button_h4_MDS_full_preprocessing",tags$sup("[?]"), class="MSqRob_tooltip")
             )
         ),
-        hidden(helpText(id="tooltip_h4_MDS_full_preprocessing","A multidimensional scaling plot. This plot shows a two-dimensional scatterplot 
-                      so that distances on the plot approximate the typical log2 fold changes between the samples based on a pairwise comparison 
+        hidden(helpText(id="tooltip_h4_MDS_full_preprocessing","A multidimensional scaling plot. This plot shows a two-dimensional scatterplot
+                      so that distances on the plot approximate the typical log2 fold changes between the samples based on a pairwise comparison
                         of the 500 most different peptides.
-                        Brush and double-click on a selected area to zoom in. 
+                        Brush and double-click on a selected area to zoom in.
                         Double click outside a selected area to zoom out.")),
-        
-        
+
+
         div(checkboxInput("plotMDSPoints", "Plot MDS points", value=FALSE)),
         div(checkboxInput("plotMDSLabels", "Plot MDS labels", value=TRUE)),
         plotOutput('plotMDS',
@@ -367,6 +394,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                                    resetOnNew = TRUE
                                  )
         )
+
 				)
        )
 )
@@ -379,9 +407,9 @@ shinyUI(fluidPage(theme = "MSqRob.css",
      # Sidebar with model specification
      sidebarLayout(
      	sidebarPanel(
-     	  
+
      	  h3("Settings", class="MSqRob_topheader"),
-     	  
+
   div(class="MSqRob_input_container",
   list(
   tags$label("Group by", `for`="proteins", class="MSqRob_label"),
@@ -395,7 +423,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 	                "))
   )
   ),
-	
+
   div(class="MSqRob_input_container",
   list(
   tags$label("Annotation columns", `for`="annotations", class="MSqRob_label"),
@@ -407,7 +435,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 	                "))
   )
   ),
-	
+
   div(class="MSqRob_input_container",
   list(
   tags$label("Fixed effects", `for`="fixed", class="MSqRob_label"),
@@ -421,7 +449,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 	                When in doubt which effects should be included as fixed, please contact us!"))
   )
   ),
-  
+
   div(class="MSqRob_input_container",
   list(
   tags$label("Random effects", `for`="random", class="MSqRob_label"),
@@ -429,7 +457,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 	htmlOutput("selectRandom"),
   hidden(helpText(id="tooltip_random","
                   Select the random effects.
-	                Random effects are effects that are random draws from a (theoretically) infinite population that are generally not of interest, 
+	                Random effects are effects that are random draws from a (theoretically) infinite population that are generally not of interest,
 	                but are only included to build a correct covariance structure in the model.
 	                They are not controlled for by the experimenter and its levels have different interpretations each time the experiment would be repeated
 	                (e.g. \"mouse 1\" from the first experiment is not the same \"mouse 1\" in the repeated experiment).
@@ -439,7 +467,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                   When in doubt which effects should be included as random, please contact us!"))
   )
   ),
-  
+
 	#checkboxInput("borrowFixed", "Borrow information across fixed effects", value = FALSE, width = NULL),
 	#checkboxInput("borrowRandom", "Borrow information across random effects", value = FALSE, width = NULL),
   div(class="MSqRob_input_container",
@@ -459,7 +487,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                   "))
       )
   ),
-  
+
 	#load saved model
   div(class="MSqRob_input_container",
       list(
@@ -472,7 +500,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
       	)
         )
   ),
-  
+
 	#Type of analysis
      	#selectInput("analysis_type", "Select the type of analysis", c("standard", "stagewise", "ANOVA")),
   div(class="MSqRob_input_container",
@@ -484,7 +512,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                   In a standard analysis, each contrast will be estimated separately (default).
                   In an ANOVA analysis, one assesses whether there is on average an effect over the specified contrasts.
                   It is often more of an exploratory tool to identify proteins that are significant in many contrasts at once.
-                  Note that the average expression for an ANOVA can be close to er even equal to zero for very significant effects 
+                  Note that the average expression for an ANOVA can be close to er even equal to zero for very significant effects
                   (i.e. when some contrasts are highly positive and others highly negative).
                   "))
       )
@@ -504,7 +532,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                         span("How to specify a contrast: ", class="bold"),
                         br(),
                         br(),
-                        "If you followed the default preprocessing, data is log2 transformed. Therefore, a simple log2 fold change between two conditions 
+                        "If you followed the default preprocessing, data is log2 transformed. Therefore, a simple log2 fold change between two conditions
                         can be tested by specifying \"1\" for the first condition and \"-1\" for the second condition
                         (a difference of log2 transformed values is equal to a log2 of their quotient).
                         An average over e.g. 3 conditions can be tested by specifying \"1/3\" for each of these conditions.
@@ -514,7 +542,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                         "))
       )
   ),
-  
+
         #Specification of contrasts
       	htmlOutput("selectLevels"),
 	#Run button
@@ -525,12 +553,26 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 
     #Main panel with results and plots
 	mainPanel(
-	  
+
 	  h3("Results", class="MSqRob_topheader"),
-	  
+
 	verbatimTextOutput("nText"),
 	htmlOutput("plot_contrast"),
 	verbatimTextOutput("contrastL"),
+
+	div(class="MSqRob_input_container",
+	    list(
+	      tags$label("File type", `for`="result_extension", class="MSqRob_label"),
+	      tags$button(id="button_result_extension", tags$sup("[?]"), class="MSqRob_tooltip"),
+	      selectInput("result_extension", NULL, c("png", "pdf", "svg", "tiff", "jpeg", "bmp", "postscript", "xfig"), width = '100%'),
+	      hidden(helpText(id="tooltip_result_extension",
+	                      "When you click the button, you can save the volcano and (if present) detail plots.
+	                      Here you can select the file extension that you want to use when saving the images.
+	                      "))
+	      )
+	      ),
+
+	actionButton(inputId="downloadResultPlots", label="Save the result plots"),
 
 	#Volcano plot
        	fluidRow(
@@ -548,7 +590,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
         	                Select and deselect points by clicking on them either in the volcano plot or in the results table.
         	                Brush and double-click on the selected area to zoom in. Double click outside the selected area to zoom out.
         	                Adjust the significance level to visualize features with an FDR level below alpha.")),
-        	
+
               	plotOutput("plot1", height = 300,
                            click = "plot1_click",
                            dblclick = "plot1_dblclick",
@@ -557,10 +599,11 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                              resetOnNew = TRUE
                            )
                 ),
+
 		actionButton("add_area_selection", "Add selected area to selection", class="MSqRob_button_space"),
     actionButton("remove_area_selection", "Remove selected area from selection", class="MSqRob_button_space"),
 		actionButton("remove_all_selection", "Remove everything from selection", class="MSqRob_button_space"),
-		
+
 		#Input significance level (alpha)
 		div(class="MSqRob_input_container",
 		    list(
@@ -577,7 +620,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
         #Detail plot
 	column(width = 6, #6 out of 12 => half the screen!
 
-	       
+
 	       div(class="MSqRob_h4_container",
 	           list(
 	             h4("Detail plot"),
@@ -585,11 +628,11 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 	           )
 	       ),
 	       hidden(helpText(id="tooltip_h4_detail_plot","
-	                       If only one data point is selected in the results table, 
+	                       If only one data point is selected in the results table,
 	                       this plot shows the individual log2 peptide intensities.
 	                       This plot is extremely useful to visually assess the evidence for differential abundance in the data.")),
-	       
-	       
+
+
                 plotOutput("plot2", height = 300,
                            click = "plot2_click",
                            dblclick = "plot2_dblclick",
