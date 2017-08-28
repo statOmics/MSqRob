@@ -19,6 +19,17 @@ shinyServer(function(input, output, session) {
   #Input Tab
   ###########################################
 
+  #Change the default for protein groups: if MaxQuant: set to true, if not, set to FALSE
+   observe({
+     if(input$input_type == "MaxQuant"){
+       value <- TRUE
+     } else{
+       value <- FALSE
+     }
+ 
+     updateCheckboxInput(session, "onlysite", value = value)
+   })
+  
   saveFolder <- reactiveValues(folder = NULL)
 
   #Function to check if save folder is set
@@ -203,7 +214,7 @@ shinyServer(function(input, output, session) {
 
   ####select Fixed effects, random effects, Proteins and store options ####
   output$selectFixed <- renderUI({
-    selectInput("fixed", label=NULL, nmsFixedOptions(), multiple=TRUE )
+    selectInput("fixed", label=NULL, choices=nmsFixedOptions(), multiple=TRUE)
     })
 
   selectedRandom <- reactive({
