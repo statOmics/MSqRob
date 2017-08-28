@@ -243,7 +243,15 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectProteins <- renderUI({
-    selectInput("proteins", label=NULL, filterOptions(), multiple=FALSE, selected=selectedProteins() )
+    selectizeInput(
+    "proteins", label=NULL, choices=filterOptions(),
+     multiple=FALSE, selected=selectedProteins(),
+    options = c(list(
+      placeholder = 'Select accession'
+      ,
+      onInitialize = I('function() { this.setValue(selectedProteins()); }')
+    ))
+  )
   })
 
   selectedAnnotations <- reactive({
