@@ -79,10 +79,13 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	#Peptides.txt file
   	div(class="MSqRob_input_container",
   	    list(
-  	tags$label("peptides.txt file", `for`="peptides", class="MSqRob_label"),
+  	tags$label("peptides file", `for`="peptides", class="MSqRob_label"),
   	tags$button(id="button_peptides", tags$sup("[?]"), class="MSqRob_tooltip"),
   	fileInput(inputId="peptides", label=NULL, multiple = FALSE, accept = NULL, width = NULL),
-  	hidden(helpText(id="tooltip_peptides","Specify the location of your peptides.txt file."))
+  	hidden(helpText(id="tooltip_peptides","Specify the location of the file that contains
+  	                the peptide-specific intensities.
+  	                When analyzing a MaxQuant shotgun proteomics experiment, this should the peptides.txt file.
+  	                When using moFF, this file should start with \"peptide_summary_intensity\" and end with \".tab\""))
   	    )
   	),
 
@@ -214,7 +217,6 @@ shinyUI(fluidPage(theme = "MSqRob.css",
         selectInput("normalisation", NULL, c("loess.fast", "rlr", "quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none"), width = '100%'), #"loess.affy" and "loess.pairs" left out on purpose because they remove everything with at least 1 NA!
         hidden(helpText(id="tooltip_normalisation",
                         "Select the type of normalization from the dropdown menu.
-                        By default, we suggest to use quantile normalization (\"quantiles\").
                         Choose \"none\" if no normalization should be performed
                         or if the data has already been normalised.
                         "))
