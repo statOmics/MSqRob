@@ -19,6 +19,17 @@ shinyServer(function(input, output, session) {
   #Input Tab
   ###########################################
 
+  #Change the default for protein groups: if MaxQuant: set to true, if not, set to FALSE
+  observe({
+    if(input$input_type == "MaxQuant"){
+      value <- TRUE
+    } else{
+      value <- FALSE
+    }
+
+    updateCheckboxInput(session, "onlysite", value = value)
+  })
+
   saveFolder <- reactiveValues(folder = NULL)
 
   #Function to check if save folder is set
@@ -203,28 +214,46 @@ shinyServer(function(input, output, session) {
 
   ####select Fixed effects, random effects, Proteins and store options ####
   output$selectFixed <- renderUI({
-    selectInput("fixed", label=NULL, nmsFixedOptions(), multiple=TRUE )
+    selectInput("fixed", label=NULL, choices=nmsFixedOptions(), multiple=TRUE )
     })
 
   selectedRandom <- reactive({
-    if(!c("Sequence") %in% filterOptions()) {
+    if(!any(c("Sequence","peptide") %in% filterOptions())) {
       NULL
-    }else{"Sequence"}
+    }else{
+      c("Sequence","peptide")[which(c("Sequence","peptide") %in% filterOptions())[1]]
+    }
   })
 
   output$selectRandom <- renderUI({
-    selectInput("random", label=NULL, fixedOptions(), multiple=TRUE, selected=selectedRandom() )
-  })
+      selectInput("random", label=NULL, choices=fixedOptions(), multiple=TRUE, selected=selectedRandom() )
+    })
 
+  #   renderText({
+  #   verbatimTextOutput(fixedOptions())
+  # })
+
+  #Check waarom er nog altijd "Select accession" staat en niet "prot"!!!!
   selectedProteins <- reactive({
-    if(!c("Proteins") %in% filterOptions()) {
-      NULL
-    }else{"Proteins"}
+    if(!any(c("Proteins","prot") %in% filterOptions())) {
+      ""
+    }else{
+      c("Proteins","prot")[which(c("Proteins","prot") %in% filterOptions())[1]]
+      }
   })
 
   output$selectProteins <- renderUI({
-    selectInput("proteins", label=NULL, filterOptions(), multiple=FALSE, selected=selectedProteins() )
+    selectizeInput(
+    "proteins", label=NULL, choices=filterOptions(),
+     multiple=FALSE, selected=selectedProteins(),
+    options = c(list(
+      placeholder = 'Select accession'
+      ,
+      onInitialize = I('function() { this.setValue(selectedProteins()); }')
+    ))
+  )
   })
+
 
   selectedAnnotations <- reactive({
     if(!any(c("Gene names", "Protein names","Gene.names", "Protein.names") %in% filterOptions())) {
@@ -289,6 +318,8 @@ observe({
                    shinyjs::toggle(id = "tooltip_outputFolder", anim = TRUE))
   shinyjs::onclick("button_project_name",
                    shinyjs::toggle(id = "tooltip_project_name", anim = TRUE))
+  shinyjs::onclick("button_input_type",
+                   shinyjs::toggle(id = "tooltip_input_type", anim = TRUE))
   shinyjs::onclick("button_peptides",
                    shinyjs::toggle(id = "tooltip_peptides", anim = TRUE))
   shinyjs::onclick("button_annotation",
@@ -319,6 +350,8 @@ observe({
                    shinyjs::toggle(id = "tooltip_evalnorm", anim = TRUE))
   shinyjs::onclick("button_selColPlotNorm",
                    shinyjs::toggle(id = "tooltip_selColPlotNorm", anim = TRUE))
+  shinyjs::onclick("button_preprocessing_extension",
+                   shinyjs::toggle(id = "tooltip_preprocessing_extension", anim = TRUE))
   shinyjs::onclick("button_h4_int_transformation",
                    shinyjs::toggle(id = "tooltip_h4_int_transformation", anim = TRUE))
   shinyjs::onclick("button_h4_full_preprocessing",
@@ -344,6 +377,8 @@ observe({
                    shinyjs::toggle(id = "tooltip_nContr", anim = TRUE))
   shinyjs::onclick("button_plot_contrast",
                    shinyjs::toggle(id = "tooltip_plot_contrast", anim = TRUE))
+  shinyjs::onclick("button_result_extension",
+                   shinyjs::toggle(id = "tooltip_result_extension", anim = TRUE))
   shinyjs::onclick("button_h4_volcano_plot",
                    shinyjs::toggle(id = "tooltip_h4_volcano_plot", anim = TRUE))
   shinyjs::onclick("button_h4_detail_plot",
@@ -426,6 +461,8 @@ observe({
     }
   })
 
+  processedvals = reactive({processInput(input)})
+
   outputlist <- eventReactive(input$go, {
 
     validate(
@@ -481,11 +518,26 @@ observe({
       fs <- list()
       fs_type <- NULL
 
-      processedvals = processInput(input)
-      peptides = read_MaxQuant(peptidesDatapath(), pattern="Intensity.", shiny=TRUE, message="Importing data...")
+      processedvals = isolate(processedvals())
+
+      if(input$input_type=="MaxQuant"){
+      peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      } else if(input$input_type=="moFF"){
+      peptides = read_moFF(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      } else{
+      peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      }
 
       useful_properties = unique(c(processedvals[["proteins"]],processedvals[["annotations"]],fixed,random)[c(processedvals[["proteins"]],processedvals[["annotations"]],fixed,random) %in% colnames(Biobase::fData(peptides))])
-      peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+
+      if(input$input_type=="MaxQuant"){
+        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      } else if(input$input_type=="moFF"){
+        peptides2 = preprocess_moFF(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      } else{
+        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      }
+
       Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2))
       proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Converting data...")
 
@@ -662,7 +714,8 @@ observe({
 
 
   ###Volcano plot###
-  output$plot1 <- renderPlot({
+
+  makeVolcanoPlot <- function(dataset,estimate,clickInfo,input){
     #!!!Quick fix voor ANOVA waarbij alles NA is (e.g. data Emmy, treatKO-treatWT en treatKO_LPS_1h-treatWT_LPS_1h), verder verfijnen!!!!:
     if(!all(is.na(dataset()$minus_log10_p))){
       colBool <- dataset()$qval<input$alpha
@@ -693,6 +746,10 @@ observe({
         points(subdataset[[estimate()]], subdataset$minus_log10_p, pch = 19, cex = 2, col=colors2)
       }
     }
+  }
+
+  output$plot1 <- renderPlot({
+    makeVolcanoPlot(dataset,estimate,clickInfo,input)
   })
 
   #When a double-click happens, check if there's a brush on the plot.
@@ -914,9 +971,9 @@ observe({
     return(pch_vals)
   })
 
+  ###The detail plot###
 
-  #plot 2
-  output$plot2 <- renderPlot({
+  makeDetailPlot <- function(data,acc_plot2,outputlist,input){
     accessions <- acc_plot2() #Geeft "NA"
     proteins <- outputlist()$RData$proteins
     #indep_var <- indep_var_plot2()
@@ -935,10 +992,87 @@ observe({
         # title(ylab="Log2(Intensity)", line=5, cex.lab=2, family="Calibri Light")
       } else plot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]],ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=getAccessions(proteins[accessions]), las=2, bty="n")
     } else{NULL}
+  }
+
+  #plot 2
+  output$plot2 <- renderPlot({
+    makeDetailPlot(data,acc_plot2,outputlist,input)
   })
 
   output$nText <- renderText({
     outputlist()$test
+  })
+
+  ########################################################################################
+  ###Save the volcano and detail plots when the downloadResultPlots button is clicked#####
+  ########################################################################################
+
+  observeEvent(input$downloadResultPlots, {
+
+    savepathFigs <- getDataPath(saveFolder$folder)
+
+    plotnames <- c("volcano","detail")
+
+    for(i in 1:length(plotnames)){
+
+      if(input$result_extension == "svg"){
+
+        grDevices::svg(file.path(savepathFigs,paste0(plotnames[i],".svg")), width=10, height=10,onefile=FALSE) ##onefile=FALSE to prevent the plots that are made previously to appear in the svg
+
+      } else if(input$result_extension == "png"){
+        grDevices::png(file.path(savepathFigs,paste0(plotnames[i],".png")),width = 3.25,
+            height    = 3.25,
+            units     = "in",
+            res       = 2000,
+            pointsize = 5.4
+        )
+      } else if(input$result_extension == "pdf") {
+        grDevices::cairo_pdf(file.path(savepathFigs,paste0(plotnames[i],".pdf")),width=10,height=10,onefile=FALSE) #onefile=FALSE to prevent the plots that are made previously to appear in the PDF
+
+      } else if(input$result_extension == "tiff") {
+        grDevices::tiff(file.path(savepathFigs,paste0(plotnames[i],".tiff")),width = 3.25,
+                        height    = 3.25,
+                        units     = "in",
+                        res       = 2000,
+                        pointsize = 5.4)
+      } else if(input$result_extension == "jpeg") {
+        grDevices::jpeg(file.path(savepathFigs,paste0(plotnames[i],".jpeg")),width = 3.25,
+                        height    = 3.25,
+                        units     = "in",
+                        res       = 2000,
+                        pointsize = 5.4)
+      } else if(input$result_extension == "bmp") {
+        grDevices::bmp(file.path(savepathFigs,paste0(plotnames[i],".bmp")),width = 3.25,
+                        height    = 3.25,
+                        units     = "in",
+                        res       = 2000,
+                        pointsize = 5.4)
+      } else if(input$result_extension == "postscript") {
+        grDevices::postscript(file.path(savepathFigs,paste0(plotnames[i],".ps")),width = 3.25,
+                       height    = 3.25,
+                       units     = "in",
+                       res       = 2000,
+                       pointsize = 5.4)
+      } else if(input$result_extension == "xfig") {
+        grDevices::xfig(file.path(savepathFigs,paste0(plotnames[i],".fig")),width = 3.25,
+                              height    = 3.25,
+                              units     = "in",
+                              res       = 2000,
+                              pointsize = 5.4)
+      }
+
+      if(i==1){makeVolcanoPlot(dataset,estimate,clickInfo,input)
+      } else if(i==2){makeDetailPlot(data,acc_plot2,outputlist,input)}
+
+      dev.off()  # turn the device off
+
+    }
+
+  })
+
+  #Show a notification when the plots are saved
+  observeEvent(input$downloadResultPlots, {
+    showNotification("Result plots saved.", duration = 1.5)
   })
 
   ##############################################
@@ -983,7 +1117,13 @@ observe({
 
   peps <- reactive({
     if(!is.null(peptidesDatapath())){
-      read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      if(input$input_type=="MaxQuant"){
+        peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      } else if(input$input_type=="moFF"){
+        peptides = read_moFF(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      } else{
+        peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      }
     } else{NULL}
   })
 
@@ -991,7 +1131,15 @@ observe({
 
     if(!is.null(peps()) & isTRUE(input$evalnorm)){
       #If remove only identified by site==TRUE and fileProteinGroups is NULL, this also throws an error
-      pepsN <- preprocess_MaxQuant(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=gsub(" ",".",input$filter), remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+
+      if(input$input_type=="MaxQuant"){
+        pepsN <- preprocess_MaxQuant(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=processedvals()[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      } else if(input$input_type=="moFF"){
+        pepsN <- preprocess_moFF(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=processedvals()[["filter"]], minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      } else{
+        pepsN <- preprocess_MaxQuant(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=processedvals()[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      }
+
       esetN <- exprs(pepsN)
     }
 
@@ -1063,7 +1211,8 @@ observe({
     }
   })
 
-  output$plotRaw<- renderPlot({
+  makePlotRaw <- function(input,eset,colorsNorm,rangesRaw){
+
     if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
     if(!is.null(eset())){
 
@@ -1081,10 +1230,9 @@ observe({
       plotDens(eset(), densXlimYlim[["densAll"]], xlim, ylim, colorsNorm(), main="")
       output$npeptidesRaw = renderText(nrow(peps()))
     }
-  })
+  }
 
-
-  output$plotNorm1<- renderPlot({
+  makePlotNorm1 <- function(input,esetN,colorsNorm,rangesNorm){
     if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
     if(isTRUE(input$evalnorm) & !is.null(esetN())){
 
@@ -1102,54 +1250,150 @@ observe({
       plotDens(esetN(), densXlimYlimN[["densAll"]], xlim, ylim, colorsNorm(), main="")
       output$npeptidesNormalized = renderText(nrow(esetN()))
     }
+  }
+
+  makeMDSPlot <- function(input,esetN,colorsNorm,rangesMDS){
+    if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
+
+    if(isTRUE(input$evalnorm) & !is.null(esetN()) & (isTRUE(input$plotMDSLabels) | isTRUE(input$plotMDSPoints))){ #Last condition: at least one of the boxes labels or points must be ticked, otherwise no plot!
+
+      mds <- plotMDS(esetN(), plot=FALSE)
+      labels_mds <- names(mds$x) #Doesn't matter whether you take mds$x or mds$y here
+
+      #Only dots: plot is always made in order to set the ranges correctly: strwidth and strheight are calculated based on the previous plot!
+      plot(mds, col=colorsNorm(), xlim = rangesMDS$x, ylim = rangesMDS$y, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
+
+      #Calculate maximal increase in plot size due to labels
+      max_increase <- (par("usr")[2]-par("usr")[1]+max(graphics::strwidth(labels_mds)))/(par("usr")[2]-par("usr")[1])
+
+      #Need extra space on x axis for labels
+      if(is.null(rangesMDS$x)){
+        xrange=c((min(mds$x)-max(graphics::strwidth(labels_mds))*max_increase/2),(max(mds$x)+max(graphics::strwidth(labels_mds))*max_increase/2)) #min(mds$x), max(mds$x)
+      } else{
+        xrange=c(rangesMDS$x[1],rangesMDS$x[2])
+      }
+
+      #Only labels
+      if(isTRUE(input$plotMDSLabels) & !isTRUE(input$plotMDSPoints)){
+        limma::plotMDS(esetN(), col=colorsNorm(), xlim = xrange, ylim = rangesMDS$y, las=1, bty="n")
+      }
+
+      #Labels and dots
+      if(isTRUE(input$plotMDSLabels) & isTRUE(input$plotMDSPoints)){
+
+        #Need extra space on top for labels
+        if(is.null(rangesMDS$y)){
+          yrange=c(min(mds$y),(max(mds$y)+max(graphics::strheight(labels_mds)))) #c(min(mds$y),(max(mds$y)+(range(mds$y)[2]-range(mds$y)[1])/10))
+        } else{
+          yrange=c(rangesMDS$y[1],rangesMDS$y[2]) #c(rangesMDS$y[1],(rangesMDS$y[2]+(rangesMDS$y[2]-rangesMDS$y[1])/10))
+        }
+
+        plot(mds, col=colorsNorm(), xlim = xrange, ylim = yrange, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
+        text(mds, labels=colnames(esetN()), col=colorsNorm(), cex= 1, pos=3)
+      }
+
+      #pch NULL, pch NA, text
+      # plotMDS(mds, las=1, bty="n",pch=NULL)
+      # text(mds, labels=colnames(test), cex= 0.7, pos=3)
+
+    }
+  }
+
+  #Render the preprocessing plots
+  output$plotRaw<- renderPlot({
+    makePlotRaw(input,eset,colorsNorm,rangesRaw)
   })
 
-  output$plotMDS<- renderPlot(
-    {
-      if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
+  output$plotNorm1<- renderPlot({
+    makePlotNorm1(input,esetN,colorsNorm,rangesNorm)
+  })
 
-      if(isTRUE(input$evalnorm) & !is.null(esetN()) & (isTRUE(input$plotMDSLabels) | isTRUE(input$plotMDSPoints))){ #Last condition: at least one of the boxes labels or points must be ticked, otherwise no plot!
+  output$plotMDS <- renderPlot({
+    makeMDSPlot(input,esetN,colorsNorm,rangesMDS)
+  })
 
-        mds <- plotMDS(esetN(), plot=FALSE)
-        labels_mds <- names(mds$x) #Doesn't matter whether you take mds$x or mds$y here
+  #Show a notification when the plots are saved
+  observeEvent(input$downloadPreprocessingPlots, {
+    showNotification("Diagnostic plots saved.", duration = 1.5)
+  })
 
-        #Only dots: plot is always made in order to set the ranges correctly: strwidth and strheight are calculated based on the previous plot!
-        plot(mds, col=colorsNorm(), xlim = rangesMDS$x, ylim = rangesMDS$y, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
+  #Save the preprocessing plots when the downloadPreprocessingPlots button is clicked
+  observeEvent(input$downloadPreprocessingPlots, {
 
-        #Calculate maximal increase in plot size due to labels
-        max_increase <- (par("usr")[2]-par("usr")[1]+max(graphics::strwidth(labels_mds)))/(par("usr")[2]-par("usr")[1])
-        
-        #Need extra space on x axis for labels
-        if(is.null(rangesMDS$x)){
-          xrange=c((min(mds$x)-max(graphics::strwidth(labels_mds))*max_increase/2),(max(mds$x)+max(graphics::strwidth(labels_mds))*max_increase/2)) #min(mds$x), max(mds$x)
-        } else{
-          xrange=c(rangesMDS$x[1],rangesMDS$x[2])
-        }
-        
-        #Only labels
-        if(isTRUE(input$plotMDSLabels) & !isTRUE(input$plotMDSPoints)){
-          limma::plotMDS(esetN(), col=colorsNorm(), xlim = xrange, ylim = rangesMDS$y, las=1, bty="n")
-        }
+    savepathFigs <- getDataPath(saveFolder$folder)
 
-        #Labels and dots
-        if(isTRUE(input$plotMDSLabels) & isTRUE(input$plotMDSPoints)){
+    plotnames <- c("rawDensity","preprocessedDensity","MDSPlot")
 
-            #Need extra space on top for labels
-            if(is.null(rangesMDS$y)){
-              yrange=c(min(mds$y),(max(mds$y)+max(graphics::strheight(labels_mds)))) #c(min(mds$y),(max(mds$y)+(range(mds$y)[2]-range(mds$y)[1])/10))
-            } else{
-              yrange=c(rangesMDS$y[1],rangesMDS$y[2]) #c(rangesMDS$y[1],(rangesMDS$y[2]+(rangesMDS$y[2]-rangesMDS$y[1])/10))
-            }
+    for(i in 1:length(plotnames)){
 
-            plot(mds, col=colorsNorm(), xlim = xrange, ylim = yrange, las=1, bty="n", xlab="Leading logFC dim 1", ylab="Leading logFC dim 2")
-            text(mds, labels=colnames(esetN()), col=colorsNorm(), cex= 1, pos=3)
-        }
+    if(input$preprocessing_extension == "svg"){
 
-        #pch NULL, pch NA, text
-        # plotMDS(mds, las=1, bty="n",pch=NULL)
-        # text(mds, labels=colnames(test), cex= 0.7, pos=3)
+      grDevices::svg(file.path(savepathFigs,paste0(plotnames[i],".svg")), width=10, height=10) #filenames,i
 
-      }
-    })
+    } else if(input$preprocessing_extension == "png"){
+      grDevices::png(file.path(savepathFigs,paste0(plotnames[i],".png")),width = 3.25,
+         height    = 3.25,
+         units     = "in",
+         res       = 2000,
+         pointsize = 5.4
+      )
+    }
+    else if(input$preprocessing_extension == "pdf") {
+      grDevices::cairo_pdf(file.path(savepathFigs,paste0(plotnames[i],".pdf")),width=10,height=10,onefile=FALSE) #onefile=FALSE to prevent the plots that are made previously to appear in the PDF
+    } else if(input$preprocessing_extension == "tiff") {
+      grDevices::tiff(file.path(savepathFigs,paste0(plotnames[i],".tiff")),width = 3.25,
+                      height    = 3.25,
+                      units     = "in",
+                      res       = 2000,
+                      pointsize = 5.4)
+    } else if(input$preprocessing_extension == "jpeg") {
+      grDevices::jpeg(file.path(savepathFigs,paste0(plotnames[i],".jpeg")),width = 3.25,
+                      height    = 3.25,
+                      units     = "in",
+                      res       = 2000,
+                      pointsize = 5.4)
+    } else if(input$preprocessing_extension == "bmp") {
+      grDevices::bmp(file.path(savepathFigs,paste0(plotnames[i],".bmp")),width = 3.25,
+                      height    = 3.25,
+                      units     = "in",
+                      res       = 2000,
+                      pointsize = 5.4)
+    } else if(input$preprocessing_extension == "postscript") {
+      grDevices::postscript(file.path(savepathFigs,paste0(plotnames[i],".ps")),width = 3.25,
+                     height    = 3.25,
+                     units     = "in",
+                     res       = 2000,
+                     pointsize = 5.4)
+    } else if(input$preprocessing_extension == "xfig") {
+      grDevices::xfig(file.path(savepathFigs,paste0(plotnames[i],".fig")),width = 3.25,
+                            height    = 3.25,
+                            units     = "in",
+                            res       = 2000,
+                            pointsize = 5.4)
+    }
 
+    if(i==1){makePlotRaw(input,eset,colorsNorm,rangesRaw)
+    } else if(i==2){makePlotNorm1(input,esetN,colorsNorm,rangesNorm)
+    } else if (i==3){makeMDSPlot(input,esetN,colorsNorm,rangesMDS)}
+
+    dev.off()  # turn the device off
+
+  }
+
+  })
+
+  observe({
+
+    #If no save folder specified or the preprocessing plots are not made, do not allow to try to download the preprocessing plots.
+    res <- try(check_save_folder(saveFolder$folder),silent = TRUE)
+
+    if(!isTRUE(input$evalnorm) | class(res) == "try-error" | (isTRUE(input$onlysite) && is.null(input$proteingroups))){
+      shinyjs::disable("downloadPreprocessingPlots")
+    } else{
+      shinyjs::enable("downloadPreprocessingPlots")
+    }
+  })
+
+  #Stop the App when closing the browser or ending the session
+  session$onSessionEnded(stopApp)
 })
