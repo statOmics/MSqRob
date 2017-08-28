@@ -79,7 +79,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	#Peptides.txt file
   	div(class="MSqRob_input_container",
   	    list(
-  	tags$label("peptides file", `for`="peptides", class="MSqRob_label"),
+  	tags$label("Peptides file", `for`="peptides", class="MSqRob_label"),
   	tags$button(id="button_peptides", tags$sup("[?]"), class="MSqRob_tooltip"),
   	fileInput(inputId="peptides", label=NULL, multiple = FALSE, accept = NULL, width = NULL),
   	hidden(helpText(id="tooltip_peptides","Specify the location of the file that contains
