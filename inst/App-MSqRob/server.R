@@ -218,14 +218,20 @@ shinyServer(function(input, output, session) {
     })
 
   selectedRandom <- reactive({
-    if(!c("Sequence") %in% filterOptions()) {
+    if(!any(c("Sequence","peptide") %in% filterOptions())) {
       NULL
-    }else{"Sequence"}
+     }else{
+      c("Sequence","peptide")[which(c("Sequence","peptide") %in% filterOptions())[1]]
+     }
   })
 
   output$selectRandom <- renderUI({
-    selectInput("random", label=NULL, fixedOptions(), multiple=TRUE, selected=selectedRandom() )
-  })
+    selectInput("random", label=NULL, choices=fixedOptions(), multiple=TRUE, selected=selectedRandom() )
+    })
+
+  #   renderText({
+  #   verbatimTextOutput(fixedOptions())
+  # })
 
   selectedProteins <- reactive({
     if(!c("Proteins") %in% filterOptions()) {
