@@ -31,7 +31,7 @@ biocLite()
 Finally, we call this to install the latest version of `MSqRob` (0.6.5):
 
 ~~~~
-devtools::install_github("statOmics/MSqRob@0.6.5")
+devtools::install_github("statOmics/MSqRob@MSqRob0.6.5")
 library(MSqRob)
 ~~~~
 
