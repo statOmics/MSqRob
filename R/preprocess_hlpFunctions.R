@@ -65,29 +65,40 @@ makeAnnotation <- function(exp_annotation, type_annot=NULL, colClasses=NA){
     }
 
     #Default: everything to factor, gsub is to remove leading and trailing spaces
-    pData <- data.frame(lapply(pData, function(x){
-      #If it's the unique column, apply make.names so that its names are equal to the colnames of the exprs slot of the MSnSet object (read in via read.table)
-      if(length(unique(x))==nrow(pData)){x <- make.names(x, unique = TRUE)}
-      return(factor(gsub("^\\s+|\\s+$", "", x), levels=unique(gsub("^\\s+|\\s+$", "", x))))})) #levels are specified to give factor levels the order given in the annotation file
-    #pData <- data.frame(lapply(pData, function(x){return(as.factor(x))}))
-
-    pData <- addColClasses(pData, colClasses)
+    pData <- make_pData_MSqRob(pData)
 
     #If exp_annotation is a data frame, just put the data frame in the pData slot (lapply and gsub are just to remove leading and trailing spaces)
-  } else{pData <- data.frame(lapply(exp_annotation, function (x) {
+  } else{pData <- make_pData_MSqRob(exp_annotation)}
+
+  pData <- addColClasses(pData, colClasses)
+
+  return(pData)
+}
+
+
+#MSqRob "make names"
+
+make_pData_MSqRob <- function(pDataObject){
+  pDataObject <- data.frame(lapply(pDataObject, function (x) {
 
     #Remove leading and trailing spaces for every column
     x <- gsub("^\\s+|\\s+$", "", x)
 
     #If it's the unique column, apply make.names so that its names are equal to the colnames of the exprs slot of the MSnSet object (read in via read.table)
-    if(length(unique(x))==nrow(exp_annotation)){
+    if(length(unique(x))==nrow(pDataObject)){
       x <- make.names(x, unique = TRUE)}
-    return(factor(x))
-  }
-  ))}
 
-  return(pData)
+    return(factor(x, levels=unique(x))) #levels are specified to give factor levels the order given in the annotation file
+  }
+  ))
+  return(pDataObject)
 }
+
+
+
+
+
+
 
 
 #addColClasses
