@@ -75,10 +75,16 @@ makeAnnotation <- function(exp_annotation, type_annot=NULL, colClasses=NA){
 
     #If exp_annotation is a data frame, just put the data frame in the pData slot (lapply and gsub are just to remove leading and trailing spaces)
   } else{pData <- data.frame(lapply(exp_annotation, function (x) {
+
+    #Remove leading and trailing spaces for every column
+    x <- gsub("^\\s+|\\s+$", "", x)
+
     #If it's the unique column, apply make.names so that its names are equal to the colnames of the exprs slot of the MSnSet object (read in via read.table)
-    if(length(unique(x))==nrow(exp_annotation)){x <- make.names(x, unique = TRUE)}
-    return(factor(gsub("^\\s+|\\s+$", "", x)))}
-                                    ))}
+    if(length(unique(x))==nrow(exp_annotation)){
+      x <- make.names(x, unique = TRUE)}
+    return(factor(x))
+  }
+  ))}
 
   return(pData)
 }
