@@ -55,7 +55,7 @@ df2protdata <- function(df, acc_col, quant_cols, quant_name="quant_value", run_n
     if(is.null(run_names)){run_names <- paste0("run_",1:length(quant_cols))}
   }
 
-  #If pData is NULL, turn it into a data frame with one a column for run
+  #If pData is NULL, turn it into a data frame with one column for run
   if(is.null(pData)){pData <- data.frame(run=run_names)
   colnames(pData) <- run_name}
 

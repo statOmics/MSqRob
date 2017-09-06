@@ -37,55 +37,66 @@ init_ann_MQ_Excel <- function(file, savepath=NULL, output_name="experimental_ann
 #'
 #' @description Creates an annotation data frame based on either an existing annotation data frame or a path to a file which contains the experiment annotation.  Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off.
 #' @param exp_annotation Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names.  Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}.
+#' @param run_names A vector containing the names of the samples. Each name must be unique.
 #' @param type_annot If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.
 #' @param colClasses character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-#' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.
 #' @return A data frame containing the experimental annotation. Possible leading and trailing spaces are trimmed.
 #' @export
-makeAnnotation <- function(exp_annotation, type_annot=NULL, colClasses=NA){
+makeAnnotation <- function(exp_annotation, run_names, type_annot=NULL, colClasses="keep"){
 
   #If exp_annotation is not a data frame, it should be imported from a file.
   if(!is.data.frame(exp_annotation)){
 
     if(isTRUE(as.logical(grep(".xlsx[/\\]*$",exp_annotation))) || type_annot=="xlsx"){
-
-      # if(Sys.info()['sysname']=="Windows"){
-      #
-      #   pData <- xlsx::read.xlsx(file=exp_annotation, sheetIndex = 1)
-      #   #Remove columns with all NA
-      #   pData <- pData[,!colSums(apply(pData, 2, is.na))==nrow(pData),drop=FALSE]
-      #   return(pData)
-      #
-      # } else{
-          pData <- openxlsx::read.xlsx(exp_annotation)
-      # }
-
+      ann_frame <- openxlsx::read.xlsx(exp_annotation)
     } else{ #if(type_annot=="tab-delim")
-      pData <- read.table(exp_annotation, sep="\t", header=TRUE, row.names = NULL)
+      ann_frame <- read.table(exp_annotation, sep="\t", header=TRUE, row.names = NULL)
     }
 
-    #Default: everything to factor, gsub is to remove leading and trailing spaces
-    pData <- make_pData_MSqRob(pData)
-
     #If exp_annotation is a data frame, just put the data frame in the pData slot (lapply and gsub are just to remove leading and trailing spaces)
-  } else{pData <- make_pData_MSqRob(exp_annotation)}
+  } else{
+    ann_frame <- exp_annotation
+  }
+
+  if(!is.na(colClasses) && colClasses=="keep"){colClasses <- vapply(ann_frame,class,"")}
+
+  #First: everything to factor, gsub is to remove leading and trailing spaces
+  pData_makeAllNames <- make_pData_MSqRob(ann_frame)
+
+  #Check which column of the given exp_annotation (pData) contains exactly the same elements as the mass spec run names in the data
+  annotation_run <- getAnnotationRun(pData=pData_makeAllNames, run_names=run_names)
+
+  #Now only "make.names" on the annotation column
+  pData <- make_pData_MSqRob(ann_frame, annotation_run=annotation_run)
 
   pData <- addColClasses(pData, colClasses)
+
+  #Error checks
+  check_expAnn(pData, annotation_run)
 
   return(pData)
 }
 
 
 #MSqRob "make names"
+#If annotation_run==NULL => "make.names" on everything, else only on the annotation_run
+make_pData_MSqRob <- function(pDataObject, annotation_run=NULL){
 
-make_pData_MSqRob <- function(pDataObject){
+  ann_run_index <- which(colnames(pDataObject)==annotation_run)
+  if(length(ann_run_index)==0){ann_run_index <- NULL}
+
+  counter <- 0
+
   pDataObject <- data.frame(lapply(pDataObject, function (x) {
+
+    counter <<- counter + 1
 
     #Remove leading and trailing spaces for every column
     x <- gsub("^\\s+|\\s+$", "", x)
 
     #If it's the unique column, apply make.names so that its names are equal to the colnames of the exprs slot of the MSnSet object (read in via read.table)
-    if(length(unique(x))==nrow(pDataObject)){
+    if(counter==ann_run_index || is.null(ann_run_index)){
       x <- make.names(x, unique = TRUE)}
 
     return(factor(x, levels=unique(x))) #levels are specified to give factor levels the order given in the annotation file
@@ -93,11 +104,6 @@ make_pData_MSqRob <- function(pDataObject){
   ))
   return(pDataObject)
 }
-
-
-
-
-
 
 
 
@@ -115,12 +121,18 @@ addColClasses <- function(df, colClasses){
 
       #Else, the type is specified by the order
     }} else if(!all(is.na(colClasses))){
-      colClasses <- rep(colClasses, length=length(colClasses))
-      for(i in 1:length(colClasses)){
+      colClasses <- rep(colClasses, length=ncol(df))
+      for(i in 1:ncol(df)){
         #"as" doesn't work for factors => need tryCatch
         df[,i] <- tryCatch(as(df[,i], colClasses[i]), error=function(e){
           return(df[,i])})
-      }}
+
+      #Else, colClasses is NA, so we return to the default behaviour of "type.convert"
+      }} else{
+        for(i in 1:ncol(df)){
+          #"as" doesn't work for factors => need tryCatch
+          df[,i] <- type.convert(df[,i])
+        }}
 
   #The real function return:
   return(df)

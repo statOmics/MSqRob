@@ -40,31 +40,3 @@ addVarFromVar <- function(protdata, basecol, name, vector){
    #Put the new list of data frames in the data slot of the new protdata object.
    return(new("protdata", accession=protdata@accession, data=protdatanew, annotation=protdata@annotation))
 }
-
-
-# addAnnotationProtdata <- function(protdata, exp_annotation, type_annot=NULL, colClasses=NA, ...){
-#
-#   #basecol automatisch bepalen!!!
-#
-#   pData <- makeAnnotation(exp_annotation=exp_annotation, type_annot=type_annot, colClasses=colClasses)
-#
-#
-#
-#   protdatanew <- lapply(protdata@data, function(x){
-#
-#     #Make a data frame equal to the existing one with an extra column
-#     #that places the values in "vector" next to their corresponding values in "basecol".
-#     x <- data.frame(x,vector[as.character(do.call('$',list(x,basecol)))])
-#
-#     #Give the chosen name to the added column.
-#     colnames(x)[ncol(x)] <- name
-#
-#     return(x)
-#
-#   })
-#
-#   #Put the new list of data frames in the data slot of the new protdata object.
-#   return(new("protdata", accession=protdata@accession, data=protdatanew, annotation=protdata@annotation))
-# }
-#
-#
