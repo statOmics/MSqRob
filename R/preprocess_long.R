@@ -10,7 +10,7 @@
 #' @param split A character indicating which string is used to separate accession groups.
 #' @param exp_annotation Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no (extra) annotation to be added.
 #' @param type_annot If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.
-#' @param quant_col A character indicating the column that contains the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to \code{"quant_value"}.
+#' @param quant_col A character indicating the column that contains the quantitative values of interest (mostly peptide intensities or peptide areas under the curve). Defaults to \code{"quant_value"} (the name of the column after importing via the \code{\link{importDIAData}} function).
 #' @param run_col A character indicating the column in data frame \code{df} that contains the mass spec run names.
 #' @param aggr_by A character indicating the column by which the data should be aggregated. We advise to aggregate the data by peptide sequence (thus aggregate over different charge states and modification statuses of the same peptide). If you only want to aggregate over charge states, set \code{aggr_by} to the column corresponding to the modified sequences. If no aggregation at all is desired, leave \code{aggr_by} at \code{NULL} (default). Data will never be aggregated over different \code{run_col}.
 #' @param aggr_function Only used when \code{aggr_by} is not \code{NULL}. The function used to aggregate intensity data. Defaults to \code{"sum"}.
@@ -24,9 +24,9 @@
 #' @param filter_symbol Only used when \code{filter} is not \code{NULL}. A character indicating the symbol in the columns corresponding to the \code{filter} argument that is used to indicate rows that should be removed from the data. Defaults to \code{NULL}.
 #' @param minIdentified A numeric value indicating the minimal number of times a peptide sequence should be identified in the dataset in order not to be removed. Defaults to 2.
 #' @param colClasses_df character. A vector of classes to be assumed for the columns of the data frame \code{df}. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-#' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.
 #' @param colClasses_exp character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-#' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.
 #' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
@@ -34,7 +34,7 @@
 #' @return A preprocessed data frame that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.
 #' @include preprocess_hlpFunctions.R
 #' @export
-preprocess_long <- function(df, accession, split, exp_annotation = NULL, type_annot = NULL, quant_col = "quant_value", run_col, aggr_by = NULL, aggr_function = "sum", logtransform = TRUE, base = 2, normalisation = "quantiles", smallestUniqueGroups = TRUE, useful_properties = NULL, filter = NULL, filter_symbol = NULL, minIdentified = 2, colClasses_df = NA, colClasses_exp = NA, printProgress = FALSE, shiny = FALSE, message = NULL, ...)
+preprocess_long <- function(df, accession, split, exp_annotation = NULL, type_annot = NULL, quant_col = "quant_value", run_col, aggr_by = NULL, aggr_function = "sum", logtransform = TRUE, base = 2, normalisation = "quantiles", smallestUniqueGroups = TRUE, useful_properties = NULL, filter = NULL, filter_symbol = NULL, minIdentified = 2, colClasses_df = "keep", colClasses_exp = "keep", printProgress = FALSE, shiny = FALSE, message = NULL, ...)
 {
 
   progress <- NULL
@@ -110,6 +110,7 @@ preprocess_long <- function(df, accession, split, exp_annotation = NULL, type_an
   }
   }
 
+  # Faster way to aggregate: check importDIAData.R: maybe implement here and in preprocess_wide.R as well!!!!!!!!
   # data <- data %>% ungroup() %>% group_by_(filename.var, get(aggr_by),
   #                                          protein.var) %>% summarise_(quant_value = sumquant)
 
@@ -220,7 +221,7 @@ preprocess_long <- function(df, accession, split, exp_annotation = NULL, type_an
 
   if(!is.null(exp_annotation)){
     #df <- dfLongAddAnnotation(df, run_col, exp_annotation, type_annot, colClasses_exp)
-    pData <- makeAnnotation(exp_annotation, type_annot=type_annot, colClasses=colClasses_exp)
+    pData <- makeAnnotation(exp_annotation, run_names=runs, type_annot=type_annot, colClasses=colClasses_exp)
     attr(df, "MSqRob_exp_annotation") <- pData
   }
 
