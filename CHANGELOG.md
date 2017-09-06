@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 0.7.1 - 2017-09-06
+
+### Added
+
+- Added support for continuous variables.
+
+## 0.7.0 
+
+### Added
+
+- Added support for exporting figures.
+- Added support for analyzing moFF data.
+
 ## 0.6.5 - 2017-08-18
 
 ### Added
