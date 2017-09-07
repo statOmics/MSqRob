@@ -14,11 +14,11 @@ When you are a Windows user who only wants to use the functionality of the MSqRo
 
 ### 1.1. Installation
 
-Simply download the MSqRob GUI through this link: https://github.com/statOmics/MSqRob/releases/download/MSqRob_standalone_Win_0.7.0/MSqRob.zip.  
+Download the MSqRob GUI through this link: https://github.com/statOmics/MSqRob/releases/download/MSqRob_standalone_Win_0.7.0/MSqRob.zip.  
 
 ### 1.2. Run the MSqRob Shiny App (graphical user interface)
 
-To start MSqRob, simply doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
+To start MSqRob, doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
 
 ## 2. MSqRob within the R framework
 
