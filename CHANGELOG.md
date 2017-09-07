@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 - Added support for exporting figures.
 - Added support for analyzing moFF data.
+- Added the possibility to run MSqRob as a standalone version on Windows.
 
 ## 0.6.5 - 2017-08-18
 
