@@ -12,11 +12,11 @@ The authors kindly ask to make a reference to Goeminne et al. (2016) and Goeminn
 
 When you are a Windows user who only wants to use the functionality of the MSqRob Shiny GUI and who doesn't foresee to use R in the near future, you can go for the MSqRob standalone version. Note that this distribution is around 500 MB in size, as it contains the R framework internally, so if you have R already installed on your computer, you might consider to install MSqRob within the R framework (see below).
 
-### 1.1. Installation
+### 1.1. Install MSqRob as a standalone application (Windows only!)
 
 Download the MSqRob GUI through this link: https://github.com/statOmics/MSqRob/releases/download/MSqRob_standalone_Win_0.7.0/MSqRob.zip.  
 
-### 1.2. Run the MSqRob Shiny App (graphical user interface)
+### 1.2. Run the standalone MSqRob Shiny App (graphical user interface)
 
 To start MSqRob, doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
 
