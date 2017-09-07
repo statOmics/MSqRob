@@ -24,7 +24,7 @@ To start MSqRob, doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
 
 ### 2.1. Installation
 
-If you're not a Windows user, and/or you are already using R and/or RStudio, and/or you want to use MSqRob on the R command line, follow the following instructions to install MSqRob.
+If you're not a Windows user, and/or you are already using R and/or RStudio, and/or you also want to have access to MSqRob on the R command line, follow the following instructions to install MSqRob.
 
 First, make sure that R is installed on your computer. Optionally, you can also install RStudio as an integrated development invironment (IDE) for R. Instructions on how to install R and RStudio can be found here: http://web.cs.ucla.edu/~gulzar/rstudio/.
 
