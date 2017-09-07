@@ -1043,14 +1043,10 @@ observe({
       } else if(input$result_extension == "postscript") {
         grDevices::postscript(file.path(savepathFigs,paste0(plotnames[i],".ps")),width = 3.25,
                        height    = 3.25,
-                       units     = "in",
-                       res       = 2000,
                        pointsize = 5.4)
       } else if(input$result_extension == "xfig") {
         grDevices::xfig(file.path(savepathFigs,paste0(plotnames[i],".fig")),width = 3.25,
                               height    = 3.25,
-                              units     = "in",
-                              res       = 2000,
                               pointsize = 5.4)
       }
 
@@ -1354,14 +1350,10 @@ observe({
     } else if(input$preprocessing_extension == "postscript") {
       grDevices::postscript(file.path(savepathFigs,paste0(plotnames[i],".ps")),width = 3.25,
                      height    = 3.25,
-                     units     = "in",
-                     res       = 2000,
                      pointsize = 5.4)
     } else if(input$preprocessing_extension == "xfig") {
       grDevices::xfig(file.path(savepathFigs,paste0(plotnames[i],".fig")),width = 3.25,
                             height    = 3.25,
-                            units     = "in",
-                            res       = 2000,
                             pointsize = 5.4)
     }
 
