@@ -58,7 +58,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	    list(
   	      tags$label("Input type", `for`="input_type", class="MSqRob_label"),
   	      tags$button(id="button_input_type", tags$sup("[?]"), class="MSqRob_tooltip"),
-  	      selectInput("input_type", NULL, c("MaxQuant", "moFF", "tab-delimited", "xlsx"), width = '100%'),
+  	      selectInput("input_type", NULL, c("MaxQuant", "moFF"), width = '100%'),
   	      hidden(helpText(id="tooltip_input_type",
   	                      "Select the type of input.
   	                      "))
