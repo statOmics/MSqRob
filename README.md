@@ -8,13 +8,29 @@ The MSqRob Shiny App allows for an easy-to-use graphical user interface that req
 
 The authors kindly ask to make a reference to Goeminne et al. (2016) and Goeminne et al. (2017) when making use of this package in any kind of publication or presentation.
 
-## Installation
+## 1. MSqRob as a standalone application for Windows
 
-Make sure that R is installed on your computer. Optionally, you can also install RStudio as an integrated development invironment (IDE) for R. Instructions on how to install R and RStudio can be found here: http://web.cs.ucla.edu/~gulzar/rstudio/.
+When you are a Windows user who only wants to use the functionality of the MSqRob Shiny App and who doesn't foresee to use R in the near future, you can go for the MSqRob standalone version. Note that this distribution is around 500 MB in size, as it contains the R framework internally, so if you have R already installed on your computer, you might consider to install MSqRob within the R framework (see below).
+
+### 1.1. Install MSqRob as a standalone application (Windows only!)
+
+Download the MSqRob GUI through this link: https://github.com/statOmics/MSqRob/releases/download/MSqRob_standalone_Win_0.7.0/MSqRob.zip.  
+
+### 1.2. Run the standalone MSqRob Shiny App (graphical user interface)
+
+To start MSqRob, doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
+
+## 2. MSqRob within the R framework
+
+### 2.1. Installation
+
+If you're not a Windows user, and/or you are already using R and/or RStudio, and/or you also want to have access to MSqRob on the R command line, follow the following instructions to install MSqRob.
+
+First, make sure that R is installed on your computer. Optionally, you can also install RStudio as an integrated development invironment (IDE) for R. Instructions on how to install R and RStudio can be found here: http://web.cs.ucla.edu/~gulzar/rstudio/.
 
 On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows. Errors in MSqRob on Windows related to unable to zip the results Excel file might be related to errors in configuring RTools.
 
-To install MSqRob directly from GitHub, we first need to install the package `devtools`:
+To install MSqRob directly from GitHub, we first need to install the package `devtools`. Just enter the following commands in RStudio:
 
 ~~~~
 install.packages("devtools")
@@ -31,25 +47,27 @@ biocLite()
 Finally, we call this to install the latest version of `MSqRob` (0.7.1):
 
 ~~~~
+
 devtools::install_github("statOmics/MSqRob@MSqRob0.7.1")
+
 library(MSqRob)
 ~~~~
 
 If you encounter any issues in installing MSqRob, please let us know at https://github.com/statOmics/MSqRob/issues/1!
 
-## Run the MSqRob Shiny App (graphical user interface)
+### 2.2. Run the MSqRob Shiny App (graphical user interface)
 
-Just enter the following command in RStudio to run the `MSqRob` Shiny app:
+Enter the following command in RStudio to run the `MSqRob` Shiny app:
 
 ~~~~
 shiny::runApp(system.file("App-MSqRob", package="MSqRob"))
 ~~~~
 
-## Tutorial for the MSqRob Shiny App
+## 3. Tutorials for the MSqRob Shiny App
 
 A tutorial on using the MSqRob Shiny App can be found in Goeminne et al. (2017). For the *Francisella* example, one finds the peptides.txt file, the experimental annotation file (label-free_Francisella_annotation.xlsx) and the proteinGroups.txt file under  https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/. For the CPTAC example, these files can be found under https://github.com/statOmics/MSqRobData/tree/master/inst/extdata/CPTAC (use label-free_CPTAC_annotation.xlsx as the experimental annotation file).
 
-## Getting started with MSqRob in R
+## 4. Getting started with MSqRob on the command line in R
 
 To get started with MSqRob, we suggest to take a look at the MSqRob vignette at https://github.com/statOmics/MSqRob/blob/master/vignettes/MSqRob.Rmd
 
@@ -60,7 +78,7 @@ https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/ana
 
 These files can be easily adjusted to cope with the analysis of your own experiment.
 
-## Run MSqRob on the terminal on a Linux system
+## 5. Run MSqRob on the terminal on a Linux system
 
 In order to run the first example in the terminal on a Linux system, it is first needed to tell the system where to find the Pandoc installation. This folder can easily be found by typing the following command in RStudio:
 
@@ -80,7 +98,7 @@ Then we knit out Rmarkdown file (which we saved at `/Users/lgoeminn/MSqRobData/i
 Rscript -e "require( 'rmarkdown' ); render('/Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/analysis_CPTAC.Rmd', 'html_document')"
 ~~~~
 
-## Run MSqRob via a bash script
+## 6. Run MSqRob via a bash script
 
 An example bash script can be found at:
 
@@ -93,11 +111,11 @@ chmod +x /Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/bash_CPTAC.sh
 bash /Users/lgoeminn/MSqRobData/inst/extdata/CPTAC/bash_CPTAC.sh
 ~~~~
 
-## Troubleshooting
+## 7. Troubleshooting
 
 **If you experience any kind of inconvencience or something is unclear to you, please do not hesitate to contact us at: [ludger.goeminne@vib-ugent.be](mailto:ludger.goeminne@vib-ugent.be).** For us it is important to get user-feedback so that we can continue improving MSqRob's user-friendliness. Therefore, we are happy to help you with any problems you might encounter when installing or using MSqRob. So for any issues or questions, even if you think that they might be trivial at first sight, please do send us a mail.
 
-## References
+## 8. References
 
 Ludger Goeminne, Andrea Argentini, Lennart Martens and Lieven Clement (2015). Summarization vs Peptide-Based Models in Label-Free Quantitative Proteomics: Performance, Pitfalls, and Data Analysis Guidelines. Journal of Proteome Research 15(10), 3550-3562.
 
