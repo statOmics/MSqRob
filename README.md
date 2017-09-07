@@ -8,7 +8,7 @@ The MSqRob Shiny App allows for an easy-to-use graphical user interface that req
 
 The authors kindly ask to make a reference to Goeminne et al. (2016) and Goeminne et al. (2017) when making use of this package in any kind of publication or presentation.
 
-## 1. MSqRob as a standalone for Windows
+## 1. MSqRob as a standalone application for Windows
 
 When you are a Windows user who only wants to use the functionality of the MSqRob Shiny GUI and who doesn't foresee to use R in the near future, you can go for the MSqRob standalone version. Note that this distribution is around 500 MB in size, as it contains the R framework internally, so if you have R already installed on your computer, you might consider to install MSqRob within the R framework (see below).
 
