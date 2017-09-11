@@ -407,7 +407,7 @@ preprocess_moFF <- function(MSnSet, accession="prot", exp_annotation=NULL, type_
   mediandata <- apply(exprs, 1, "median", na.rm = TRUE)
   flag1 = 1
   for (j in 1:ncol(exprs)) {
-    LRfit <- rlm(as.matrix(exprs[, j]) ~ mediandata, weights=weights, na.action = na.exclude)
+    LRfit <- MASS::rlm(as.matrix(exprs[, j]) ~ mediandata, weights=weights, na.action = na.exclude)
     Coeffs <- LRfit$coefficients
     a <- Coeffs[2]
     b <- Coeffs[1]
