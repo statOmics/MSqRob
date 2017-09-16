@@ -44,7 +44,7 @@ prot.p.adjust <- function(coefmatlist, method = "fdr", pcol="pval", qname="qval"
 
       pvals <- pvals[ord]
       signs <- signs[ord]
-      x <- x[ord,]
+      x <- x[ord,,drop=FALSE]
       ########################################
 
       #Adjust p values and add them as an extra column
