@@ -82,6 +82,10 @@ setMethod("getBetaVcovDf", "lm", .getBetaVcovDfLm)
 
   #Design matrix for the fixed effects:
   X <- lme4::getME(model,"X")
+  
+  if(!is.null(attr(X,"scaled:center")) & !is.null(attr(X,"scaled:scale"))){
+  X <- X * attr(X, 'scaled:scale') + attr(X, 'scaled:center')
+  }
 
   #If "Intercept_MSqRob" is present (sometimes if other fixed effects are shrunken in fit.model), change to "(Intercept)"
   colnames(X)[colnames(X)=="Intercept_MSqRob"] <- "(Intercept)"
