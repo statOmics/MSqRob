@@ -50,8 +50,10 @@ makeAnnotation <- function(exp_annotation, run_names, type_annot=NULL, colClasse
 
     if(isTRUE(as.logical(grep(".xlsx[/\\]*$",exp_annotation))) || type_annot=="xlsx"){
       ann_frame <- openxlsx::read.xlsx(exp_annotation)
+      #Convert characters to factors: this is the default for files and will be put into your colClasses if colClasses="keep"!
+      ann_frame <- as.data.frame(unclass(ann_frame))
     } else{ #if(type_annot=="tab-delim")
-      ann_frame <- read.table(exp_annotation, sep="\t", header=TRUE, row.names = NULL)
+      ann_frame <- read.table(exp_annotation, sep="\t", header=TRUE, row.names = NULL, stringsAsFactors = TRUE)
     }
 
     #If exp_annotation is a data frame, just put the data frame in the pData slot (lapply and gsub are just to remove leading and trailing spaces)
@@ -155,6 +157,8 @@ check_expAnn <- function(pData, annotation_run){
     uniquelvls <- names(which(apply(pData,2, function(x) length(unique(x))==nrow(pData))))
     if(length(uniquelvls)>0){stop(paste0("Make sure that exactly one column in the experiment annotation has elements equal to the mass spec run names in the data. Maybe one of the following columns has an error in at least one of its elements: ",paste0(uniquelvls, collapse=", "),"."))
     } else{stop("Make sure that exactly one column in the experiment annotation has elements equal to the mass spec run names in the data.")}
+  } else if(!is.factor(pData[,annotation_run])){
+    stop("Please make sure that the column in your experiment annotation that corresponds to the mass spec run names is a factor variable.")
   }
 }
 
