@@ -27,7 +27,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 ############################################################################
 #Navigation bar with 3 panel:Input, preprocessing, quantification
 ############################################################################
-   navbarPage("MSqRob Shiny App v 0.7.0", inverse=TRUE,
+   navbarPage("MSqRob Shiny App v 0.7.1", inverse=TRUE,
 
 
     ####################################
@@ -97,7 +97,22 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 		fileInput(inputId="annotation", label=NULL, multiple = FALSE, accept = NULL, width = NULL),
 		hidden(helpText(id="tooltip_annotation","Specify the location of your experimental annotation file."))
 		)
+		),
+
+		div(class="MSqRob_input_container",
+		    list(
+		      checkboxInput("asis_numeric", label="Read numeric annotations", value=FALSE),
+		      tags$button(id="button_asis_numeric", tags$sup("[?]"), class="MSqRob_tooltip"),
+		      hidden(helpText(id="tooltip_asis_numeric",
+		                      "By default, MSqRob reads all data in the annotation file as factor variables.
+		                      Tick this box to read numeric variables as numeric.
+		                      Be careful when choosing this option: reading a numeric variable as numeric only makes sense when
+		                      the numeric variable has enough levels. Also, make sure that all your factor variables contain at least a character,
+		                      e.g. a repeat with levels \"1\", \"2\", \"3\" should for example be given levels \"r1\", \"r2\", \"r3\" to make sure that it is read as a factor."
+		      ))
+		    )
 		)
+
   	),
 
 		#Main panel with number of output and plots
@@ -519,6 +534,25 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                   "))
       )
   ),
+
+  div(class="MSqRob_input_container",
+      list(
+        conditionalPanel(
+        condition = "input.analysis_type != \"ANOVA\"",
+        tags$label("Minimal fold change", `for`="lfc", class="MSqRob_label"),
+        tags$button(id="button_lfc", tags$sup("[?]"), class="MSqRob_tooltip"),
+        numericInput("lfc", label=NULL, value=0.5, min = 0, max = NA, step = 0.1, width = NULL),
+        hidden(helpText(id="tooltip_lfc","
+                        In many scientific experiments, proteins that are significant with only a minimal fold change are considered biologically irrelevant,
+                        even if they have a high statistical significance. Testing against a minimal fold change threshold removes these proteins with low fold changes that might obscure your list of significant results.",
+                        span("Enter here the (log-transformed) value below which you believe there is no biological relevance.", class="bold"),
+                        "The advantage of this approach over manually applying an estimate cut-off is that the p-values and FDR values retain a meaningful value.
+                        When you change the cut-off, you should redo the analysis.
+                        This type of analysis cannot be performed in combination with an ANOVA.
+                        "))
+      )
+        )
+        ),
 
   #Number of contrasts
   div(class="MSqRob_input_container",
