@@ -103,9 +103,13 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
   errorMsg <- NULL
 
-  #Control: fixed en random connot be NULL at the same time!
+  #Control: fixed and random connot be NULL at the same time!
   if(is.null(response)){errorMsg <- paste0(errorMsg, "\n\n", "Please specify a response variable.")}
   if(is.null(fixed) && is.null(random)){errorMsg <- paste0(errorMsg, "\n\n", "Please specify appropriate fixed and/or random effects.")}
+
+  #Control: fixed and random effects must be completely different: no overlaps, otherwise problems with ".adjustNames" function!
+  #If you really want to try something this crazy, just duplicate the effect.
+  if(any(fixed %in% random)){errorMsg <- paste0(errorMsg, "\n\n", "Fixed and random effects must be different from each other.")}
 
   #Correct for possible interactions (only used in error control that follows)
   errorMsg <- .checkPredictors(errorMsg, fixed, possible_vars, "fixed")
@@ -384,7 +388,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
 
 
-.createParsedFormula=function(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix,scaleUnshrFix,modfiedGS,nObsPep=NULL,nNonObsPep=NULL,v=NULL){
+.createParsedFormula=function(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix,scaleUnshrFix,modfiedGS,nObsPep=NULL,nNonObsPep=NULL,v=NULL,familyfun=NULL){
 
   #,nObsPep=NULL,nNonObsPep=NULL,v=NULL need to be given if a count formula needs to be made, even though these arguments are never used,
   #they need to be set in order for the formula not to fail!
@@ -394,6 +398,8 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   x <- droplevels(x)
 
   error <- FALSE
+
+  if(n==0){error <- TRUE}
 
   # if(!is.null(fixed) && any(sapply(strsplit(fixed, ":"), function(z){return(length(levels(factor(do.call(paste, x[,z, drop=FALSE])))))})==1)){
   #   warning("Fixed effects should have at least 2 levels before a model can be fit.")
@@ -431,9 +437,65 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     #If there is at least one shrunken fixed effect
   } else if(any(shrinkage.fixed!=0)){
 
+    #We don't want any singularities in our fixed effects!!!
+    #Remove those singularities from the data!
+    oldContr <- options("contrasts")$contrasts
+    newContr <- oldContr
+    newContr["unordered"] <- "contr.ltfr_MSqRob"
+    options(contrasts = newContr)
+
+    MMFull <- model.matrix(formula_fix, data=x)
+
+    options(contrasts = oldContr)
+
+    if(any(duplicated(cov(MMFull), MARGIN = 2))){
+    lol <- lapply(.adjustNames(list(x), fixed), function(z) {
+      colnames(MMFull)[duplicated(cov(MMFull), MARGIN = 2)]==z}
+      )
+
+    x <- x[which(rowSums(lol[[1]])==0),]
+    x <- droplevels(x)
+    n <- nrow(x)
+    y <- y[which(rowSums(lol[[1]])==0)]
+
+    ###COPY PASTE VAN HIERBOVEN!!!####
+    ###Recall functie???###
+
+    #Remove fixed effects with only one level so that these models can be fit (interpretation is done when fitting contrasts!)
+    templist <- .removeSingleLevels(fixed, shrinkage.fixed, formula_fix, x, add.intercept)
+    fixed <- templist[[1]]
+    shrinkage.fixed <- templist[[2]]
+    formula_fix <- templist[[3]]
+
+    #Default: shrink all fixed effects together except the intercept
+    if(!is.null(fixed) && is.null(shrinkage.fixed)){
+      shrinkage.fixed <- rep(1, length(fixed))
+      if(isTRUE(add.intercept)){ #If shrinkage.fixed is NULL AND there is an intercept!!!
+        shrinkage.fixed <- c(0,shrinkage.fixed)
+      }
+    }
+
+    fixed2 <- fixed
+
+    if(isTRUE(add.intercept)){
+      fixed2 <- c(1,fixed)
+      #Always add 0 to fixed2, needed for the formula
+    } else{fixed2 <- c(0,fixed)}
+
+    ############################
+    ############################
+    ############################
+
+    }
+
     #Make fixed design model matrix MM, this step is only because we need its attributes
     #If you find a bug here, check options("contrasts")$contrasts: unordered should be "contr.treatment" and definitely not "contr.ltfr_MSqRob"!
-    MM <- model.matrix(formula_fix, data=x)
+
+    #Catch error in case x would have 0 rows after removing singularities
+    if(n==0){
+      MM <- x
+    #Default model matrix for the fixed effects
+    } else{MM <- model.matrix(formula_fix, data=x)}
 
     #Make fixed design matrix
     #design_fix <- Matrix::Matrix(MM)
@@ -473,6 +535,24 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     Q_fix <- QR_fix[["Q"]]
     R_fix <- QR_fix[["R"]]
 
+    # R_fix2 <- R_fix
+    # Q_fix2 <- Q_fix
+
+    #Intercept will always be first in the design matrix!!!!
+    #Try e.g.: model.matrix(~ -1 + lab + 1 + condition, data=x)
+    #Check if there is an intercept!!!
+    # if(isTRUE(add.intercept)){
+    #
+    # R_fix2[1,] <- R_fix2[1,]/R_fix2[1,1]
+    # Q_fix2[,1] <- 1 #Q_fix2[,1]/Q_fix2[1,1]
+    #
+    # R_fix <- R_fix2
+    # Q_fix <- Q_fix2
+    # }
+
+    # R_fix <- NULL
+    # Q_fix <- MM
+
     ridgeGroupsForm <- NULL
     if(length(groups)!=0){
       ridgeGroups <- vector()
@@ -498,7 +578,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
     #If there are also unshrunken fixed effects next to shrunken fixed effects
     #position of unshrunken effects in Q_fix:
-    if(any(shrinkage.fixed==0)){
+    if(any(shrinkage.fixed==0) && nrow(x)>0){
       fixedUnshrGroups <- vector()
 
       for(i in 1:length(unshr_pos)){
@@ -807,7 +887,7 @@ addZerosQR <- function(Q=NULL, R){
   devianceFunction <- tryCatch(do.call(lme4::mkLmerDevfun, parsedFormula), error=function(e){
     return(NULL)})
 
-  optimizerOutput <- tryCatch(lme4::optimizeLmer(devianceFunction), error=function(e){return(NULL)})
+  optimizerOutput <- suppressWarnings(tryCatch(lme4::optimizeLmer(devianceFunction), error=function(e){return(NULL)}))
 
   #ridgeFit=lme4::lmer(formula, data=data,weights=weights,...)
   ridgeFit=lme4::mkMerMod(
@@ -857,7 +937,7 @@ addZerosQR <- function(Q=NULL, R){
 
     #devianceFunction(environment(devianceFunction)$pp$theta) # one evaluation to ensure all values are set
 
-    optimizerOutput <- tryCatch(lme4::optimizeLmer(devianceFunction), error=function(e){return(NULL)}) #, optimizer = "nloptwrap"
+    optimizerOutput <- suppressWarnings(tryCatch(lme4::optimizeLmer(devianceFunction), error=function(e){return(NULL)})) #, optimizer = "nloptwrap"
 
     #ridgeFit=lme4::lmer(formula, data=data,weights=weights,...)
     # ridgeFit=lme4::mkMerMod(
