@@ -15,6 +15,8 @@
 #' @param squeezeVar A logical indicating whether the residual standard deviation of all models should be squeezed towards a common value. Defaults to \code{TRUE}. If set to \code{FALSE}, residual standard deviations will not be squeezed.
 #' @param min_df A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}.
 #' @param robust_var A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}. Defaults to \code{TRUE}.
+#' @param robustM A logical indicating wheter the weighing of the observations in the M estimation step should be based on the Huber weights of the residuals devided by the median absolute deviation (mad) of the residuals instead of the residuals devided by the residual standard deviation. Older MSqRob implementations used the approach with the residual standard deviation as a default. With the new approach, downweighing outliers will be more efficient, as the mad is not strongly influenced by outliers. Defaults to \code{TRUE}.
+#' @param modfiedGS A logical indicating wheter the Modified Gram-Schmidt algorithm should be used for orthogonalizing the fixed effects design matrix instead of the regular QR decomposition algorithm. Defaults to \code{FALSE}.
 #' @param tolPwrss A numeric value indicating the maximally tolerated deviation on the penalized weighted residual sum of squares when iteratively estimating the weights by M estimation.
 #' @param verbose A logical value indicating whether the models should be printed out. Defaults to \code{FALSE}.
 #' @param printProgress A logical indicating whether the R should print a message before fitting each model. Defaults to \code{FALSE}.
@@ -38,7 +40,7 @@
 #' @include dummyVars_MSqRob.R
 #' @include updateProgress.R
 #' @export
-fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, robustM = FALSE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting=NULL, message_thetas=NULL, message_squeeze=NULL, message_update=NULL, ...)
+fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.intercept=TRUE, shrinkage.fixed=NULL, weights="Huber", k = 1.345, par_squeeze=NULL, squeezeVar=TRUE, min_df=1, robust_var=TRUE, robustM = TRUE, scaleUnshrFix = FALSE, modfiedGS = FALSE, tolPwrss = 1e-10, verbose=FALSE, printProgress=FALSE, shiny=FALSE, message_fitting = NULL, message_thetas = NULL, message_squeeze = NULL, message_update = NULL, ...)
 {
   datalist <- getData(protdata, simplify=FALSE)
 
@@ -75,7 +77,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     datalist <- .adjustNames(datalist, random)
 
     #Fit the list of ridge models
-    modellist <- .createRidgeList(datalist = datalist, weights = weights, response = response, fixed = fixed, shrinkage.fixed = shrinkage.fixed, formula_fix = formula_fix, random = random, formula_ran = formula_ran, add.intercept = add.intercept, intercept = intercept, intercept_name = "(Intercept)", k = k, robustM = robustM, tolPwrss = tolPwrss, verbose = verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, ...)
+    modellist <- .createRidgeList(datalist = datalist, weights = weights, response = response, fixed = fixed, shrinkage.fixed = shrinkage.fixed, formula_fix = formula_fix, random = random, formula_ran = formula_ran, add.intercept = add.intercept, intercept = intercept, intercept_name = "(Intercept)", k = k, robustM = robustM, scaleUnshrFix = scaleUnshrFix, modfiedGS = modfiedGS, tolPwrss = tolPwrss, verbose = verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, ...)
 
     #2. We need a simple linear regression model (lm)
   } else if(is.null(random) && (all(shrinkage.fixed==0) && is.numeric(shrinkage.fixed))){
@@ -319,7 +321,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
 
 #Create a list with fitted ridge regression models
-.createRidgeList=function(datalist, weights, response, fixed, shrinkage.fixed, formula_fix, random, formula_ran, add.intercept, intercept, intercept_name = "(Intercept)", k, robustM, tolPwrss, verbose, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
+.createRidgeList=function(datalist, weights, response, fixed, shrinkage.fixed, formula_fix, random, formula_ran, add.intercept, intercept, intercept_name = "(Intercept)", k, robustM, scaleUnshrFix, modfiedGS,  tolPwrss, verbose, printProgress=NULL, shiny=FALSE, message_fitting=NULL, ...){
 
   progress <- NULL
   if(isTRUE(shiny)){
@@ -342,7 +344,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     #If the weighs for this particular protein are of length 1, duplicate them to the correct length
     if(length(y)==1){y <- rep(y,n)}
 
-    parsedFormula <- .createParsedFormula(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix)
+    parsedFormula <- .createParsedFormula(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix,scaleUnshrFix,modfiedGS)
 
     #For models that cannot be fitted, factors with only one level should not be removed (as is being done in .createParsedFormula), as the model cannot be fitted anyways!
     predictors2 <- unique(unlist(strsplit(c(fixed,random),":")))
@@ -382,7 +384,10 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
 
 
 
-.createParsedFormula=function(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix){
+.createParsedFormula=function(x,y,response,fixed,shrinkage.fixed,random,formula_ran,add.intercept,formula_fix,scaleUnshrFix,modfiedGS,nObsPep=NULL,nNonObsPep=NULL,v=NULL){
+
+  #,nObsPep=NULL,nNonObsPep=NULL,v=NULL need to be given if a count formula needs to be made, even though these arguments are never used,
+  #they need to be set in order for the formula not to fail!
 
   n <- nrow(x)
 
@@ -421,6 +426,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   if(all(shrinkage.fixed==0) || isTRUE(error)){
     ridgeGroupsForm <- NULL
     fixedUnshrForm <- paste0(fixed2, collapse="+")
+    fixedUnshrGroups <- NULL
 
     #If there is at least one shrunken fixed effect
   } else if(any(shrinkage.fixed!=0)){
@@ -449,12 +455,17 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     #   return(Matrix(nrow=0, ncol=0, sparse=TRUE))
     # }))
 
+    if(!isTRUE(modfiedGS)){
     Q_fix=tryCatch(Matrix::qr.Q(Matrix::qr(MM)), error=function(e){
       return(matrix(nrow=n, ncol=0))
     })
     R_fix=tryCatch(Matrix::qr.R(Matrix::qr(MM)), error=function(e){
       return(matrix(nrow=0, ncol=0))
     })
+    } else{
+      R_fix=gramschmidt(MM)$R
+      Q_fix=gramschmidt(MM)$Q
+    }
 
     #If R_fix has more columns than rows, make it square by adding zeros
     #This happens when some predictors are perfectly linearly dependent
@@ -522,6 +533,32 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
                                                attr(parsedFormula,"MSqRob_fail") <- TRUE
                                                return(parsedFormula)
                                              }))
+
+  #Proposal for scaling
+  if(isTRUE(scaleUnshrFix) && !is.null(fixedUnshrGroups)){
+
+  # parsedFormula$fr[,fixedUnshrGroups] <- scale(parsedFormula$fr[,fixedUnshrGroups,drop=FALSE])
+  # parsedFormula$X <- scale(parsedFormula$X)
+
+    origX <- parsedFormula$X[1,"Intercept_MSqRob"]
+
+    X1 <- as.matrix(parsedFormula$fr[,fixedUnshrGroups,drop=FALSE])
+    X2 <- parsedFormula$X
+
+    X1 <- X1/origX
+    X1[,"Intercept_MSqRob"] <- 1
+    attr(X1,"scaled:center") <- 0
+    attr(X1,"scaled:scale") <- origX
+
+    X2 <- X2/origX
+    X2[,"Intercept_MSqRob"] <- 1
+    attr(X2,"scaled:center") <- 0
+    attr(X2,"scaled:scale") <- origX
+
+    parsedFormula$fr[,fixedUnshrGroups] <- X1
+    parsedFormula$X <- X2
+
+  }
 
   if(isTRUE(attr(parsedFormula,"MSqRob_fail"))){error <- TRUE}
 
@@ -820,7 +857,7 @@ addZerosQR <- function(Q=NULL, R){
 
     #devianceFunction(environment(devianceFunction)$pp$theta) # one evaluation to ensure all values are set
 
-    optimizerOutput <- tryCatch(lme4::optimizeLmer(devianceFunction), error=function(e){return(NULL)})
+    optimizerOutput <- tryCatch(lme4::optimizeLmer(devianceFunction), error=function(e){return(NULL)}) #, optimizer = "nloptwrap"
 
     #ridgeFit=lme4::lmer(formula, data=data,weights=weights,...)
     # ridgeFit=lme4::mkMerMod(
@@ -921,5 +958,37 @@ addZerosQR <- function(Q=NULL, R){
 
   return(lmFit)
 }
+
+gramschmidt <- function(x) {
+  x <- as.matrix(x)
+  # Get the number of rows and columns of the matrix
+  n <- ncol(x)
+  m <- nrow(x)
+
+  # Initialize the Q and R matrices
+  q <- matrix(0, m, n)
+  r <- matrix(0, n, n)
+
+  for (j in 1:n) {
+    v = x[,j] # Step 1 of the Gram-Schmidt process v1 = a1
+    # Skip the first column
+    if (j > 1) {
+      for (i in 1:(j-1)) {
+        r[i,j] <- t(q[,i]) %*% x[,j] # Find the inner product (noted to be q^T a earlier)
+        # Subtract the projection from v which causes v to become perpendicular to all columns of Q
+        v <- v - r[i,j] * q[,i]
+      }
+    }
+    # Find the L2 norm of the jth diagonal of R
+    r[j,j] <- sqrt(sum(v^2))
+    # The orthogonalized result is found and stored in the ith column of Q.
+    q[,j] <- v / r[j,j]
+  }
+
+  # Collect the Q and R matrices into a list and return
+  qrcomp <- list('Q'=q, 'R'=r)
+  return(qrcomp)
+}
+
 
 

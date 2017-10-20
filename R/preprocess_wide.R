@@ -22,7 +22,7 @@
 #' @param filter_symbol Only used when \code{filter} is not \code{NULL}. A character indicating the symbol in the columns corresponding to the \code{filter} argument that is used to indicate rows that should be removed from the data. Defaults to \code{NULL}.
 #' @param minIdentified A numeric value indicating the minimal number of times a peptide sequence should be identified in the dataset in order not to be removed. Defaults to 2.
 #' @param colClasses character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-#' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.
 #' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
@@ -30,7 +30,7 @@
 #' @return A preprocessed \code{\link[=MSnSet-class]{MSnSet}} object that is ready to be converted into a \code{\link[=protdata-class]{protdata}} object.
 #' @include preprocess_hlpFunctions.R
 #' @export
-preprocess_wide <- function(df, accession, split, exp_annotation = NULL, type_annot = NULL, quant_cols, aggr_by = NULL, aggr_function = "sum", logtransform = TRUE, base = 2, normalisation = "quantiles", smallestUniqueGroups = TRUE, useful_properties = NULL, filter = NULL, filter_symbol = NULL, minIdentified = 2, colClasses = NA, printProgress = FALSE, shiny = FALSE, message = NULL, ...)
+preprocess_wide <- function(df, accession, split, exp_annotation = NULL, type_annot = NULL, quant_cols, aggr_by = NULL, aggr_function = "sum", logtransform = TRUE, base = 2, normalisation = "quantiles", smallestUniqueGroups = TRUE, useful_properties = NULL, filter = NULL, filter_symbol = NULL, minIdentified = 2, colClasses = "keep", printProgress = FALSE, shiny = FALSE, message = NULL, ...)
 {
 
   progress <- NULL
@@ -215,7 +215,7 @@ preprocess_wide <- function(df, accession, split, exp_annotation = NULL, type_an
 
   if(!is.null(exp_annotation)){
 
-    pData <- makeAnnotation(exp_annotation, type_annot=type_annot, colClasses=colClasses)
+    pData <- makeAnnotation(exp_annotation, run_names=quant_cols, type_annot=type_annot, colClasses=colClasses)
     attr(df, "MSqRob_exp_annotation") <- pData
 
     # pData <- makeAnnotation(exp_annotation=exp_annotation, type_annot=type_annot, colClasses=colClasses)

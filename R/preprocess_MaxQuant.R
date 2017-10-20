@@ -106,7 +106,7 @@ read_moFF <- function(file, pattern="sumIntensity_", remove_pattern=TRUE, shiny=
 #' @param external_filter_accession Only used when \code{external_filter_file} is not \code{NULL}. A character indicating the column that contains the protein identifiers in the \code{external_filter_file}. Defaults to \code{NULL}, which will throw an error if \code{external_filter_file} is not \code{NULL} to alert the user to specify a filter column.
 #' @param external_filter_column Only used when \code{external_filter_file} is not \code{NULL}. A vector of names containing the column name(s) on which to filter in the \code{external_filter_file}. Defaults to \code{NULL}, which will throw an error if \code{external_filter_file} is not \code{NULL} to alert the user to specify a filter column.
 #' @param colClasses character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-#' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.
 #' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
@@ -116,7 +116,7 @@ read_moFF <- function(file, pattern="sumIntensity_", remove_pattern=TRUE, shiny=
 #' @include preprocess_hlpFunctions.R
 #' @include updateProgress.R
 #' @export
-preprocess_MSnSet <- function(MSnSet, accession, exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, split=NULL, useful_properties=NULL, filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL, details=NULL)
+preprocess_MSnSet <- function(MSnSet, accession, exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, split=NULL, useful_properties=NULL, filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses="keep", printProgress=FALSE, shiny=FALSE, message=NULL, details=NULL)
 {
   #Error control
 
@@ -222,17 +222,12 @@ preprocess_MSnSet <- function(MSnSet, accession, exp_annotation=NULL, type_annot
 
     updateProgress(progress=progress, detail=details[8], n=n, shiny=shiny, print=isTRUE(printProgress & !is.null(exp_annotation)))
 
-    pData <- makeAnnotation(exp_annotation=exp_annotation, type_annot=type_annot, colClasses=colClasses)
-
     exprs <- Biobase::exprs(MSnSet)
 
-    #Check which column of the given exp_annotation (pData) contains exactly the same elements as the mass spec run names in the data
-    annotation_run <- getAnnotationRun(pData, colnames(exprs))
-
-    #Error checks
-    check_expAnn(pData, annotation_run)
+    pData <- makeAnnotation(exp_annotation=exp_annotation, run_names=colnames(exprs), type_annot=type_annot, colClasses=colClasses)
 
     #Sort columns in exprs by annotation_run column
+    annotation_run <- getAnnotationRun(pData=pData, run_names=colnames(exprs))
     exprs <- exprs[,match(as.character(pData[,annotation_run]), colnames(exprs))]
     rownames(pData) <- colnames(exprs)
 
@@ -274,7 +269,7 @@ preprocess_MSnSet <- function(MSnSet, accession, exp_annotation=NULL, type_annot
 #' @param remove_only_site A logical indicating wheter proteins that are only identified by peptides carrying one or more modification sites should be removed from the data. This requires the extra input of a proteinGroups.txt file in the \code{file_proteinGroups} argument. Defaults to \code{FALSE}.
 #' @param file_proteinGroups The name of the proteinGroups.txt file, which is used to remove proteins that are only identified by peptides carrying one or more modification sites. Only used when \code{remove_only_site} is set to \code{TRUE}.
 #' @param colClasses character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-#' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.
 #' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
@@ -284,7 +279,7 @@ preprocess_MSnSet <- function(MSnSet, accession, exp_annotation=NULL, type_annot
 #' @include preprocess_hlpFunctions.R
 #' @include updateProgress.R
 #' @export
-preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, useful_properties=c("Proteins","Sequence","PEP"), filter=c("Potential.contaminant","Reverse"), filter_symbol="+", minIdentified=2, remove_only_site=FALSE, file_proteinGroups=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL)
+preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, useful_properties=c("Proteins","Sequence","PEP"), filter=c("Potential.contaminant","Reverse"), filter_symbol="+", minIdentified=2, remove_only_site=FALSE, file_proteinGroups=NULL, colClasses="keep", printProgress=FALSE, shiny=FALSE, message=NULL)
 {
 
   #Some older versions of MaxQuant use "Contaminant" instead of "Potential.contaminant"
@@ -344,7 +339,7 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 #' @param external_filter_accession Only used when \code{external_filter_file} is not \code{NULL}. A character indicating the column that contains the protein identifiers in the \code{external_filter_file}. Defaults to \code{NULL}, which will throw an error if \code{external_filter_file} is not \code{NULL} to alert the user to specify a filter column.
 #' @param external_filter_column Only used when \code{external_filter_file} is not \code{NULL}. A vector of names containing the column name(s) on which to filter in the \code{external_filter_file}. Defaults to \code{NULL}, which will throw an error if \code{external_filter_file} is not \code{NULL} to alert the user to specify a filter column.
 #' @param colClasses character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-#' Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.
+#' Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.
 #' @param printProgress A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
@@ -355,7 +350,7 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 #' @include preprocess_hlpFunctions.R
 #' @include updateProgress.R
 #' @export
-preprocess_moFF <- function(MSnSet, accession="prot", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, useful_properties="peptide", filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses=NA, printProgress=FALSE, shiny=FALSE, message=NULL){
+preprocess_moFF <- function(MSnSet, accession="prot", exp_annotation=NULL, type_annot=NULL, logtransform=TRUE, base=2, normalisation="quantiles", weights=NULL, smallestUniqueGroups=TRUE, useful_properties="peptide", filter=NULL, filter_symbol=NULL, minIdentified=2, external_filter_file=NULL, external_filter_accession=NULL, external_filter_column=NULL, colClasses="keep", printProgress=FALSE, shiny=FALSE, message=NULL){
 
   details <- c("Log-transforming data",
                "Normalizing data",

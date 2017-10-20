@@ -154,9 +154,17 @@ shinyServer(function(input, output, session) {
   ########################################
   #Generate options for fixed effect variables
   ########################################
+
+  colClasses <- reactive({
+    if(isTRUE(input$asis_numeric)){
+      colClasses <- "keep"
+    } else{colClasses <- "factor"}
+    return(colClasses)
+  })
+
   #from annotation file
   fixedOptions2 <- reactive({
-    if(is.null(input$annotation$name)){
+    if(is.null(input$annotation$name) || is.null(peps())){
       exp_annotation <- NULL
     } else{
       if(isTRUE(as.logical(grep(".xlsx[/\\]*$",input$annotation$name)))){
@@ -169,12 +177,14 @@ shinyServer(function(input, output, session) {
         #   return(test)
         # } else{
         exp_annotation <- openxlsx::read.xlsx(annotationDatapath())
+        #Convert characters to factors:
+        exp_annotation <- as.data.frame(unclass(exp_annotation))
         # }
 
       } else{
-        exp_annotation <- read.table(annotationDatapath(), sep="\t", header=TRUE, row.names = NULL, quote="")
+        exp_annotation <- read.table(annotationDatapath(), sep="\t", header=TRUE, row.names = NULL, quote="", stringsAsFactors = TRUE)
       }
-      exp_annotation <- makeAnnotation(exp_annotation)
+      exp_annotation <- makeAnnotation(exp_annotation, run_names=colnames(Biobase::exprs(peps())), colClasses=colClasses())
     }
     return(exp_annotation)
   })
@@ -201,8 +211,18 @@ shinyServer(function(input, output, session) {
       if(inherits(RData, 'try-error')){stop("Loading of model file failed. Please provide a valid RDatas model file.")}
       levelOptions <- RData$levelOptions
     } else{
+
       optionsFixedSelected <- fixedOptions2()[,input$fixed,drop=FALSE]
-      levelOptions <- unique(as.vector(as.matrix(sapply(colnames(optionsFixedSelected),function(name){ paste0(name,optionsFixedSelected[,name])}))))
+
+      #Should stay "sapply" because result can sometimes be double or character
+      levelOptions <- unique(unlist(lapply(colnames(optionsFixedSelected),function(name){
+        if(is.numeric(optionsFixedSelected[,name])){result <- name
+        } else{
+          result <- paste0(name,optionsFixedSelected[,name])
+        }
+        return(result)
+      })))
+
       return(levelOptions)
     }
   })
@@ -317,6 +337,8 @@ observe({
                    shinyjs::toggle(id = "tooltip_peptides", anim = TRUE))
   shinyjs::onclick("button_annotation",
                    shinyjs::toggle(id = "tooltip_annotation", anim = TRUE))
+  shinyjs::onclick("button_asis_numeric",
+                   shinyjs::toggle(id = "tooltip_asis_numeric", anim = TRUE))
   shinyjs::onclick("button_newExpAnnText",
                    shinyjs::toggle(id = "tooltip_newExpAnnText", anim = TRUE))
   shinyjs::onclick("button_cite",
@@ -366,6 +388,8 @@ observe({
                    shinyjs::toggle(id = "tooltip_load_model", anim = TRUE))
   shinyjs::onclick("button_analysis_type",
                    shinyjs::toggle(id = "tooltip_analysis_type", anim = TRUE))
+  shinyjs::onclick("button_lfc",
+                   shinyjs::toggle(id = "tooltip_lfc", anim = TRUE))
   shinyjs::onclick("button_nContr",
                    shinyjs::toggle(id = "tooltip_nContr", anim = TRUE))
   shinyjs::onclick("button_plot_contrast",
@@ -400,9 +424,8 @@ observe({
 
     if(input$save!=2){
       shinyjs::enable("peptides")
-      shinyjs::enable("peptides_label")
       shinyjs::enable("annotation")
-      shinyjs::enable("annotation_label")
+      shinyjs::enable("asis_numeric")
       shinyjs::enable("onlysite")
       shinyjs::enable("proteingroups")
       shinyjs::enable("proteingroups_label")
@@ -419,6 +442,7 @@ observe({
 
       shinyjs::enable("evalnorm")
       shinyjs::enable("selColPlotNorm1")
+      shinyjs::enable("preprocessing_extension")
       shinyjs::enable("plotMDSPoints")
       shinyjs::enable("plotMDSLabels")
 
@@ -427,9 +451,8 @@ observe({
 
     } else if(input$save==2){
       shinyjs::disable("peptides")
-      shinyjs::disable("peptides_label")
       shinyjs::disable("annotation")
-      shinyjs::disable("annotation_label")
+      shinyjs::disable("asis_numeric")
       shinyjs::disable("onlysite")
       shinyjs::disable("proteingroups")
       shinyjs::disable("proteingroups_label")
@@ -446,6 +469,7 @@ observe({
 
       shinyjs::disable("evalnorm")
       shinyjs::disable("selColPlotNorm1")
+      shinyjs::disable("preprocessing_extension")
       shinyjs::disable("plotMDSPoints")
       shinyjs::disable("plotMDSLabels")
 
@@ -507,6 +531,7 @@ observe({
 
       fixed <- input$fixed
       random <- input$random
+      lfc <- input$lfc
 
       fs <- list()
       fs_type <- NULL
@@ -524,11 +549,11 @@ observe({
       useful_properties = unique(c(processedvals[["proteins"]],processedvals[["annotations"]],fixed,random)[c(processedvals[["proteins"]],processedvals[["annotations"]],fixed,random) %in% colnames(Biobase::fData(peptides))])
 
       if(input$input_type=="MaxQuant"){
-        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), colClasses=colClasses(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
       } else if(input$input_type=="moFF"){
-        peptides2 = preprocess_moFF(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+        peptides2 = preprocess_moFF(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], minIdentified=input$minIdentified, shiny=TRUE, colClasses=colClasses(), printProgress=TRUE, message="Preprocessing data...")
       } else{
-        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), colClasses=colClasses(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
       }
 
       Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2))
@@ -552,7 +577,7 @@ observe({
 
     #If standard
     if(input$analysis_type=="standard"){
-      RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
+      RidgeSqM <- test.contrast_adjust(outputlist$RData$models, L, simplify=FALSE, lfc=lfc, printProgress=TRUE, shiny=TRUE, message_extract="Calculating contrasts...", message_test="Testing contrasts...")
 
       #If stagewise
     } else if(input$analysis_type=="stagewise"){
@@ -979,11 +1004,11 @@ observe({
       subdataset <- data()[s, , drop = FALSE]
       main <- subdataset[,input$selMainPlot2]
 
-      if (is.factor(getData(proteins[accessions])[[input$selPlot2]])){
-        boxplot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]], outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=main, las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) #, cex.main=2, cex.lab=2, cex.axis=2, cex=2, getAccessions(proteins[accessions])
+      #if(is.factor(getData(proteins[accessions])[[input$selPlot2]])){
+        boxplot(getData(proteins[accessions])$quant_value~as.factor(getData(proteins[accessions])[[input$selPlot2]]), outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=main, las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) #, cex.main=2, cex.lab=2, cex.axis=2, cex=2, getAccessions(proteins[accessions])
         points(jitter((as.numeric(getData(proteins[accessions])[[input$selPlot2]])), factor=2),getData(proteins[accessions])$quant_value, col=colorsPlot2(), pch=pchPlot2()) #,cex=2, lwd=2, col=c(1,2,3,4,"cyan2",6)
         # title(ylab="Log2(Intensity)", line=5, cex.lab=2, family="Calibri Light")
-      } else plot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]],ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=getAccessions(proteins[accessions]), las=2, bty="n")
+      #} else plot(getData(proteins[accessions])$quant_value~getData(proteins[accessions])[[input$selPlot2]], outline=FALSE, ylim=c(min(getData(proteins[accessions])$quant_value)-0.2,max(getData(proteins[accessions])$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=main, las=2, frame.plot=FALSE, frame=FALSE, bty="n")
     } else{NULL}
   }
 

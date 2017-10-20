@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 0.7.1 - 2017-09-06
+
+### Added
+
+- Added support for continuous variables.
+
 ## 0.7.0 
 
 ### Added
