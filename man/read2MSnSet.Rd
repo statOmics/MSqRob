@@ -4,21 +4,32 @@
 \alias{read2MSnSet}
 \title{Import a file and convert it to an MSnSet object}
 \usage{
-read2MSnSet(file, pattern, remove_pattern = FALSE, sep = "\\t",
-  shiny = FALSE, message = NULL)
+read2MSnSet(file, pattern = NULL, colInt = NULL, remove_pattern = FALSE,
+  sep = "\\t", na.strings = NULL, quote = "", comment.char = "",
+  shiny = FALSE, message = NULL, ...)
 }
 \arguments{
 \item{file}{The name of a file. For more details about how this argument can be specified, see \code{\link[utils]{read.table}}.}
 
-\item{pattern}{A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values.}
+\item{pattern}{A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values. Defaults to \code{NULL}. Ignored if \code{colInt} is not \code{NULL}.}
+
+\item{colInt}{A vector of integers indicating the columns containing the peptide intensity values. Defaults to \code{NULL}, in which case a valid \code{pattern} should be specified.}
 
 \item{remove_pattern}{A logical indicating whether the expression in "pattern" should be removed from the column names in the resulting \code{\link[=MSnSet-class]{MSnSet}} object. Defaults to \code{FALSE}.}
 
 \item{sep}{A character indicating the field separator character. Values on each line of the file are separated by this character.The  Defaults to "\\t", indicating a tab-delimited input file.}
 
+\item{na.strings}{A character vector of strings which are to be interpreted as NA values. Blank fields are also considered to be missing values in logical, integer, numeric and complex fields. Note that the test happens after white space is stripped from the input, so \code{na.strings} values may need their own white space stripped in advance. Defaults to \code{NULL}.}
+
+\item{quote}{The set of quoting characters. See \code{\link{scan}} for the behaviour on quotes embedded in quotes. Quoting is only considered for columns read as character. Defaults to \code{""}, where quoting is disabled altogether.}
+
+\item{comment.char}{A character vector of length one containing a single character or an empty string. Defaults to \code{""}, in which case the interpretation of comments is turned off altogether.}
+
 \item{shiny}{A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.}
 
-\item{message}{Only used when \code{printProgress=TRUE} and \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
+\item{message}{Only used when \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).}
+
+\item{...}{Further arguments that can be passed on to the \code{\link{read.table}}-like functions.}
 }
 \value{
 An object of class \code{\link[=MSnSet-class]{MSnSet}}.
