@@ -138,7 +138,11 @@ shinyServer(function(input, output, session) {
       NULL
     } else{
       # req(input$peptides)
-      make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote=""))))
+      if(input$input_type=="Progenesis"){
+        make.names(as.vector(as.matrix(read.table(peptidesDatapath(), sep=",", skip=2, nrows=1, quote="", comment.char = ""))))
+      } else{
+      make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="", comment.char = ""))))
+      }
     }
   })
   selectedFilter <- reactive({
@@ -149,6 +153,18 @@ shinyServer(function(input, output, session) {
 
   output$selectFilters <- renderUI({
     selectInput("filter", NULL, filterOptions(), multiple=TRUE, selected=selectedFilter(), width = '100%')})
+
+  selNormalisation <- reactive({
+    if(input$input_type=="Progenesis"){
+      selNormalisation <- "none"
+    } else{
+      selNormalisation <- NULL
+    }
+  })
+
+  output$selectNormalisation <- renderUI({
+    selectInput("normalisation", NULL, c("loess.fast", "rlr", "quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none"), selected=selNormalisation(), width = '100%') #"loess.affy" and "loess.pairs" left out on purpose because they remove everything with at least 1 NA!
+    })
 
 
   ########################################
@@ -184,7 +200,7 @@ shinyServer(function(input, output, session) {
       } else{
         exp_annotation <- read.table(annotationDatapath(), sep="\t", header=TRUE, row.names = NULL, quote="", stringsAsFactors = TRUE)
       }
-      exp_annotation <- makeAnnotation(exp_annotation, run_names=colnames(Biobase::exprs(peps())), colClasses=colClasses())
+      exp_annotation <- makeAnnotation(exp_annotation, run_names=colnames(eset()), colClasses=colClasses())
     }
     return(exp_annotation)
   })
@@ -238,10 +254,10 @@ shinyServer(function(input, output, session) {
     })
 
   selectedRandom <- reactive({
-    if(!any(c("Sequence","peptide") %in% filterOptions())) {
+    if(!any(c("Sequence","sequence","peptide") %in% filterOptions())) {
       NULL
     }else{
-      c("Sequence","peptide")[which(c("Sequence","peptide") %in% filterOptions())[1]]
+      c("Sequence","sequence","peptide")[which(c("Sequence","sequence","peptide") %in% filterOptions())[1]]
     }
   })
 
@@ -255,10 +271,10 @@ shinyServer(function(input, output, session) {
 
   #Check waarom er nog altijd "Select accession" staat en niet "prot"!!!!
   selectedProteins <- reactive({
-    if(!any(c("Proteins","prot") %in% filterOptions())) {
+    if(!any(c("Proteins","prot","Accession","accession") %in% filterOptions())) {
       ""
     }else{
-      c("Proteins","prot")[which(c("Proteins","prot") %in% filterOptions())[1]]
+      c("Proteins","prot","Accession","accession")[which(c("Proteins","prot","Accession","accession") %in% filterOptions())[1]]
       }
   })
 
@@ -269,9 +285,9 @@ shinyServer(function(input, output, session) {
 
 
   selectedAnnotations <- reactive({
-    if(!any(c("Gene names", "Protein names","Gene.names", "Protein.names") %in% filterOptions())) {
+    if(!any(c("Gene names", "Protein names","Gene.names", "Protein.names", "gene") %in% filterOptions())) {
       NULL
-    }else{c("Gene names", "Protein names","Gene.names", "Protein.names")[c("Gene names", "Protein names","Gene.names","Protein.names") %in% filterOptions()]}
+    }else{c("Gene names", "Protein names","Gene.names", "Protein.names", "gene")[c("Gene names", "Protein names","Gene.names","Protein.names","gene") %in% filterOptions()]}
   })
 
   output$selectAnnotations <- renderUI({
@@ -361,8 +377,8 @@ observe({
                    shinyjs::toggle(id = "tooltip_minIdentified", anim = TRUE))
   shinyjs::onclick("button_filter",
                    shinyjs::toggle(id = "tooltip_filter", anim = TRUE))
-  shinyjs::onclick("button_evalnorm",
-                   shinyjs::toggle(id = "tooltip_evalnorm", anim = TRUE))
+  # shinyjs::onclick("button_evalnorm",
+  #                  shinyjs::toggle(id = "tooltip_evalnorm", anim = TRUE))
   shinyjs::onclick("button_selColPlotNorm",
                    shinyjs::toggle(id = "tooltip_selColPlotNorm", anim = TRUE))
   shinyjs::onclick("button_preprocessing_extension",
@@ -440,7 +456,7 @@ observe({
       shinyjs::enable("fixed")
       shinyjs::enable("random")
 
-      shinyjs::enable("evalnorm")
+      # shinyjs::enable("evalnorm")
       shinyjs::enable("selColPlotNorm1")
       shinyjs::enable("preprocessing_extension")
       shinyjs::enable("plotMDSPoints")
@@ -467,7 +483,7 @@ observe({
       shinyjs::disable("fixed")
       shinyjs::disable("random")
 
-      shinyjs::disable("evalnorm")
+      # shinyjs::disable("evalnorm")
       shinyjs::disable("selColPlotNorm1")
       shinyjs::disable("preprocessing_extension")
       shinyjs::disable("plotMDSPoints")
@@ -479,6 +495,14 @@ observe({
   })
 
   processedvals = reactive({processInput(input)})
+
+  useful_properties = reactive({
+    if(is.null(peps)){useful_properties <- NULL
+    } else{
+      useful_properties <- unique(c(processedvals()[["proteins"]],processedvals()[["annotations"]],input$fixed,input$random)[c(processedvals()[["proteins"]],processedvals()[["annotations"]],input$fixed,input$random) %in% colnames(Biobase::fData(peps()))])
+    }
+    return(useful_properties)
+    })
 
   outputlist <- eventReactive(input$go, {
 
@@ -531,32 +555,34 @@ observe({
 
       fixed <- input$fixed
       random <- input$random
-      lfc <- input$lfc
 
       fs <- list()
       fs_type <- NULL
 
       processedvals = isolate(processedvals())
+      useful_properties = isolate(useful_properties())
 
-      if(input$input_type=="MaxQuant"){
-      peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
-      } else if(input$input_type=="moFF"){
-      peptides = read_moFF(peptidesDatapath(), shiny=TRUE, message="Importing data...")
-      } else{
-      peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
-      }
+      # peptides <- isolate(peps())
 
-      useful_properties = unique(c(processedvals[["proteins"]],processedvals[["annotations"]],fixed,random)[c(processedvals[["proteins"]],processedvals[["annotations"]],fixed,random) %in% colnames(Biobase::fData(peptides))])
+      # if(input$input_type=="MaxQuant"){
+      # peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      # } else if(input$input_type=="moFF"){
+      # peptides = read_moFF(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      # } else{
+      # peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
+      # }
 
-      if(input$input_type=="MaxQuant"){
-        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), colClasses=colClasses(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
-      } else if(input$input_type=="moFF"){
-        peptides2 = preprocess_moFF(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], minIdentified=input$minIdentified, shiny=TRUE, colClasses=colClasses(), printProgress=TRUE, message="Preprocessing data...")
-      } else{
-        peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), colClasses=colClasses(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
-      }
+      peptides2 <- isolate(pepsN())
 
-      Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2))
+      # if(input$input_type=="MaxQuant"){
+      #   peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), colClasses=colClasses(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      # } else if(input$input_type=="moFF"){
+      #   peptides2 = preprocess_moFF(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], minIdentified=input$minIdentified, shiny=TRUE, colClasses=colClasses(), printProgress=TRUE, message="Preprocessing data...")
+      # } else{
+      #   peptides2 = preprocess_MaxQuant(peptides, accession=processedvals[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties, filter=processedvals[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), colClasses=colClasses(),  filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      # }
+
+      # Biobase::fData(peptides2) <- droplevels(Biobase::fData(peptides2)) # -> nu geïmplementeerd in preprocess_MaxQuant en preprocess_moFF!
       proteins = MSnSet2protdata(peptides2, accession=processedvals[["proteins"]], annotations=processedvals[["annotations"]], printProgress=TRUE, shiny=TRUE, message="Converting data...")
 
       par_squeeze <- NULL
@@ -574,6 +600,7 @@ observe({
     }
 
     outputlist$L <- L
+    lfc <- input$lfc
 
     #If standard
     if(input$analysis_type=="standard"){
@@ -1129,34 +1156,53 @@ observe({
 
   ####NEW######
 
-  peps <- reactive({
+  rawPeptides <- reactive({
     if(!is.null(peptidesDatapath())){
-      if(input$input_type=="MaxQuant"){
-        peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
-      } else if(input$input_type=="moFF"){
-        peptides = read_moFF(peptidesDatapath(), shiny=TRUE, message="Importing data...")
-      } else{
-        peptides = read_MaxQuant(peptidesDatapath(), shiny=TRUE, message="Importing data...")
-      }
-    } else{NULL}
+
+      rawPeptides = import2MSnSet(file=peptidesDatapath(), filetype=input$input_type, shiny=TRUE, message="Importing data...")
+
+    } else{rawPeptides <- NULL}
+    return(rawPeptides)
   })
 
-  esetN <- reactive({
+  peps <- reactive({
+    if(!is.null(rawPeptides())){
 
-    if(!is.null(peps()) & isTRUE(input$evalnorm)){
+      if(input$input_type=="Progenesis"){
+      peps = aggregateMSnSet(rawPeptides(), aggr_by="Sequence", aggr_function="sum", split=", ", shiny=TRUE, printProgress=TRUE, message="Aggregating peptides")
+      } else if(input$input_type=="mzTab"){
+      peps = aggregateMSnSet(rawPeptides(), aggr_by="sequence", aggr_function="sum", split=", ", shiny=TRUE, printProgress=TRUE, message="Aggregating peptides")
+      } else {
+      peps = rawPeptides()
+      }
+
+    } else{peps <- NULL}
+
+    return(peps)
+  })
+
+  pepsN <- reactive({
+    if(!is.null(peps()) && !is.null(input$proteins)){ #!is.null(input$proteins) is there to prevent this from double running, e.g. with moFF! #& isTRUE(input$evalnorm)
       #If remove only identified by site==TRUE and fileProteinGroups is NULL, this also throws an error
 
       if(input$input_type=="MaxQuant"){
-        pepsN <- preprocess_MaxQuant(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=processedvals()[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
-      } else if(input$input_type=="moFF"){
-        pepsN <- preprocess_moFF(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=processedvals()[["filter"]], minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
-      } else{
-        pepsN <- preprocess_MaxQuant(peps(), logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, filter=processedvals()[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+        pepsN <- preprocess_MaxQuant(peps(), accession=processedvals()[["proteins"]], exp_annotation=annotationDatapath(), type_annot=processedvals()[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties(), filter=processedvals()[["filter"]], remove_only_site=input$onlysite, file_proteinGroups=proteinGroupsDatapath(), colClasses=colClasses(), filter_symbol="+", minIdentified=input$minIdentified, shiny=TRUE, printProgress=TRUE, message="Preprocessing data...")
+      } else {
+        pepsN <- preprocess_generic(peps(), MSnSetType=input$input_type, exp_annotation=annotationDatapath(), type_annot=processedvals()[["type_annot"]], logtransform=input$logtransform, base=input$log_base, normalisation=input$normalisation, smallestUniqueGroups=input$smallestUniqueGroups, useful_properties=useful_properties(), filter=processedvals()[["filter"]], minIdentified=input$minIdentified, colClasses=colClasses(), shiny=TRUE, printProgress=TRUE, message="Preprocessing data...") #Deze wordt twee keer gelopen!!!
       }
-
-      esetN <- exprs(pepsN)
+    } else{
+      pepsN <- NULL
     }
+    return(pepsN)
+  })
 
+  esetN <- reactive({
+    if(!is.null(pepsN())){
+      esetN <- Biobase::exprs(pepsN())
+    } else{
+      esetN <- NULL
+    }
+    return(esetN)
   })
 
   getDensXlimYlim <- function(eset){
@@ -1170,11 +1216,11 @@ observe({
 
   eset <- reactive({
 
-    if(!is.null(peptidesDatapath())){
+    if(!is.null(peps())){
 
-      if(isTRUE(input$logtransform)) {eset <- log(exprs(peps()),base=input$log_base)
+      if(isTRUE(input$logtransform)) {eset <- log(Biobase::exprs(peps()),base=input$log_base)
 
-      } else {eset <- exprs(peps())}
+      } else {eset <- Biobase::exprs(peps())}
       eset[is.infinite(eset)] <- NA
     } else{eset <- NULL}
 
@@ -1248,7 +1294,7 @@ observe({
 
   makePlotNorm1 <- function(input,esetN,colorsNorm,rangesNorm){
     if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
-    if(isTRUE(input$evalnorm) & !is.null(esetN())){
+    if(!is.null(esetN())){ #isTRUE(input$evalnorm) &
 
       densXlimYlimN <- getDensXlimYlim(esetN())
 
@@ -1269,7 +1315,7 @@ observe({
   makeMDSPlot <- function(input,esetN,colorsNorm,rangesMDS){
     if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
 
-    if(isTRUE(input$evalnorm) & !is.null(esetN()) & (isTRUE(input$plotMDSLabels) | isTRUE(input$plotMDSPoints))){ #Last condition: at least one of the boxes labels or points must be ticked, otherwise no plot!
+    if(!is.null(esetN()) & (isTRUE(input$plotMDSLabels) | isTRUE(input$plotMDSPoints))){ #isTRUE(input$evalnorm) & #Last condition: at least one of the boxes labels or points must be ticked, otherwise no plot!
 
       mds <- plotMDS(esetN(), plot=FALSE)
       labels_mds <- names(mds$x) #Doesn't matter whether you take mds$x or mds$y here
@@ -1397,7 +1443,7 @@ observe({
     #If no save folder specified or the preprocessing plots are not made, do not allow to try to download the preprocessing plots.
     res <- try(check_save_folder(saveFolder$folder),silent = TRUE)
 
-    if(!isTRUE(input$evalnorm) | class(res) == "try-error" | (isTRUE(input$onlysite) && is.null(input$proteingroups))){
+    if(class(res) == "try-error" | (isTRUE(input$onlysite) && is.null(input$proteingroups))){ #!isTRUE(input$evalnorm) |
       shinyjs::disable("downloadPreprocessingPlots")
     } else{
       shinyjs::enable("downloadPreprocessingPlots")
