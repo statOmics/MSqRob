@@ -1,4 +1,6 @@
 
+library(zoo)
+
 ###This file contains functions that allow for quick plotting of ROC curves!###
 ### .pfd, .png are unnecessary because we save in .svg => easily transferable to other formats!###
 
@@ -14,7 +16,7 @@ addTPcol <- function(result, pattern="UPS", TPcolname="ups"){
 }
 
 
-makeSummary <- function(resultobject, upratio, qval="qval", level=0.05, TPcol="ups", estimate="estimate"){
+makeSummary <- function(resultobject, upratio, qval="qval", level=0.05, TPcol="ups", estimate="estimate", addEstimate=TRUE){
 
   n <- length(resultobject)
 
@@ -28,6 +30,7 @@ makeSummary <- function(resultobject, upratio, qval="qval", level=0.05, TPcol="u
 
     waarden3 <- na.omit(resultobject[[i]])
 
+    if(isTRUE(addEstimate)){
     #RMSE
     summary_object$RMSE0[i] <- sqrt(mean(((subset(waarden3, waarden3[,TPcol]==0)[,estimate])-0)^2, na.rm=TRUE))
     #bias:
@@ -45,6 +48,7 @@ makeSummary <- function(resultobject, upratio, qval="qval", level=0.05, TPcol="u
     summary_object$sd1[i] <- sd((subset(waarden3, waarden3[,TPcol]==1)[,estimate]), na.rm=TRUE)
     #standard deviation:
     summary_object$mad1[i] <- mad((subset(waarden3, waarden3[,TPcol]==1)[,estimate]), na.rm=TRUE)
+    }
 
     #TP:
     summary_object$TP5proc[i] <- sum(significante[,TPcol])
@@ -63,7 +67,7 @@ makeSummary <- function(resultobject, upratio, qval="qval", level=0.05, TPcol="u
 }
 
 
-plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, pAUC_cutoff=0.1, directory=getwd(), filenames="ROC_curves", signifcol="signif", main_names=NULL, plotSVG=FALSE){
+plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, pAUC_cutoff=0.1, directory=getwd(), filenames="ROC_curves", signifcol="signif", main_names=NULL, relative=TRUE, plotSVG=FALSE){
 
   AUC <- matrix(nrow=ncol(L), ncol=length(resultobjectlist))
   pAUC <- matrix(nrow=ncol(L), ncol=length(resultobjectlist))
@@ -71,12 +75,10 @@ plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, 
   dimnames(AUC)=list(colnames(L),names(resultobjectlist))
   dimnames(pAUC)=list(colnames(L),names(resultobjectlist))
 
-  library(zoo)
-
   #Order everything by ordering of truth
   proteins2 <- proteins[names(truth)]
-  data <- getData(proteins2)
-  data2 <- .adjustNames(data, colnames(data[[1]]))
+  data <- MSqRob::getData(proteins2)
+  data2 <- adjustNames(data, colnames(data[[1]]))
 
   TPtot <- vector("list", ncol(L))
   FPtot <- vector("list", ncol(L))
@@ -89,6 +91,8 @@ plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, 
     namesComp <- names(which(L[,colnames(L)[i]]!=0))
 
     allnamespresent <- vapply(data2, function(y){sum(unlist(lapply(y, function(x){namesComp %in% x})))}, 0)==length(namesComp)
+
+    if(!isTRUE(relative)){allnamespresent <- rep(TRUE,length(allnamespresent))}
 
     #HUMAN:
     TPtot[[i]] <- sum(allnamespresent & truth)
@@ -110,7 +114,7 @@ plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, 
 
       if(j==1){
         plot(TP~FP, main=main_names[i], type="l", xlim=c(0,1), ylim=c(0,1), xlab="True positive rate", ylab="False positive rate",
-             cex.main=2, cex.lab=2, cex.axis=2, cex=2, lwd=2, pch=1, col=colors[j])
+             frame.plot=FALSE, cex.main=2, cex.lab=2, cex.axis=2, cex=2, lwd=2, pch=1, col=colors[j])
         } else{
           lines(TP~FP, col=colors[j], cex.main=2, cex.lab=2, cex.axis=2, cex=2, lwd=2, pch=1)
           }
@@ -131,31 +135,37 @@ plotROC=function(resultobjectlist, summary_objectlist, proteins, truth, colors, 
   return(list(AUC=AUC, pAUC=pAUC))
 }
 
-plotMA_MSqRob=function(resultobject, proteins, quant_name="quant_value", qname="qval", level=0.05, addNames=FALSE, directory=getwd(), filenames="MA_plots", main_names=NULL, plotSVG=FALSE){
+plotMA_MSqRob=function(resultobject, proteins, quant_name="quant_value", qname="qval", level=0.05, addNames=FALSE, colors=c("green","red"), directory=getwd(), filenames="MA_plots", main_names=NULL, plotSVG=FALSE){
+
+  if(is.null(main_names)){main_names <- names(resultobject)}
+
+  if(isTRUE(plotSVG)){grDevices::svg(file.path(directory,paste0(filenames,i,".svg")), width=10, height=10)}
 
   for(i in 1:length(resultobject)){
   resultsSorted <- resultobject[[i]][as.character(getAccessions(proteins)),]
 
-  A = vapply(getData(proteins), function(x) mean(x[[quant_name]]),0)
+  A = vapply(MSqRob::getData(proteins), function(x) mean(x[[quant_name]]),0)
   names(A) = as.character(getAccessions(proteins))
 
   #Extract the log2 fold change estimate from the contrastHeLa object
   M = resultsSorted[,"estimate"]
   names(M) = as.character(getAccessions(proteins))
 
-  plot(A,M, xlab="Average log2-expression", ylab="log2-fold-change")
+  plot(A,M, xlab="Average log2-expression", ylab="log2-fold-change", main=main_names[i])
 
   #Plots a horizontal line at 0
-  abline(h=0, col="green", lwd=2)
+  abline(h=0, col=colors[1], lwd=2)
 
   #Plot the significant proteins in red
   topProt = as.character(getAccessions(proteins)[which(resultsSorted[,qname]<level)])
-  points(A[topProt], M[topProt],col="red")
+  points(A[topProt], M[topProt],col=colors[2])
 
   #Add the protein labels
   if(isTRUE(addNames)){
-  text(A[topProt],M[topProt],labels=topProt,col="red",pos=4)
+  text(A[topProt],M[topProt],labels=topProt,col=colors[2],pos=4)
   }
+
+  if(isTRUE(plotSVG)){dev.off()}
 
   }
 
