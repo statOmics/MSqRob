@@ -74,7 +74,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     #Adjust names of predictors to make them similar to those of "lm"
     #In case of factors, the name of the factor is concatenated with the level of the factor
     #Also takes a bit of time with big datasets:
-    datalist <- .adjustNames(datalist, random)
+    datalist <- adjustNames(datalist, random)
 
     #Fit the list of ridge models
     modellist <- .createRidgeList(datalist = datalist, weights = weights, response = response, fixed = fixed, shrinkage.fixed = shrinkage.fixed, formula_fix = formula_fix, random = random, formula_ran = formula_ran, add.intercept = add.intercept, intercept = intercept, intercept_name = "(Intercept)", k = k, robustM = robustM, scaleUnshrFix = scaleUnshrFix, modfiedGS = modfiedGS, tolPwrss = tolPwrss, verbose = verbose, printProgress=printProgress, shiny=shiny, message_fitting=message_fitting, ...)
@@ -107,7 +107,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   if(is.null(response)){errorMsg <- paste0(errorMsg, "\n\n", "Please specify a response variable.")}
   if(is.null(fixed) && is.null(random)){errorMsg <- paste0(errorMsg, "\n\n", "Please specify appropriate fixed and/or random effects.")}
 
-  #Control: fixed and random effects must be completely different: no overlaps, otherwise problems with ".adjustNames" function!
+  #Control: fixed and random effects must be completely different: no overlaps, otherwise problems with "adjustNames" function!
   #If you really want to try something this crazy, just duplicate the effect.
   if(any(fixed %in% random)){errorMsg <- paste0(errorMsg, "\n\n", "Fixed and random effects must be different from each other.")}
 
@@ -449,7 +449,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
     options(contrasts = oldContr)
 
     if(any(duplicated(cov(MMFull), MARGIN = 2))){
-    lol <- lapply(.adjustNames(list(x), fixed), function(z) {
+    lol <- lapply(adjustNames(list(x), fixed), function(z) {
       colnames(MMFull)[duplicated(cov(MMFull), MARGIN = 2)]==z}
       )
 
@@ -844,8 +844,15 @@ addZerosQR <- function(Q=NULL, R){
   return(emptylmerMod)
 }
 
-#This function adjusts the names for the factors in a data object
-.adjustNames=function(datalist, predictors){
+#' Adjust the names of the elements in a list of dataframes
+#'
+#' @description Given a list of dataframes, this function pastes the colnames of all factors and characters to the elements in these columns.
+#' This is necessary to produces consisten results when fitting with lm or lmer. This function is borderline internal.
+#' @param datalist A list of dataframes.
+#' @param predictors A vector of predictors corresponding to some of the columnames in the list of dataframes for which the given adjustment will be performed if the columns corresponding to these predictors are characters or factors.
+#' @return The list of dataframes with adusted elements.
+#' @export
+adjustNames=function(datalist, predictors){
 
   if(!is.null(predictors)){
   datalist_adj <- lapply(datalist, function(x){
