@@ -27,7 +27,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 ############################################################################
 #Navigation bar with 3 panel:Input, preprocessing, quantification
 ############################################################################
-   navbarPage("MSqRob Shiny App v 0.7.1", inverse=TRUE,
+   navbarPage("MSqRob Shiny App v 0.7.5", inverse=TRUE,
 
 
     ####################################
@@ -58,7 +58,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	    list(
   	      tags$label("Input type", `for`="input_type", class="MSqRob_label"),
   	      tags$button(id="button_input_type", tags$sup("[?]"), class="MSqRob_tooltip"),
-  	      selectInput("input_type", NULL, c("MaxQuant", "moFF"), width = '100%'),
+  	      selectInput("input_type", NULL, c("MaxQuant", "moFF", "mzTab", "Progenesis"), width = '100%'),
   	      hidden(helpText(id="tooltip_input_type",
   	                      "Select the type of input.
   	                      "))
@@ -193,6 +193,32 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 
         h3("Settings", class="MSqRob_topheader"),
 
+        div(class="MSqRob_input_container",
+            list(
+              tags$label("Group by", `for`="proteins", class="MSqRob_label"),
+              tags$button(id="button_proteins", tags$sup("[?]"), class="MSqRob_tooltip"),
+              htmlOutput("selectProteins"),
+              hidden(helpText(id="tooltip_proteins","
+                              Select the level on which the data should be grouped.
+                              This is mostly the column that contains the protein identifiers (\"Proteins\" for MaxQuant data), as for a traditional shotgun experiment, one is mostly interested in which proteins are differentially abundant.
+                              However, sometimes, one would for example like to do inference on the peptides.
+                              In these more advanced cases, select the appropriate grouping level.
+                              "))
+              )
+              ),
+
+        div(class="MSqRob_input_container",
+            list(
+              tags$label("Annotation columns", `for`="annotations", class="MSqRob_label"),
+              tags$button(id="button_annotations", tags$sup("[?]"), class="MSqRob_tooltip"),
+              htmlOutput("selectAnnotations"),
+              hidden(helpText(id="tooltip_annotations","
+                              Some input files contain additional information about a protein, such as a gene name, a full protein name, a pathway annotation, etc.
+                              If you whish to see these columns in the output, select these additional annotation	columns here.
+                              "))
+              )
+              ),
+
         h4("Transformation", class=c("MSqRob_sidebar")),
 
         div(class="MSqRob_input_container",
@@ -229,11 +255,14 @@ shinyUI(fluidPage(theme = "MSqRob.css",
             list(
         tags$label("Normalization", `for`="normalisation", class="MSqRob_label"),
         tags$button(id="button_normalisation", tags$sup("[?]"), class="MSqRob_tooltip"),
-        selectInput("normalisation", NULL, c("loess.fast", "rlr", "quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none"), width = '100%'), #"loess.affy" and "loess.pairs" left out on purpose because they remove everything with at least 1 NA!
+        #selectInput("normalisation", NULL, c("loess.fast", "rlr", "quantiles", "quantiles.robust", "vsn", "center.median", "center.mean", "max", "sum", "none"), width = '100%'), #"loess.affy" and "loess.pairs" left out on purpose because they remove everything with at least 1 NA!
+        htmlOutput("selectNormalisation"),
         hidden(helpText(id="tooltip_normalisation",
                         "Select the type of normalization from the dropdown menu.
                         Choose \"none\" if no normalization should be performed
                         or if the data has already been normalised.
+                        Note that with Progenesis data, we try to import the Normalized abundance.
+                        Therefore, the default normalisation for Progenesis data is set to \"none\".
                         "))
             )
         ),
@@ -317,14 +346,14 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 
                   h3("Diagnostic plots", class="MSqRob_topheader"),
 
-                  div(class="MSqRob_input_container MSqRob_h4_checkbox",
-                      list(
-                        checkboxInput("evalnorm", "Evaluate preprocessing", value=TRUE),
-                        tags$button(id="button_evalnorm", tags$sup("[?]"), class="MSqRob_tooltip"),
-                        hidden(helpText(id="tooltip_evalnorm","Tick the box to get diagnostic plots for the preprocessing.
-                                        Untick the box to skip the making of these diagnostic plots."))
-                      )
-                  ),
+                  # div(class="MSqRob_input_container MSqRob_h4_checkbox",
+                  #     list(
+                  #       checkboxInput("evalnorm", "Evaluate preprocessing", value=TRUE),
+                  #       tags$button(id="button_evalnorm", tags$sup("[?]"), class="MSqRob_tooltip"),
+                  #       hidden(helpText(id="tooltip_evalnorm","Tick the box to get diagnostic plots for the preprocessing.
+                  #                       Untick the box to skip the making of these diagnostic plots."))
+                  #     )
+                  # ),
         strong('Number of peptides before preprocessing:'),textOutput('npeptidesRaw',container = span),div(),
         strong('Number of peptides after preprocessing:'),textOutput('npeptidesNormalized',container = span),div(),
         htmlOutput("selectColPlotNorm1"),
@@ -426,32 +455,6 @@ shinyUI(fluidPage(theme = "MSqRob.css",
      	sidebarPanel(
 
      	  h3("Settings", class="MSqRob_topheader"),
-
-  div(class="MSqRob_input_container",
-  list(
-  tags$label("Group by", `for`="proteins", class="MSqRob_label"),
-  tags$button(id="button_proteins", tags$sup("[?]"), class="MSqRob_tooltip"),
-	htmlOutput("selectProteins"),
-	hidden(helpText(id="tooltip_proteins","
-	                Select the level on which the data should be grouped.
-	                This is mostly the \"Proteins\" column, as for a traditional shotgun experiment, one is mostly interested in which proteins are differentially abundant.
-	                However, sometimes, one would for example like to do inference on the peptides.
-	                In these more advanced cases, select the appropriate grouping level.
-	                "))
-  )
-  ),
-
-  div(class="MSqRob_input_container",
-  list(
-  tags$label("Annotation columns", `for`="annotations", class="MSqRob_label"),
-  tags$button(id="button_annotations", tags$sup("[?]"), class="MSqRob_tooltip"),
-	htmlOutput("selectAnnotations"),
-	hidden(helpText(id="tooltip_annotations","
-	                Some input files contain additional information about a protein, such as a gene name, a full protein name, a pathway annotation, etc.
-	                If you whish to see these columns in the output, select these additional annotation	columns here.
-	                "))
-  )
-  ),
 
   div(class="MSqRob_input_container",
   list(

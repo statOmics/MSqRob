@@ -44,14 +44,10 @@ source("https://bioconductor.org/biocLite.R")
 biocLite()
 ~~~~
 
-Finally, we call this to install the latest version of `MSqRob` (0.7.1):
+Finally, we call this to install the latest version of `MSqRob` (0.7.5):
 
 ~~~~
-
-
-devtools::install_github("statOmics/MSqRob@MSqRob0.7.1")
-
-
+devtools::install_github("statOmics/MSqRob@MSqRob0.7.5")
 library(MSqRob)
 ~~~~
 

@@ -1,6 +1,21 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 0.7.5 - 2017-10-20
+
+### Added
+
+- Added support for mzTab and Progenesis file formats.
+- Changed to default testing against a fold change of 0.5 in the GUI.
+
+### Fixed
+
+- Made estimations more stable when testing multiple fixed effects simultanously.
+
+### Removed
+
+- Removed the preprocess_moFF function and replaced it by preprocess_generic.
+
 ## 0.7.1 - 2017-09-06
 
 ### Added

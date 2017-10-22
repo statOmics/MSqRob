@@ -52,6 +52,7 @@ setGeneric (
 #' @export
 setMethod("getBetaVcovDf", "lm", .getBetaVcovDfLm)
 
+
 .getBetaVcovDfMermod <- function(model, exp_unit=NULL, pars_between=NULL, Ginvoffset = 1e-18){
   # condVar <- function(model) {
   #   s2 <- sigma(model)^2
@@ -82,7 +83,7 @@ setMethod("getBetaVcovDf", "lm", .getBetaVcovDfLm)
 
   #Design matrix for the fixed effects:
   X <- lme4::getME(model,"X")
-  
+
   if(!is.null(attr(X,"scaled:center")) & !is.null(attr(X,"scaled:scale"))){
   X <- X * attr(X, 'scaled:scale') + attr(X, 'scaled:center')
   }
@@ -234,3 +235,4 @@ setMethod("getBetaVcovDf", "lm", .getBetaVcovDfLm)
 #' @include protLM.R
 #' @export
 setMethod("getBetaVcovDf", "lmerMod", .getBetaVcovDfMermod)
+

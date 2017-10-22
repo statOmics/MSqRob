@@ -6,16 +6,17 @@
 \usage{
 preprocess_MaxQuant(MSnSet, accession = "Proteins", exp_annotation = NULL,
   type_annot = NULL, logtransform = TRUE, base = 2,
-  normalisation = "quantiles", smallestUniqueGroups = TRUE,
-  useful_properties = c("Proteins", "Sequence", "PEP"),
-  filter = c("Potential.contaminant", "Reverse"), filter_symbol = "+",
-  minIdentified = 2, remove_only_site = FALSE, file_proteinGroups = NULL,
-  colClasses = NA, printProgress = FALSE, shiny = FALSE, message = NULL)
+  normalisation = "quantiles", weights = NULL,
+  smallestUniqueGroups = TRUE, useful_properties = c("Proteins", "Sequence",
+  "PEP"), filter = c("Potential.contaminant", "Reverse"),
+  filter_symbol = "+", minIdentified = 2, remove_only_site = FALSE,
+  file_proteinGroups = NULL, colClasses = "keep", droplevels = TRUE,
+  printProgress = FALSE, shiny = FALSE, message = NULL)
 }
 \arguments{
 \item{MSnSet}{An \code{\link[=MSnSet-class]{MSnSet}} object that contains data originating from MaxQuant's peptides.txt file.}
 
-\item{accession}{A character indicating the column that contains the unit on which you want to do inference (typically the protein identifiers). Defaults to "Proteins".}
+\item{accession}{A character indicating the column that contains the the protein identifiers. This is only used if \code{smallestUniqueGroups} is \code{TRUE} and/or and \code{external_filter_file} is provided. Thus, the \code{accession} parameter can safely be specified even when you are not interested in comparing proteins later on. Defaults to "Proteins".}
 
 \item{exp_annotation}{Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no annotation to be added.}
 
@@ -26,6 +27,8 @@ preprocess_MaxQuant(MSnSet, accession = "Proteins", exp_annotation = NULL,
 \item{base}{A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.}
 
 \item{normalisation}{A character vector of length one that describes how to normalise the \code{\link[=MSnSet-class]{MSnSet}} object. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.}
+
+\item{weights}{Only used when \code{normalisation} is set to or "rlr", "loess.fast", "loess.affy" or "loess.pairs". A numeric vector of weights for each row in the MSnSet object to be used for the fitting during the normalisation step. Defaults to \code{NULL}.}
 
 \item{smallestUniqueGroups}{A logical indicating whether protein groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.}
 
@@ -43,7 +46,9 @@ Typical examples are contaminants or reversed sequences. Defaults to \code{c("Co
 \item{file_proteinGroups}{The name of the proteinGroups.txt file, which is used to remove proteins that are only identified by peptides carrying one or more modification sites. Only used when \code{remove_only_site} is set to \code{TRUE}.}
 
 \item{colClasses}{character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.}
+Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.}
+
+\item{droplevels}{A logical indicating if levels of factors that disappeared during preprocessing should be removed from the data. Defaults to \code{TRUE}.}
 
 \item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
 

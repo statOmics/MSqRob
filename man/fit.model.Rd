@@ -7,7 +7,8 @@
 fit.model(protdata, response = NULL, fixed = NULL, random = NULL,
   add.intercept = TRUE, shrinkage.fixed = NULL, weights = "Huber",
   k = 1.345, par_squeeze = NULL, squeezeVar = TRUE, min_df = 1,
-  robust_var = TRUE, robustM = FALSE, tolPwrss = 1e-10, verbose = FALSE,
+  robust_var = TRUE, robustM = TRUE, scaleUnshrFix = FALSE,
+  modfiedGS = FALSE, tolPwrss = 1e-10, verbose = FALSE,
   printProgress = FALSE, shiny = FALSE, message_fitting = NULL,
   message_thetas = NULL, message_squeeze = NULL, message_update = NULL,
   ...)
@@ -36,6 +37,10 @@ fit.model(protdata, response = NULL, fixed = NULL, random = NULL,
 \item{min_df}{A numeric value indicating the minimal degrees of freedom that will be taken into account for calculating the prior degrees of freedom and prior variance. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}.}
 
 \item{robust_var}{A logical indicating wheter the estimation of the prior degrees of freedom and the prior variance (needed for shrinkage) should be robustified against outlier variances. Only used when \code{par_squeeze=TRUE} or \code{squeezeVar} is not \code{NULL}. Defaults to \code{TRUE}.}
+
+\item{robustM}{A logical indicating wheter the weighing of the observations in the M estimation step should be based on the Huber weights of the residuals devided by the median absolute deviation (mad) of the residuals instead of the residuals devided by the residual standard deviation. Older MSqRob implementations used the approach with the residual standard deviation as a default. With the new approach, downweighing outliers will be more efficient, as the mad is not strongly influenced by outliers. Defaults to \code{TRUE}.}
+
+\item{modfiedGS}{A logical indicating wheter the Modified Gram-Schmidt algorithm should be used for orthogonalizing the fixed effects design matrix instead of the regular QR decomposition algorithm. Defaults to \code{FALSE}.}
 
 \item{tolPwrss}{A numeric value indicating the maximally tolerated deviation on the penalized weighted residual sum of squares when iteratively estimating the weights by M estimation.}
 

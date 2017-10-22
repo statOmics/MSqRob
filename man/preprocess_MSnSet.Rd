@@ -4,29 +4,36 @@
 \alias{preprocess_MSnSet}
 \title{Preprocess MSnSet objects}
 \usage{
-preprocess_MSnSet(MSnSet, accession = "prot", exp_annotation = NULL,
-  type_annot = NULL, logtransform = TRUE, base = 2,
-  normalisation = "quantiles", smallestUniqueGroups = TRUE, split = NULL,
+preprocess_MSnSet(MSnSet, accession, exp_annotation = NULL,
+  type_annot = NULL, aggr_by = NULL, aggr_function = "sum",
+  logtransform = TRUE, base = 2, normalisation = "quantiles",
+  weights = NULL, smallestUniqueGroups = TRUE, split = NULL,
   useful_properties = NULL, filter = NULL, filter_symbol = NULL,
   minIdentified = 2, external_filter_file = NULL,
   external_filter_accession = NULL, external_filter_column = NULL,
-  colClasses = NA, printProgress = FALSE, shiny = FALSE, message = NULL,
-  details = NULL)
+  colClasses = "keep", droplevels = TRUE, printProgress = FALSE,
+  shiny = FALSE, message = NULL, details = NULL)
 }
 \arguments{
 \item{MSnSet}{An \code{\link[=MSnSet-class]{MSnSet}} object.}
 
-\item{accession}{A character indicating the column that contains the unit on which you want to do inference (typically the protein identifiers).}
+\item{accession}{A character indicating the column that contains the the protein identifiers. This is only used if \code{smallestUniqueGroups} is \code{TRUE} and/or and \code{external_filter_file} is provided. Thus, the \code{accession} parameter can safely be specified even when you are not interested in comparing proteins later on.}
 
-\item{exp_annotation}{Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no annotation to be added.}
+\item{exp_annotation}{Either the path to the file which contains the experiment annotation or a data frame containing the experiment annotation. Exactly one colum in the experiment annotation should contain the mass spec run names. Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off. The default, \code{NULL} indicates there is no annotation to be added (in contrast to the default from the \code{\link{preprocess_generic}} function!).}
 
 \item{type_annot}{If \code{exp_annotation} is a path to a file, the type of file. \code{type_annot} is mostly obsolete as supported files will be automatically recognized by their extension. Currently only \code{"tab-delim"} (tab-delimited file), \code{"xlsx"} (Office Open XML Spreadsheet file) and \code{NULL} (file type decided based on the extension) are supported. If the extension is not recognized, the file will be assumed to be a tab-delimited file. Defaults to \code{NULL}.}
+
+\item{aggr_by}{A character indicating the column by which the data should be aggregated. We advise to aggregate the data by peptide sequence (thus aggregate over different charge states and modification statuses of the same peptide). If you only want to aggregate over charge states, set \code{aggr_by} to the column corresponding to the modified sequences. The default, \code{NULL}, indicates that no aggregation will be performed.}
+
+\item{aggr_function}{Only used when \code{aggr_by} is not \code{NULL}. The function used to aggregate intensity data. Defaults to \code{"sum"}.}
 
 \item{logtransform}{A logical value indicating whether the intensities should be log-transformed. Defaults to \code{TRUE}.}
 
 \item{base}{A positive or complex number: the base with respect to which logarithms are computed. Defaults to 2.}
 
 \item{normalisation}{A character vector of length one that describes how to normalise the \code{\link[=MSnSet-class]{MSnSet}} object. See \code{\link[=normalise-methods]{normalise}} for details. Defaults to \code{"quantiles"}. If no normalisation is wanted, set \code{normalisation="none"}.}
+
+\item{weights}{Only used when \code{normalisation} is set to or "rlr", "loess.fast", "loess.affy" or "loess.pairs". A numeric vector of weights for each row in the MSnSet object to be used for the fitting during the normalisation step. Defaults to \code{NULL}.}
 
 \item{smallestUniqueGroups}{A logical indicating whether protein groups for which any of its member proteins is present in a smaller protein group should be removed from the dataset. Defaults to \code{TRUE}.}
 
@@ -47,8 +54,10 @@ Typical examples are contaminants or reversed sequences. Defaults to \code{NULL}
 
 \item{external_filter_column}{Only used when \code{external_filter_file} is not \code{NULL}. A vector of names containing the column name(s) on which to filter in the \code{external_filter_file}. Defaults to \code{NULL}, which will throw an error if \code{external_filter_file} is not \code{NULL} to alert the user to specify a filter column.}
 
-\item{colClasses}{character. Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.
-Possible values are \code{NA} (the default, when \code{type.convert} is used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{logical}, \code{integer}, \code{numeric}, \code{complex}, \code{character}, \code{raw}), or \code{factor}, \code{Date} or \code{POSIXct}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{character} to the specified formal class.}
+\item{colClasses}{Only used when the \code{exp_annotation} argument is a filepath. A vector of classes to be assumed for the columns of the experimental annotation data frame. Recycled if necessary. If named and shorter than required, names are matched to the column names with unspecified values are taken to be NA.}
+
+\item{droplevels}{A logical indicating if levels of factors that disappeared during preprocessing should be removed from the data. Defaults to \code{TRUE}.
+Possible values are \code{"keep"} (the default, when the colClasses are unchanged for data frames and \code{type.convert} is used for files),  \code{NA} (when \code{type.convert} is always used), \code{NULL} (when the column is skipped), one of the atomic vector classes (\code{"logical"}, \code{"integer"}, \code{"numeric"}, \code{"complex"}, \code{"character"}, \code{"raw"}), or \code{"factor"}, \code{"Date"} or \code{"POSIXct"}. Otherwise there needs to be an as method (from package \code{methods}) for conversion from \code{"character"} to the specified formal class.}
 
 \item{printProgress}{A logical indicating whether the R should print a message before performing each preprocessing step. Defaults to \code{FALSE}.}
 
