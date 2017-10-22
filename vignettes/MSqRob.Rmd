@@ -97,13 +97,13 @@ file_peptides_txt <- system.file("extdata/Francisella", "peptides.txt", package 
 file_peptides_txt
 ```
 
-Import the data using the `read_MaxQuant` function. The `pattern` argument should contain a text string that is present in all column names that contain peptide intensities but not in the other column names. This defaults to `"Intensity\ "`. The default setting `remove_pattern=TRUE` then removes the pattern from these column names so that the names equal the names that were entered in MaxQuant's "Experiment" column when conducting the search. In this particular *Francisella* experiment, our column names start with a number (either "1" or "3"), which is not a valid column name in R. Therefore, an "X" is prepended to these names.
+Import the data using the `import2MSnSet` function. The `pattern` argument should contain a text string that is present in all column names that contain peptide intensities but not in the other column names. This defaults to `"Intensity\ "` for MaxQuant data. The default setting `remove_pattern=TRUE` then removes the pattern from these column names so that the names equal the names that were entered in MaxQuant's "Experiment" column when conducting the search. In this particular *Francisella* experiment, our column names start with a number (either "1" or "3"), which is not a valid column name in R. Therefore, an "X" is prepended to these names.
 
 ```{r eval=TRUE}
-peptidesFranc <- read_MaxQuant(file_peptides_txt, pattern="Intensity ", remove_pattern=TRUE)
+peptidesFranc <- import2MSnSet(file_peptides_txt, filetype="MaxQuant", remove_pattern=TRUE)
 ```
 
-`read_MaxQuant` creates an `MSnSet` object with 3 slots:
+`import2MSnSet` creates an `MSnSet` object with 3 slots:
 
 - `exprs`: contains a matrix of peptide intensities of which the rows correspond to the peptides present in the dataset and the columns correspond to the different mass spec runs.
 
@@ -512,7 +512,7 @@ We can easily preprocess the data frame using the `preprocess_wide` function (fo
 
 We already made the `exp_annotation` object before (see "2.1. Create an experimental annotation data frame."), so we will not repeat this code again here. **Importantly, however, contrary to the `exprs` slot in the `peptidesFranc2` object created before, the names of all intensity columns in data frame `pepFrancDf` start with "Intensity.".**
 
-**This is because the default setting `remove_pattern=TRUE` in the `read_MaxQuant` function removes the prefix "Intensity\ " from the columns containing the intensities as this allows users that are unfamiliar with R to just copy and paste the names they provided in MaxQuant's "Experiment" column as an input. Here, we just imported the peptides.txt file as it is.** We thus create a new experimental annotation data frame called `exp_annotation2` with run names starting with "Intensity." (a space is not syntactically valid in R, so it is automatically converted to a dot).
+**This is because the default setting `remove_pattern=TRUE` in the `import2MSnSet` function removes the prefix "Intensity\ " from the columns containing the intensities as this allows users that are unfamiliar with R to just copy and paste the names they provided in MaxQuant's "Experiment" column as an input. Here, we just imported the peptides.txt file as it is.** We thus create a new experimental annotation data frame called `exp_annotation2` with run names starting with "Intensity." (a space is not syntactically valid in R, so it is automatically converted to a dot).
 
 ```{r eval=TRUE}
 runs2 <- colnames(pepFrancDf)[grepl("Intensity.",colnames(pepFrancDf))]
@@ -582,7 +582,7 @@ file_peptides_txt <- system.file("extdata/CPTAC", "peptides.txt", package = "MSq
 
 Import MaxQuant's peptides.txt file and convert it to an `MSnSet` object (see package `MSnbase`).
 ```{r eval=TRUE}
-peptidesCPTAC <- read_MaxQuant(file_peptides_txt, pattern="Intensity ", remove_pattern=TRUE)
+peptidesCPTAC <- import2MSnSet(file_peptides_txt, filetype="MaxQuant", remove_pattern=TRUE)
 ```
 
 The "pattern" argument indicates which columns in the peptides.txt file contain peptide intensities. Currently, all columns containing "Intensity\ " in their column names will be treated as peptide intensities (default for MaxQuant). `remove_pattern=TRUE` (default) indicates that the name of the pattern is removed from the column names.
@@ -740,6 +740,9 @@ minIdentified <- 2
 keepers <- rowSums(!is.na(exprs(peptidesCPTAC3)))>=minIdentified
 peptidesCPTAC3 <- peptidesCPTAC3[keepers]
 head(exprs(peptidesCPTAC3))
+
+#Remove unused levels
+fData(peptidesCPTAC3) <- droplevels(fData(peptidesCPTAC3))
 ```
 
 8. Add the experimental design to the MSnSet object.
@@ -989,16 +992,14 @@ summary_ridgeSqM
 colors <- c(1,2,3,4,5,6)
 resultobjectlist <- list(lm_normal,lm_Sq,lm_SqM,ridge,ridgeSq,ridgeSqM)
 
-truth <- summary_lm[[1]][,"ups"]
-names(truth) <- rownames(summary_lm[[1]])
+truth <- lm_normal[[1]][,"ups"]
+names(truth) <- rownames(lm_normal[[1]])
 summary_objectlist <- lapply(resultobjectlist, function(x){return(makeSummary(x, upratio))})
 
 plotROC(resultobjectlist, summary_objectlist=summary_objectlist, proteins=proteinsCPTAC, truth=truth, colors=colors, plotSVG=FALSE)
 ```
 
 ## References
-
-Gillet, L. C., Navarro, P., Tate, S., Röst, H., Selevsek, N., Reiter, L., Bonner, R., and Aebersold, R. (2012) Targeted Data Extraction of the MS/MS Spectra Generated by Data-independent Acquisition: A New Concept for Consistent and Accurate Proteome Analysis. Molecular & Cellular Proteomics 11(6), O111.016717.
 
 Goeminne, L. J. E., Argentini, A., Martens, L., and Clement, L. (2015) Summarization vs Peptide-Based Models in Label-Free Quantitative Proteomics: Performance, Pitfalls, and Data Analysis Guidelines. Journal of Proteome Research 14(6), pp 2457-2465.
 
