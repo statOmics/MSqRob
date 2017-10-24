@@ -104,7 +104,7 @@ import2MSnSet <- function(file, filetype, remove_pattern=NA, normalizedAbundance
       beginInt <- which(firstLine==abundanceType)
       endInt <- endInts[which(endInts>beginInt)[1]]
 
-    peptides <- read2MSnSet(file=file, colInt=beginInt:endInt, remove_pattern=remove_pattern, sep=",", skip=2, shiny=shiny, message=message)
+    peptides <- read2MSnSet(file=file, colInt=beginInt:endInt, remove_pattern=remove_pattern, sep=",", na.strings = "", skip=2, shiny=shiny, message=message)
   } else{
     stop("\"filetype\" argment should be one of: \"MaxQuant\", \"moFF\", \"mzTab\" or \"Progenesis\"!")
   }
