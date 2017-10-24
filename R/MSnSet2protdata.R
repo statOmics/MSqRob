@@ -46,34 +46,38 @@ MSnSet2protdata <- function(MSnSet, accession=NULL, annotations=NULL, quant_name
   exprs <- Biobase::exprs(MSnSet)
 
   accessions <- unique(fData[,accession])
-  datalist <- replicate(length(accessions), data.frame())
-  annotation_matrix <- matrix(nrow=length(accessions), ncol=length(annotations), dimnames=list(accessions,annotations))
 
-  for(i in 1:length(accessions)){
+  sel <- lapply(accessions, function(x){return(which(fData[,accession] == x))})
 
-    updateProgress(progress=progress, detail=paste0("Converting protein ",i," of ",length(accessions),"."), n=length(accessions), shiny=shiny, print=isTRUE(printProgress))
+  datalist <- lapply(sel, function(x){
 
-    sel <- fData[,accession] == accessions[i]
-    intensities <- exprs[sel,,drop=FALSE]
-    properties <- fData[sel,,drop=FALSE]
-    #If for the same accession in an annation column, there would be multiple different values, just paste them together.
-    annotation_matrix[i,] <- matrix(as.character(unlist(lapply(properties[,annotations, drop=FALSE], function(x){paste0(unique(x), collapse="")}))),nrow=1)
-    properties <- properties[,-which(colnames(properties) %in% c(colnames(properties[,accession,drop=FALSE]),colnames(properties[,annotations,drop=FALSE]))), drop=FALSE]
+    properties <- fData[x,-which(colnames(fData) %in% c(colnames(fData[,accession,drop=FALSE]),colnames(fData[,annotations,drop=FALSE]))), drop=FALSE]
 
-    quant_value <- as.vector(intensities)
+    return(
+      cbind(
+        data.frame(c(exprs[x,,drop=FALSE])),
+        lapply(properties, function(z){
+          return(droplevels(rep(z, ncol(exprs))))
+        }),
+        pData[rep(row.names(pData), each=length(x)),,drop=FALSE]
+      )
+    )})
 
-    framelist <- replicate(ncol(intensities), droplevels(properties), simplify = FALSE)
-
-    frame <- plyr::rbind.fill(framelist)
-
-    frame2 <- cbind(data.frame(quant_value=quant_value,frame), pData[rep(row.names(pData), each=nrow(intensities)),,drop=FALSE])
-    #Name the newly create intensity column.
-    names(frame2)[1] <- quant_name
+  datalist <- lapply(datalist, function(x){
+    #Give name
+    names(x)[1] <- quant_name
 
     #Removing NA
-    frame3 <- frame2[complete.cases(frame2[,1]),,drop=FALSE]
+    x <- x[complete.cases(x[,1]),,drop=FALSE]
+    return(x)
+  })
 
-    datalist[[i]] <- frame3
+  properties <- fData[,annotations,drop=FALSE]
+
+  annotation_matrix <- matrix(nrow=length(accessions), ncol=length(annotations), dimnames=list(accessions,annotations))
+
+  for(i in 1:nrow(annotation_matrix)){
+    annotation_matrix[i,] <- vapply(properties[sel[[1]],, drop=FALSE], function(y){paste0(unique(y), collapse="")},"; ")
   }
 
   protdata <- new("protdata", accession=accessions, data=datalist, annotation=annotation_matrix, pData=pData)
