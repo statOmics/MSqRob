@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 - Added support for mzTab and Progenesis file formats.
 - Changed to default testing against a fold change of 0.5 in the GUI.
+- Greatly improved speed of converting to a protdata object (about a factor 10).
 
 ### Fixed
 
