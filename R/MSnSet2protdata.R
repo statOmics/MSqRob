@@ -49,7 +49,12 @@ MSnSet2protdata <- function(MSnSet, accession=NULL, annotations=NULL, quant_name
 
   sel <- lapply(accessions, function(x){return(which(fData[,accession] == x))})
 
+  count <- 0
+
   datalist <- lapply(sel, function(x){
+
+    count <<- count+1
+    updateProgress(progress=progress, detail=paste0("Converting protein ",count," of ",length(sel),"."), n=length(sel), shiny=shiny, print=isTRUE(printProgress))
 
     properties <- fData[x,-which(colnames(fData) %in% c(colnames(fData[,accession,drop=FALSE]),colnames(fData[,annotations,drop=FALSE]))), drop=FALSE]
 
