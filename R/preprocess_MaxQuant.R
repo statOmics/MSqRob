@@ -45,9 +45,12 @@ read2MSnSet <- function(file, pattern=NULL, colInt=NULL, remove_pattern=FALSE, s
     pData <- Biobase::pData(peptides)
     colnames(exprs) <- make.names(gsub(pattern,"",colnames(exprs)), unique = TRUE)
     rownames(pData) <- make.names(gsub(pattern,"",rownames(pData)), unique = TRUE)
-    Biobase::sampleNames(Biobase::protocolData(peptides)) <- rownames(pData)
-    Biobase::pData(peptides) <- pData
-    Biobase::exprs(peptides) <- exprs
+    
+    #Biobase::sampleNames(Biobase::protocolData(peptides)) <- rownames(pData)
+    #Biobase::pData(peptides) <- pData
+    #Biobase::exprs(peptides) <- exprs
+    
+    peptides <- MSnbase::MSnSet(exprs=exprs, fData=Biobase::fData(peptides), pData=pData)
   }
   return(peptides)
 }
