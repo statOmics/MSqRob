@@ -324,7 +324,7 @@ preprocess_MSnSet <- function(MSnSet, accession, exp_annotation=NULL, type_annot
 
   }
 
-  if(isTRUE(droplevels)){MSnSet <- droplevels(MSnSet)}
+  if(isTRUE(droplevels)){Biobase::fData(MSnSet) <- droplevels(Biobase::fData(MSnSet))}
 
   return(MSnSet)
 }
