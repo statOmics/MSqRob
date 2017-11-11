@@ -62,7 +62,11 @@ MSnSet2protdata <- function(MSnSet, accession=NULL, annotations=NULL, quant_name
       cbind(
         data.frame(c(exprs[x,,drop=FALSE])),
         lapply(properties, function(z){
-          return(droplevels(rep(z, ncol(exprs))))
+          
+          property_col <- rep(z, ncol(exprs))
+          if(is.factor(property_col)){property_col <- droplevels(property_col)}
+
+          return(property_col)
         }),
         pData[rep(row.names(pData), each=length(x)),,drop=FALSE]
       )
