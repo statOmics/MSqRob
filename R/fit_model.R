@@ -168,7 +168,7 @@ fit.model=function(protdata, response=NULL, fixed=NULL, random=NULL, add.interce
   #return(unlist(lapply(predictors, function(y) length(levels(x[,y]))!=1)))
   if(is.null(predictors)){return(FALSE)
   }else{
-    return(unlist(lapply(strsplit(predictors,":"), function(y) prod(unlist(lapply(x[,y,drop=FALSE], function(z) prod(length(unique(z))))))!=1)))
+    return(unlist(lapply(strsplit(predictors,":"), function(y) min(unlist(lapply(x[,y,drop=FALSE], function(z) prod(length(unique(z))))))!=1))) #prod replaced by "min" -> if one element of an interaction has only one level => remove the interaction (keeping it would throw an error later on!)
   }
 }
 
@@ -854,7 +854,11 @@ addZerosQR <- function(Q=NULL, R){
 #' @export
 adjustNames=function(datalist, predictors){
 
-  if(!is.null(predictors)){
+  if(!is.null(predictors) && any(predictors %in% colnames(x))){
+
+    #We don't want interactions over here
+    predictors <- predictors[predictors %in% colnames(x)]
+    
   datalist_adj <- lapply(datalist, function(x){
 
     for(i in 1:length(x[,predictors, drop=FALSE]))
