@@ -854,12 +854,14 @@ addZerosQR <- function(Q=NULL, R){
 #' @export
 adjustNames=function(datalist, predictors){
 
-  if(!is.null(predictors) && any(predictors %in% colnames(x))){
+  if(!is.null(predictors)){
 
-    #We don't want interactions over here
-    predictors <- predictors[predictors %in% colnames(x)]
-    
   datalist_adj <- lapply(datalist, function(x){
+
+    ###We don't want interactions over here###
+    if(any(predictors %in% colnames(x))){
+      predictors <- predictors[predictors %in% colnames(x)]
+      #######
 
     for(i in 1:length(x[,predictors, drop=FALSE]))
     {
@@ -869,6 +871,7 @@ adjustNames=function(datalist, predictors){
       }
     }
 
+    }
     return(x)
   })
   } else{datalist_adj <- datalist}
