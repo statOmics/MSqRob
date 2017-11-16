@@ -45,12 +45,12 @@ test.ANOVA=function(beta, vcov, df, sigma, L, anova.na.ignore=TRUE)
   #Estimates (based on reduced L matrix, only needed for Fval)
   estimate <- as.double(crossprod(L,beta))
 
-  #F value
-  #Try-catch needed because sometimes t(L)%*%(vcov*sigma^2)%*%L is uninvertible while vcov is invertible
-  Fval <- tryCatch(as.double(estimate%*%solve(t(L)%*%(vcov*sigma^2)%*%L)%*%estimate), error=function(e){return(as.numeric(NA))})
-
   #df numerator:
   df_num <- tryCatch(Matrix::rankMatrix(L, method="qrLINPACK"), error=function(e){return(as.numeric(NA))})
+
+  #F value
+  #Try-catch needed because sometimes t(L)%*%(vcov*sigma^2)%*%L is uninvertible while vcov is invertible
+  Fval <- tryCatch(as.double(estimate%*%solve(t(L)%*%(vcov*sigma^2)%*%L)%*%estimate)/df_num, error=function(e){return(as.numeric(NA))})
 
   #df denominator: equal to t-test
   df_den <- df
