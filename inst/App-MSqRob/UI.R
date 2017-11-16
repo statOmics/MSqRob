@@ -544,7 +544,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
         condition = "input.analysis_type != \"ANOVA\"",
         tags$label("Minimal fold change", `for`="lfc", class="MSqRob_label"),
         tags$button(id="button_lfc", tags$sup("[?]"), class="MSqRob_tooltip"),
-        numericInput("lfc", label=NULL, value=0.5, min = 0, max = NA, step = 0.1, width = NULL),
+        numericInput("lfc", label = NULL, value = 0, min = 0, max = NA, step = 0.1, width = NULL),
         hidden(helpText(id="tooltip_lfc","
                         In many scientific experiments, proteins that are significant with only a minimal fold change are considered biologically irrelevant,
                         even if they have a high statistical significance. Testing against a minimal fold change threshold removes these proteins with low fold changes that might obscure your list of significant results.",
