@@ -58,7 +58,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	    list(
   	      tags$label("Input type", `for`="input_type", class="MSqRob_label"),
   	      tags$button(id="button_input_type", tags$sup("[?]"), class="MSqRob_tooltip"),
-  	      selectInput("input_type", NULL, c("MaxQuant", "moFF", "Progenesis"), width = '100%'),
+  	      selectInput("input_type", NULL, c("MaxQuant", "moFF", "mzTab", "Progenesis"), width = '100%'),
   	      hidden(helpText(id="tooltip_input_type",
   	                      "Select the type of input.
   	                      "))
@@ -86,6 +86,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	                the peptide-specific intensities.
   	                When analyzing a MaxQuant shotgun proteomics experiment, this should the peptides.txt file.
   	                When using moFF, this file should start with \"peptide_summary_intensity\" and end with \".tab\".
+			When using mzTab, this file should be a tab-delimited file with data summarized at the peptide level (\".tsv\" output file).
   	                When using Progenesis, this should be a \".csv\" file with data summarized at the peptide level.
 			"))
   	    )
