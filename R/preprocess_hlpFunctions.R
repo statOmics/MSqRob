@@ -141,7 +141,7 @@ addColClasses <- function(df, colClasses){
 }
 
 #getAnnotationRun
-
+#' @export
 getAnnotationRun <- function(pData, run_names){
   annotation_run <- names(which(vapply(pData, function(x) return(identical(sort(as.character(run_names)),sort(as.character(x)))), FUN.VALUE = TRUE)))
   return(annotation_run)

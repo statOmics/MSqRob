@@ -85,7 +85,10 @@ shinyUI(fluidPage(theme = "MSqRob.css",
   	hidden(helpText(id="tooltip_peptides","Specify the location of the file that contains
   	                the peptide-specific intensities.
   	                When analyzing a MaxQuant shotgun proteomics experiment, this should the peptides.txt file.
-  	                When using moFF, this file should start with \"peptide_summary_intensity\" and end with \".tab\""))
+  	                When using moFF, this file should start with \"peptide_summary_intensity\" and end with \".tab\".
+			When using mzTab, this file should be a tab-delimited file with data summarized at the peptide level (\".tsv\" output file).
+  	                When using Progenesis, this should be a \".csv\" file with data summarized at the peptide level.
+			"))
   	    )
   	),
 
