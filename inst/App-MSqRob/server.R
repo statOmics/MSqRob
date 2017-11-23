@@ -179,8 +179,8 @@ shinyServer(function(input, output, session) {
   })
 
   #from annotation file
-  fixedOptions2 <- reactive({
-    if(is.null(input$annotation$name) || is.null(peps())){
+  exp_annotation <- reactive({
+    if(is.null(input$annotation$name) || is.null(eset())){ #Needs to be "eset()" here and not "eset3()", "evaluation nested too deeply" error because exp_annotation() depends both on exp_annotation and peptide input
       exp_annotation <- NULL
     } else{
       if(isTRUE(as.logical(grep(".xlsx[/\\]*$",input$annotation$name)))){
@@ -206,11 +206,11 @@ shinyServer(function(input, output, session) {
   })
   #from peptides file (filterOptions)
   fixedOptions <- reactive({
-    c(as.vector(colnames(fixedOptions2())),filterOptions())
+    c(as.vector(colnames(exp_annotation())),filterOptions())
   })
   #Generate option of factor levels
   levelOptions <- reactive({
-    if((is.null(fixedOptions2()) | is.null(input$fixed)) & (input$save!=2 | is.null(input$load_model$datapath))){
+    if((is.null(exp_annotation()) | is.null(input$fixed)) & (input$save!=2 | is.null(input$load_model$datapath))){
       NULL
     } else if(input$save==2 & !is.null(input$load_model$datapath)){
       #Load models
@@ -228,7 +228,7 @@ shinyServer(function(input, output, session) {
       levelOptions <- RData$levelOptions
     } else{
 
-      optionsFixedSelected <- fixedOptions2()[,input$fixed,drop=FALSE]
+      optionsFixedSelected <- exp_annotation()[,input$fixed,drop=FALSE]
 
       #Should stay "sapply" because result can sometimes be double or character
       levelOptions <- unique(unlist(lapply(colnames(optionsFixedSelected),function(name){
@@ -246,7 +246,7 @@ shinyServer(function(input, output, session) {
   ###########################################
   #Functionalities for Quantification Tab
   ###########################################
-  nmsFixedOptions <- reactive({names(fixedOptions2())})
+  nmsFixedOptions <- reactive({names(exp_annotation())})
 
   ####select Fixed effects, random effects, Proteins and store options ####
   output$selectFixed <- renderUI({
@@ -1123,7 +1123,7 @@ observe({
 
   ###Drop down menu for plot normalization Plot###
   plotNorm1DependentVars <- reactive({
-    as.list(c("none",colnames(fixedOptions2())))
+    as.list(c("none",colnames(exp_annotation())))
   })
 
   output$selectColPlotNorm1 <- renderUI({
@@ -1143,8 +1143,8 @@ observe({
   colorsNorm <- reactive({
     colors <- 1
     try(
-      {colordata <- fixedOptions2()[,input$selColPlotNorm1]
-      colors<-grDevices::colorRampPalette(RColorBrewer::brewer.pal(8,"Spectral"))(length(unique(colordata)))
+      {colordata <- exp_annotation()[,input$selColPlotNorm1]
+      colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8,"Spectral"))(length(unique(colordata)))
       colors <- colors[as.numeric(droplevels(as.factor(colordata)))]
       },silent=TRUE)
     return(colors)
@@ -1222,8 +1222,21 @@ observe({
 
       } else {eset <- Biobase::exprs(peps())}
       eset[is.infinite(eset)] <- NA
+
     } else{eset <- NULL}
 
+    return(eset)
+  })
+
+  eset3 <- reactive({
+    if(is.null(eset()) || is.null(exp_annotation())){
+      eset <- NULL
+    } else{
+      #Sort columns of unprocessed data in exprs by annotation_run column: needed to make correct plots!
+      pData <- exp_annotation()
+      annotation_run <- getAnnotationRun(pData=pData, run_names=colnames(eset()))
+      eset <- eset()[,match(as.character(pData[,annotation_run]), colnames(eset()))]
+    }
     return(eset)
   })
 
@@ -1274,9 +1287,9 @@ observe({
   makePlotRaw <- function(input,eset,colorsNorm,rangesRaw){
 
     if(isTRUE(input$onlysite) && is.null(input$proteingroups)){stop("Please provide a proteinGroups.txt file or untick the box \"Remove only identified by site\".")}
-    if(!is.null(eset())){
+    if(!is.null(eset3())){
 
-      densXlimYlim <- getDensXlimYlim(eset())
+      densXlimYlim <- getDensXlimYlim(eset3())
 
       #Allow for zooming
       if(is.null(rangesRaw$y) & is.null(rangesRaw$x)){
@@ -1287,7 +1300,7 @@ observe({
         ylim=rangesRaw$y
       }
 
-      plotDens(eset(), densXlimYlim[["densAll"]], xlim, ylim, colorsNorm(), main="")
+      plotDens(eset3(), densXlimYlim[["densAll"]], xlim, ylim, colorsNorm(), main="")
       output$npeptidesRaw = renderText(nrow(peps()))
     }
   }
