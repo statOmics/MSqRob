@@ -56,11 +56,12 @@ Loading the package is done via the `library` command, as with any other package
 library(MSqRob)
 ```
 
-Additionally, we load the packages `Biobase` and `MSnbase`, as we will use a few of their functions in this vignette.
+Additionally, we load the packages `Biobase`, `MSnbase` and `limma`, as we will use a few of their functions in this vignette.
 
 ```{r eval=TRUE}
 library(Biobase)
 library(MSnbase)
+library(limma)
 ```
 
 ##The MSqRobData package
@@ -234,20 +235,64 @@ peptidesFranc2 <- preprocess_MaxQuant(peptidesFranc, accession="Proteins", exp_a
 
 8. Add experimental annotation (`exp_annotation=exp_annotation`).
 
-###3. Convert the MSnSet object peptidesFranc2 into a protdata object proteinsFranc.
+We can now make density plots to inspect the effect of the preprocessing on the distribution of our log2-transformed peptide intensities.
 
-**Caution:** this step might take some time! (almost 2 minutes on our system).
+###3. Make diagnostic plots
+
+Here we take a closer look at how you can make the diagnostic plots from the Shiny app.
+We will plot both the density plots and the MDS plot.
+
+```{r eval=TRUE}
+
+#Make sure the order of the rows in your exp_annotation is the same as the columns of the exprs slot in your peptides object.
+all(exp_annotation[,"run"]==colnames(exprs(peptidesFranc)))
+
+#Color by biological repeat
+colors <- as.numeric(exp_annotation[,"biorep"])
+
+###Density plot before preprocessing###
+
+densAll <- apply(log2(exprs(peptidesFranc)),2,density,na.rm=TRUE)
+
+#Automatically determine the plot window size
+ymax=max(vapply(densAll,function(d) max(d$y),1))
+rangematrix <- vapply(densAll,function(d) range(d$x, na.rm=TRUE), c(1,1)) #no longer
+xlim=range(rangematrix,na.rm=TRUE)
+ylim=c(0,ymax)
+
+plot(densAll[[1]],col=colors[1],xlim=xlim,ylim=ylim, las=1, frame.plot=FALSE, main="Density before preprocessing")
+for (i in 2:length(densAll)) lines(densAll[[i]],col=colors[i])
+
+######
+
+###Density plot after preprocessing###
+
+densAll <- apply(log2(exprs(peptidesFranc2)),2,density,na.rm=TRUE)
+
+#Automatically determine the plot window size
+ymax=max(vapply(densAll,function(d) max(d$y),1))
+rangematrix <- vapply(densAll,function(d) range(d$x, na.rm=TRUE), c(1,1)) #no longer
+xlim=range(rangematrix,na.rm=TRUE)
+ylim=c(0,ymax)
+
+plot(densAll[[1]],col=colors[1],xlim=xlim,ylim=ylim, las=1, frame.plot=FALSE, main="Density after preprocessing")
+for (i in 2:length(densAll)) lines(densAll[[i]],col=colors[i])
+
+######
+
+```
+
+We can also construct an MDS plot. This plot will cluster similar runs together.
+
+```{r eval=TRUE}
+plotMDS(exprs(peptidesFranc2), col=colors, las=1)
+```
+
+###4. Convert the MSnSet object peptidesFranc2 into a protdata object proteinsFranc.
+
 The `accession` argument denotes by which column the individual peptide observations should be grouped. The `annotations` argument indicates which columns in peptidesFranc2 are annotations linked to the accessions (in our case: the GI number and the protein names). These annotations will be added to a separate `annotation` slot.
 
 ```{r eval=TRUE}
-system.time(proteinsFranc <- MSnSet2protdata(peptidesFranc2, accession="Proteins", annotations = c("GI.number", "Protein.names")))
-proteinsFranc
-```
-
-The `system.time` function is only used here to print out how long the operation lasted. If you are not interested in that, you can of course omit this.
-
-```{r eval=FALSE}
-#Change to eval=TRUE to execute this piece of code.
 proteinsFranc <- MSnSet2protdata(peptidesFranc2, accession="Proteins", annotations = c("GI.number", "Protein.names"))
 ```
 
@@ -265,17 +310,46 @@ proteinsFranc2 <- addVarFromVar(proteinsFranc, basecol="run", name="techrep", ve
 proteinsFranc2
 ```
 
-###4. Fit the model
+###5. Inspect the data for a specific protein via a detailed protein plot
+
+Here, we illustrate how you can reproduce the detail plots from the Shiny app. We will take a closer look at the protein "WP_003039212".
+
+```{r eval=TRUE}
+protein_name <- "WP_003039212"
+data <- getData(proteinsFranc[protein_name])
+
+#We plot the peptide sequences as different point symbols
+points <- as.numeric(droplevels(as.factor(data$Sequence)))
+#We don't want to use repeated plot symbols or invisible symbols
+pch_vals <- c(0:25,32:127)
+#Repeat pch_vals if there would be more than 122 unique levels
+pch_vals <- rep_len(pch_vals, length(unique(points)))
+pch_vals <- pch_vals[points]
+
+#We color by mass spec run
+colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8,"Spectral"))(length(unique(droplevels(as.factor(data$run)))))
+colors <- colors[as.numeric(droplevels(as.factor(data$run)))]
+
+#We make a different boxplot for each genotype
+boxplot(data$quant_value~as.factor(data$genotype), outline=FALSE, ylim=c(min(data$quant_value)-0.2,max(data$quant_value)+0.2), ylab="preprocessed peptide intensity", xlab="", main=paste0("Detail plot for protein ", protein_name), las=2, frame.plot=FALSE, frame=FALSE, col="grey", pars=list(boxcol="white")) 
+
+#Add the data as separate points     
+points(jitter((as.numeric(data$genotype)), factor=2),data$quant_value, col=colors, pch=pch_vals)
+```
+
+###6. Fit the model
 
 Fit the robust ridge models for each protein. The `fit.model` function will fit a model to each protein in the `protdata` object `proteinsFranc`. The default setting `reg="ridge"` indicates that ridge regression should be used. The default setting `weights="Huber"` indicates that an M estimation algorithm should be used that assigns Huber weights to each peptide observation based on their residuals.
 
-Caution: fitting the models takes some time (less than 15 minutes for the *Francisella tularensis* dataset on our system). The `system.time` function was again only added to output the duration of the model fitting.
+Caution: fitting the models takes some time (less than 15 minutes for the *Francisella tularensis* dataset on our system).
 
 ```{r eval=TRUE}
 system.time(protLMFranc <- fit.model(proteinsFranc, response="quant_value", fixed=c("genotype"),  random=c("biorep","run","Sequence"), add.intercept=TRUE, weights="Huber"))
 ```
 
-###4.1. Inspect the model
+The `system.time` function was only added to output the duration of the model fitting. If you are not interested in this, you can of course omit it.
+
+###5.1. Inspect the model
 
 `protLMFranc` is a `protLM` object.
 
@@ -351,7 +425,7 @@ betaVcovDfList <- getBetaVcovDfList(protLMFranc[1:2])
 str(betaVcovDfList)
 ```
 
-###4.2 Save your results
+###6.2 Save your results
 
 You can save your `proteinsFranc` and `protLMFranc` objects to a .RDatas object that can be loaded in R or in the Shiny graphical user interface. If you want your .RDatas object to be loaded into the Shiny App, you should also specify the `levelOptions`, `random` and `plot2DependentVars` objects. These objects are settings that are saved automatically when using the MSqRob Shiny App. In this example, I save the .RDatas object to my desktop.
 
@@ -404,7 +478,7 @@ proteinsFranc_result <- result_files$proteins
 protLMFranc_result <- result_files$models
 ```
 
-###5. Statistical inference
+###7. Statistical inference
 
 We are interested in which proteins differ significantly in abundance between ArgP mutant and wild type *Francisella tularensis*. Via the `"MSqRob_levels"` attribute, you can check which factor levels are present in each model. Pick a model for which there are no missing levels for the factors for which you want to test contrasts and inspect the names. Note that these names are always the combination of the parameter name and the factor level.
 
@@ -747,7 +821,8 @@ fData(peptidesCPTAC3) <- droplevels(fData(peptidesCPTAC3))
 
 8. Add the experimental design to the MSnSet object.
 ```{r eval=TRUE}
-pData(peptidesCPTAC3) <- exp_annotation
+rownames(exp_annotation) <- exp_annotation[,"run"]
+peptidesCPTAC3 <- MSnbase::MSnSet(exprs=exprs(peptidesCPTAC3), fData=fData(peptidesCPTAC3), pData=exp_annotation)
 ```
 
 Check whether our manually preprocessed `peptidesCPTAC3` is equal to `peptidesCPTAC2`.
