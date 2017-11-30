@@ -140,7 +140,13 @@ addColClasses <- function(df, colClasses){
   return(df)
 }
 
-#getAnnotationRun
+#' Get the column with the mass spec run names
+#'
+#' @description Get the name of the column of an experimental annotation data frame \code{pData}. This column should contain exactly the same elements as the elements in the \code{run_names} vector.
+#' This function is borderline internal.
+#' @param pData A dataframe containing experimental annotation information, of which one column contains the mass spec run names.
+#' @param run_names A vector with the mass spec run names.
+#' @return The name of the column in \code{pData} that contains all elements in the vector \code{run_names}.
 #' @export
 getAnnotationRun <- function(pData, run_names){
   annotation_run <- names(which(vapply(pData, function(x) return(identical(sort(as.character(run_names)),sort(as.character(x)))), FUN.VALUE = TRUE)))
