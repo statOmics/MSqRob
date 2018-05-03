@@ -86,7 +86,7 @@ MSnSet2protdata <- function(MSnSet, accession=NULL, annotations=NULL, quant_name
   annotation_matrix <- matrix(nrow=length(accessions), ncol=length(annotations), dimnames=list(accessions,annotations))
 
   for(i in 1:nrow(annotation_matrix)){
-    annotation_matrix[i,] <- vapply(properties[sel[[1]],, drop=FALSE], function(y){paste0(unique(y), collapse="")},"; ")
+    annotation_matrix[i,] <- vapply(properties[sel[[i]],, drop=FALSE], function(y){paste0(unique(y), collapse="")},"; ")
   }
 
   protdata <- new("protdata", accession=accessions, data=datalist, annotation=annotation_matrix, pData=pData)
