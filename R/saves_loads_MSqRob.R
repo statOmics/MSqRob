@@ -90,7 +90,17 @@ saves_MSqRob <- function (..., envir = environment(), list = character(), file =
     } else{savedir <- dirname(file[i])}
 
     setwd(tmp)
-    tar(paste(savedir, "/", basename(file[i]), sep = ""), ".", compression = "none")
+
+    tryCatch(
+    tar(paste(savedir, "/", basename(file[i]), sep = ""), ".", compression = "none"),
+
+    ### IF this would fail, at least reset the working directory to where it was. ###
+    error = function(e){
+      setwd(w)
+      stop("Error in tar function.")
+    }
+    )
+    ###
 
     setwd(w)
     unlink(tmp, recursive = TRUE)
