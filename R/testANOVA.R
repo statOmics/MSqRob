@@ -46,7 +46,7 @@ test.ANOVA=function(beta, vcov, df, sigma, L, anova.na.ignore=TRUE)
   estimate <- as.double(crossprod(L,beta))
 
   #df numerator:
-  df_num <- tryCatch(Matrix::rankMatrix(L, method="qrLINPACK"), error=function(e){return(as.numeric(NA))})
+  df_num <- suppressWarnings(tryCatch(Matrix::rankMatrix(L, method="qrLINPACK"), error=function(e){return(as.numeric(NA))}))
 
   #F value
   #Try-catch needed because sometimes t(L)%*%(vcov*sigma^2)%*%L is uninvertible while vcov is invertible
