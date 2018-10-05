@@ -12,17 +12,21 @@ vignette: >
 
 ## A first notice
 
-This vignette will guide you through the main features of the MSqRob package. We will highlight two examples in order to help you familiarize with its main features. As we go into quite some detail, this vignette might be a bit overwhelming for a first-time user. **You might want to skim through this vignette and then take a look at the same two examples stripped to their essential analyses. These can be found at https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd and https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd for the *Francisella* and CPTAC example respectively.** Note that we mainly focus on MaxQuant output, but that any type type of search engine output can be used with MSqRob, see "1.2. Importing other data types" for more info.
+This vignette might be a bit overwhelming for a first-time user. 
 
-MSqRob is completely free and open source, but please make a reference to Goeminne et al. (2016) when using our package in any kind of publication.
+**You might want to skim through this vignette and then take a look at the same two examples stripped to their essential analyses. These can be found at https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd and https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd for the *Francisella* and CPTAC example respectively.** Note that we mainly focus on MaxQuant output, but that any type type of search engine output can be used with MSqRob, see "1.2. Importing other data types" for more info.
 
 ## Introduction
+
+This vignette will guide you through the main features of the MSqRob package. We will highlight two examples in order to help you familiarize with its main features. 
 
 The MSqRob package is designed for the analysis of differential abundance in label-free mass spectrometry-based shotgun proteomics experiments. These experiments typically output large spectral files (e.g. ".mzML" files) that need to be searched for identifications by specialized peak detection and peptide identification software such as Andromeda (used in the MaxQuant software package) and Mascot Distiller. These algorithms output lists of putative peptides accompanied by their corresponding overall intensity estimates.
 
 Often, researchers further summarize these peptide intensities to protein intensities. However, as we have shown before, this summarization-based approaches tend to perform suboptimal compared to peptide-based models, wherein the peptide intensities are directly provided as input to the statistical model used for differential quantification (Goeminne et al., 2015). Nonetheless, most of these models still suffer from overfitting issues.
 
 This package implements the robust ridge approach that prevents overfitting in sparse data but also accurately fits highly abundant proteins as described in Goeminne et al. (2016).
+
+MSqRob is completely free and open source, but please make a reference to Goeminne et al. (2016) when using our package in any kind of publication.
 
 ## Downloading, installing and loading MSqRob
 
