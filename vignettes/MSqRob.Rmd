@@ -14,7 +14,11 @@ vignette: >
 
 This vignette might be a bit overwhelming for a first-time user. 
 
-**You might want to skim through this vignette and then take a look at the same two examples stripped to their essential analyses. These can be found at https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd and https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd for the *Francisella* and CPTAC example respectively.** Note that we mainly focus on MaxQuant output, but that any type type of search engine output can be used with MSqRob, see "1.2. Importing other data types" for more info.
+**You might want to skim through this vignette and then take a look at the same two examples stripped to their essential analyses. These can be found at https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd and https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd for the *Francisella* and CPTAC example respectively.**
+
+Note that we mainly focus on MaxQuant output, but that any type type of search engine output can be used with MSqRob, see "1.2. Importing other data types" for more info.
+
+If anything is unclear, please do not hesitate to contact me at ludger.goeminne@vib-ugent.be or to open an issue on GitHub. Your feedback is highly welcomed!
 
 ## Introduction
 
