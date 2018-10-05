@@ -10,6 +10,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## A first notice
+
+This vignette will guide you through the main features of the MSqRob package. We will highlight two examples in order to help you familiarize with its main features. As we go into quite some detail, this vignette might be a bit overwhelming for a first-time user. **You might want to skim through this vignette and then take a look at the same two examples stripped to their essential analyses. These can be found at https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd and https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd for the *Francisella* and CPTAC example respectively.** Note that we mainly focus on MaxQuant output, but that any type type of search engine output can be used with MSqRob, see "1.2. Importing other data types" for more info.
+
+MSqRob is completely free and open source, but please make a reference to Goeminne et al. (2016) when using our package in any kind of publication.
+
 ## Introduction
 
 The MSqRob package is designed for the analysis of differential abundance in label-free mass spectrometry-based shotgun proteomics experiments. These experiments typically output large spectral files (e.g. ".mzML" files) that need to be searched for identifications by specialized peak detection and peptide identification software such as Andromeda (used in the MaxQuant software package) and Mascot Distiller. These algorithms output lists of putative peptides accompanied by their corresponding overall intensity estimates.
@@ -18,13 +24,9 @@ Often, researchers further summarize these peptide intensities to protein intens
 
 This package implements the robust ridge approach that prevents overfitting in sparse data but also accurately fits highly abundant proteins as described in Goeminne et al. (2016).
 
-This vignette will guide you through the main features of the MSqRob package. We will highlight two examples in order to help you familiarize with its main features. As we go into quite some detail, this vignette might be a bit overwhelming for a first-time user. You might want to skim through this vignette and then take a look at the same two examples stripped to their essential analyses. These can be found at https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/analysis_Francisella.Rmd and https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/analysis_CPTAC.Rmd for the *Francisella* and CPTAC example respectively.
-
-MSqRob is completely free and open source, but please make a reference to Goeminne et al. (2016) when using our package in any kind of publication.
-
 ## Downloading, installing and loading MSqRob
 
-##Installing the package
+## Installing the package
 
 On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows. Errors in MSqRob on Windows related to unable to zip the results Excel file might be related to errors in configuring RTools.
 
@@ -48,7 +50,7 @@ Note that the latest version of MSqRob can always be found at: https://github.co
 
 The latest version of this vignette can be found at: https://github.com/statOmics/MSqRob/blob/master/vignettes/MSqRob.Rmd.
 
-##Loading MSqRob
+## Loading MSqRob
 
 Loading the package is done via the `library` command, as with any other package.
 
@@ -64,7 +66,7 @@ library(MSnbase)
 library(limma)
 ```
 
-##The MSqRobData package
+## The MSqRobData package
 
 R packages uploaded on CRAN have a maximum size limit of 5 MB. As proteomics datasets are typically several hunderds of GB in size and even an output file of a peptide search can be tens of MBs in size, we uploaded our example data in a separate data package called MSqRobData. If you want to run the examples in this vignette, you also need the data package. This can also be downloaded from GitHub in the following way:
 
@@ -74,7 +76,7 @@ devtools::install_github("statOmics/MSqRobData")
 library(MSqRobData)
 ```
 
-##The Shiny App
+## The Shiny App
 
 If you want to work with the Shiny graphical user interface (MaxQuant output only), use the following command:
 
@@ -83,12 +85,16 @@ If you want to work with the Shiny graphical user interface (MaxQuant output onl
 shiny::runApp(system.file('App-MSqRob', package='MSqRob'))
 ```
 
-##*Francisella tularensis* dataset (design with pseudoreplication)
+## *Francisella tularensis* dataset (design with pseudoreplication)
 
 The bacterium *Francisella tularensis* is a facultative intracellular parasite of macrophages and must import host cell arginine in order to be able to multiply inside the host cell. Ramond et al. (2015) investigated the effect of gene deletion of a newly identified arginine transporter called ArgP.
 Their data is deposited in the PRIDE repository at http://www.ebi.ac.uk/pride/archive/projects/PXD001584. We used the authors' supplied peptides.txt file which is the result of preprocessing with MaxQuant version 1.4.1.2. As the authors used now outdated GI numbers, we modified this file to incorporate NCBI accessions and protein names (September 25, 2016).
 
-###1. Importing data
+### 1. Importing data
+
+MSqRob data input can come from any kind of source, as long as feature-level or peptide-level data is available. I will here focus on a MaxQuant example, but in fact, output from any search engine can be used.
+
+### 1.1. Importing MaxQuant data
 
 First, specify the location of the peptides.txt MaxQuant output file.
 By default, MaxQuant creates a "combined" folder in the same folder as the raw files are (or if the raw files are in different directories, in the directory of the first raw file). The peptides.txt file can then be found in "path_to_raw_files/combined/txt/peptides.txt". Just provide the path to where the file is located on your computer. The `system.file` function is used here only to access the example tab-delimited peptides.txt file that is delivered with our package. 
@@ -101,7 +107,7 @@ file_peptides_txt
 Import the data using the `import2MSnSet` function. The `pattern` argument should contain a text string that is present in all column names that contain peptide intensities but not in the other column names. This defaults to `"Intensity\ "` for MaxQuant data. The default setting `remove_pattern=TRUE` then removes the pattern from these column names so that the names equal the names that were entered in MaxQuant's "Experiment" column when conducting the search. In this particular *Francisella* experiment, our column names start with a number (either "1" or "3"), which is not a valid column name in R. Therefore, an "X" is prepended to these names.
 
 ```{r eval=TRUE}
-peptidesFranc <- import2MSnSet(file_peptides_txt, filetype="MaxQuant", remove_pattern=TRUE)
+peptidesFranc <- import2MSnSet(file_peptides_txt, filetype = "MaxQuant", remove_pattern = TRUE)
 ```
 
 `import2MSnSet` creates an `MSnSet` object with 3 slots:
@@ -131,9 +137,15 @@ The `pData` slot will contain the experimental annotation. Right now, it has 18 
 pData(peptidesFranc)
 ```
 
-###2. Preprocessing
+### 1.2. Importing other data types
 
-###2.1. Create an experimental annotation data frame.
+The `import2MSnSet` has built-in support for moFF (Argentini et al., 2016), mzTab (Griss et al., 2014) and Progenesis (Nonlinear Dynamics, Newcastle upon Tyne, U.K.) output. You should then simply set `filetype` to `"moFF"`, `"mzTab"` or `"Progenesis"` respectively.
+
+If you are using yet another data type, you can use MSqRob's `read2MSnSet` function to import your data. Hereby, you have to specify (1) your file, (2) a regular expression pattern that indicates the columns with the peptide intensities or simply the indices of these columns and (3) the separator (e.g. `"\t"`, `","`, ...).
+
+### 2. Preprocessing
+
+### 2.1. Create an experimental annotation data frame.
 
 Now, we are going to create a data frame that contains the experimental annotation. This data frame should contain all explanatory variables that groups different runs together. This is important in order to be able to include factors on which you will do inference (such as treatment effects or effects over time, or, in our case: the effect of the genetic knock-out) as well as other factors that might have an influence (such as biological repeats, technical repeats and potential confounders such as batch effects).
 
@@ -199,7 +211,7 @@ exp_annotation_xlsx
 
 Note that here, there is no "X" prepended to the run names. However, names will be changed automatically to syntactically valid names by MSqRob during preprocessing.
 
-###2.2. Preprocess the data using the preprocess_MaxQuant function.
+### 2.2. Preprocess the data using the preprocess_MaxQuant function.
 
 The identification of peptides that carry one or more chemical modifications is often not as reliable as the identification of unmodified peptides. Therefore, a common step during the preprocessing of proteomics data consists of removing the proteins of which all identified peptides have one or more modification sites. If we want to remove these proteins that are only identified by modified peptides from the dataset, we also need the proteinGroups.txt file. This file can be found in the same location as the peptides.txt file ("path_to_raw_files/combined/txt/proteinGroups.txt"). Here, we make use of the proteinGroups.txt file that is delivered with the package.
 
@@ -237,7 +249,7 @@ peptidesFranc2 <- preprocess_MaxQuant(peptidesFranc, accession="Proteins", exp_a
 
 We can now make density plots to inspect the effect of the preprocessing on the distribution of our log2-transformed peptide intensities.
 
-###3. Make diagnostic plots
+### 3. Make diagnostic plots
 
 Here we take a closer look at how you can make the diagnostic plots from the Shiny app.
 We will plot both the density plots and the MDS plot.
@@ -250,7 +262,7 @@ all(exp_annotation[,"run"]==colnames(exprs(peptidesFranc)))
 #Color by biological repeat
 colors <- as.numeric(exp_annotation[,"biorep"])
 
-###Density plot before preprocessing###
+### Density plot before preprocessing ###
 
 densAll <- apply(log2(exprs(peptidesFranc)),2,density,na.rm=TRUE)
 
@@ -265,7 +277,7 @@ for (i in 2:length(densAll)) lines(densAll[[i]],col=colors[i])
 
 ######
 
-###Density plot after preprocessing###
+### Density plot after preprocessing ###
 
 densAll <- apply(log2(exprs(peptidesFranc2)),2,density,na.rm=TRUE)
 
@@ -288,7 +300,7 @@ We can also construct an MDS plot. This plot will cluster similar runs together.
 plotMDS(exprs(peptidesFranc2), col=colors, las=1)
 ```
 
-###4. Convert the MSnSet object peptidesFranc2 into a protdata object proteinsFranc.
+### 4. Convert the MSnSet object peptidesFranc2 into a protdata object proteinsFranc.
 
 The `accession` argument denotes by which column the individual peptide observations should be grouped. The `annotations` argument indicates which columns in peptidesFranc2 are annotations linked to the accessions (in our case: the GI number and the protein names). These annotations will be added to a separate `annotation` slot.
 
@@ -296,7 +308,7 @@ The `accession` argument denotes by which column the individual peptide observat
 proteinsFranc <- MSnSet2protdata(peptidesFranc2, accession="Proteins", annotations = c("GI.number", "Protein.names"))
 ```
 
-###Advanced: add information on the design after creating your protdata object
+### Advanced: add information on the design after creating your protdata object
 
 Imagine you forgot a factor in your experimental annotation. Should you redo the whole preprocessing part? No, often, you can still add this factor thanks to the `addVarFromVar` function. We will now show how we can add an extra (redundant) factor called `techrep`.
 
@@ -310,7 +322,7 @@ proteinsFranc2 <- addVarFromVar(proteinsFranc, basecol="run", name="techrep", ve
 proteinsFranc2
 ```
 
-###5. Inspect the data for a specific protein via a detailed protein plot
+### 5. Inspect the data for a specific protein via a detailed protein plot
 
 Here, we illustrate how you can reproduce the detail plots from the Shiny app. We will take a closer look at the protein "WP_003039212".
 
@@ -337,7 +349,7 @@ boxplot(data$quant_value~as.factor(data$genotype), outline=FALSE, ylim=c(min(dat
 points(jitter((as.numeric(data$genotype)), factor=2),data$quant_value, col=colors, pch=pch_vals)
 ```
 
-###6. Fit the model
+### 6. Fit the model
 
 Fit the robust ridge models for each protein. The `fit.model` function will fit a model to each protein in the `protdata` object `proteinsFranc`. The default setting `reg="ridge"` indicates that ridge regression should be used. The default setting `weights="Huber"` indicates that an M estimation algorithm should be used that assigns Huber weights to each peptide observation based on their residuals.
 
@@ -349,7 +361,7 @@ system.time(protLMFranc <- fit.model(proteinsFranc, response="quant_value", fixe
 
 The `system.time` function was only added to output the duration of the model fitting. If you are not interested in this, you can of course omit it.
 
-###5.1. Inspect the model
+### 5.1. Inspect the model
 
 `protLMFranc` is a `protLM` object.
 
@@ -425,7 +437,7 @@ betaVcovDfList <- getBetaVcovDfList(protLMFranc[1:2])
 str(betaVcovDfList)
 ```
 
-###6.2 Save your results
+### 6.2 Save your results
 
 You can save your `proteinsFranc` and `protLMFranc` objects to a .RDatas object that can be loaded in R or in the Shiny graphical user interface. If you want your .RDatas object to be loaded into the Shiny App, you should also specify the `levelOptions`, `random` and `plot2DependentVars` objects. These objects are settings that are saved automatically when using the MSqRob Shiny App. In this example, I save the .RDatas object to my desktop.
 
@@ -436,7 +448,7 @@ result_files_new <- list()
 result_files_new$proteins <- proteinsFranc
 result_files_new$models <- protLMFranc
 
-###This part is only needed if you want to load your .RDatas file in the MSqRob Shiny App###
+### This part is only needed if you want to load your .RDatas file in the MSqRob Shiny App ###
 
 #Should contain all contrast options for the fixed effects (see also 5. Statistical inference)
 result_files_new$levelOptions <- c("genotypeWT","genotypeKO")
@@ -478,7 +490,7 @@ proteinsFranc_result <- result_files$proteins
 protLMFranc_result <- result_files$models
 ```
 
-###7. Statistical inference
+### 7. Statistical inference
 
 We are interested in which proteins differ significantly in abundance between ArgP mutant and wild type *Francisella tularensis*. Via the `"MSqRob_levels"` attribute, you can check which factor levels are present in each model. Pick a model for which there are no missing levels for the factors for which you want to test contrasts and inspect the names. Note that these names are always the combination of the parameter name and the factor level.
 
@@ -531,7 +543,7 @@ Inspect the first 6 significant proteins:
 head(resultFranc,6)
 ```
 
-###Advanced: importing as a data frame
+### Advanced: importing as a data frame
 
 It is also possible to import your data as a simple data frame and make use of some custom preprocessing pipeline. Here, we will show the same preprocessing pipeline for the *Francisella* dataset as outlined above, but note that adding, removing or modifying steps in the preprocessing pipeline is now very simple as the data is in data frame format.
 
@@ -586,7 +598,7 @@ We can easily preprocess the data frame using the `preprocess_wide` function (fo
 
 We already made the `exp_annotation` object before (see "2.1. Create an experimental annotation data frame."), so we will not repeat this code again here. **Importantly, however, contrary to the `exprs` slot in the `peptidesFranc2` object created before, the names of all intensity columns in data frame `pepFrancDf` start with "Intensity.".**
 
-**This is because the default setting `remove_pattern=TRUE` in the `import2MSnSet` function removes the prefix "Intensity\ " from the columns containing the intensities as this allows users that are unfamiliar with R to just copy and paste the names they provided in MaxQuant's "Experiment" column as an input. Here, we just imported the peptides.txt file as it is.** We thus create a new experimental annotation data frame called `exp_annotation2` with run names starting with "Intensity." (a space is not syntactically valid in R, so it is automatically converted to a dot).
+**This is because the default setting `remove_pattern=TRUE` in the `import2MSnSet` function removes the prefix `"Intensity\ "` from the columns containing the intensities as this allows users that are unfamiliar with R to just copy and paste the names they provided in MaxQuant's "Experiment" column as an input. Here, we just imported the peptides.txt file as it is.** We thus create a new experimental annotation data frame called `exp_annotation2` with run names starting with "Intensity." (a space is not syntactically valid in R, so it is automatically converted to a dot).
 
 ```{r eval=TRUE}
 runs2 <- colnames(pepFrancDf)[grepl("Intensity.",colnames(pepFrancDf))]
@@ -645,7 +657,7 @@ https://cptac-data-portal.georgetown.edu/cptac/dataPublic/list?currentPath=%2FPh
 
 Here, we limited ourselves to the data of LTQ-Orbitrap at site 86, LTQ-Orbitrap O at site 65 and LTQ-Orbitrap W at site 56. The data was searched with MaxQuant version 1.5.2.8. Detailed search settings can be found in Goeminne et al. (2016).
 
-###1. Import MaxQuant's peptides.txt file
+### 1. Import MaxQuant's peptides.txt file
 
 First, specify the location of the peptides.txt MaxQuant output file.
 By default, MaxQuant creates a "combined" folder in the same folder as the raw files are (or if the raw files are in different directories, in the directory of the first raw file). The peptides.txt file can then be found in "path_to_raw_files/combined/txt/peptides.txt". Here, we make use of the peptides.txt file that is delivered with the package.
@@ -659,11 +671,11 @@ Import MaxQuant's peptides.txt file and convert it to an `MSnSet` object (see pa
 peptidesCPTAC <- import2MSnSet(file_peptides_txt, filetype="MaxQuant", remove_pattern=TRUE)
 ```
 
-The "pattern" argument indicates which columns in the peptides.txt file contain peptide intensities. Currently, all columns containing "Intensity\ " in their column names will be treated as peptide intensities (default for MaxQuant). `remove_pattern=TRUE` (default) indicates that the name of the pattern is removed from the column names.
+The "pattern" argument indicates which columns in the peptides.txt file contain peptide intensities. Currently, all columns containing `"Intensity\ "` in their column names will be treated as peptide intensities (default for MaxQuant). `remove_pattern=TRUE` (default) indicates that the name of the pattern is removed from the column names.
 
-###2. Preprocessing
+### 2. Preprocessing
 
-###2.1. Add information on the design: create an experimental annotation data frame.
+### 2.1. Add information on the design: create an experimental annotation data frame.
 
 Extract the names of the mass spec runs via the `sampleNames` function from the `Biobase` package.
 ```{r eval=TRUE}
@@ -697,7 +709,7 @@ exp_annotation
 
 Remember that the `exp_annotation` can also be given as an Excel file or a tab delimited file!
 
-###2.2. Preprocess the data using the preprocess_MaxQuant function.
+### 2.2. Preprocess the data using the preprocess_MaxQuant function.
 
 If we want to remove proteins that are only identified by modified peptides from the dataset, we also need the proteinGroups.txt file. This file can be found in the same location as the peptides.txt file ("path_to_raw_files/combined/txt/proteinGroups.txt"). Here, we make use of the proteinGroups.txt file that is delivered with the package.
 
@@ -736,7 +748,7 @@ The following preprocessing steps are executed in this order:
 
 8. Add experimental annotation.
 
-###2.3. Advanced alternative: do the preprocessing yourself.
+### 2.3. Advanced alternative: do the preprocessing yourself.
 
 It is possible to do all the preprocessing steps yourself. That way, you can do more advanced preprocessing or change the order of certain preprocessing steps if you like to.
 
@@ -833,7 +845,7 @@ all(fData(peptidesCPTAC2)==fData(peptidesCPTAC3), na.rm=TRUE)
 all(pData(peptidesCPTAC2)==pData(peptidesCPTAC3), na.rm=TRUE)
 ```
 
-###3. Convert the MSnSet object peptidesCPTAC2 into a protdata object proteinsCPTAC.
+### 3. Convert the MSnSet object peptidesCPTAC2 into a protdata object proteinsCPTAC.
 
 **Caution:** this step might take some time! (about 5 minutes on our system).
 The accession element denotes by which column the individual peptide observations should be grouped.
@@ -842,9 +854,9 @@ The accession element denotes by which column the individual peptide observation
 system.time(proteinsCPTAC <- MSnSet2protdata(peptidesCPTAC2, accession="Proteins"))
 ```
 
-###4. Main Analysis
+### 4. Main Analysis
 
-###4.1. Fit the model
+### 4.1. Fit the model
 
 When your goal is to analyze the CPTAC data in the recommended way (i.e. a robust ridge model with variance shrinkage and M estimation), your model should be constructed look as follows:
 
@@ -854,11 +866,11 @@ system.time(modelCPTAC_RR <- fit.model(protdata=proteinsCPTAC, response="quant_v
 
 Caution: model fitting takes some time with large datasets! On our computer, fitting the robust ridge model took about 13 - 18 minutes.
 
-###4.2. Save your results
+### 4.2. Save your results
 
 Saving results is completely analogous to the *Francisella* example.
 
-###4.3. Comparing different types of models
+### 4.3. Comparing different types of models
 
 In this section, we fit different types of models to the CPTAC data, analogous to what has been done in Goeminne et al. (2016) in order to compare their performances. We compare an ordinary least squares (OLS) model with and without M estimation (Huber weights) to a ridge model with and without M estimation. As we also want to assess the impact of the empirical Bayes variance estimation, we set `squeezeVar=FALSE` so that no variance squeezing is performed yet.
 
@@ -890,7 +902,7 @@ system.time(modelCPTAC_Ridge_M <- fit.model(protdata=proteinsCPTAC, response="qu
 
 As you noticed, an OLS model can be fit by setting `shrinkage.fixed=c(0,0,0,0)`. This indicates that neither the intercept and none of our three fixed effects should be shrunken. The ridge model is here specified by setting `shrinkage.fixed=c(0,1)`. This indicates that the intercept should not be shrunken, but the fixed effect `"condition"` should be shrunken. Alternatively, one could also set `shrinkage.fixed=NULL` as the shrinkage of all fixed effects except for the intercept is the default behaviour of MSqRob.
 
-###4.4. Inspect the models
+### 4.4. Inspect the models
 
 ```{r eval=TRUE}
 attr(getModels(modelCPTAC_RR[1]),"MSqRob_levels")
@@ -903,7 +915,7 @@ Extract the data as a list from the protdata object `proteinsCPTAC`.
 data <- getData(proteinsCPTAC)
 ```
 
-###4.5. Avanced and optional: check which models would fail to converge by building a linear mixed effects model.
+### 4.5. Avanced and optional: check which models would fail to converge by building a linear mixed effects model.
 
 ```{r eval=TRUE}
 convergence <- lapply(data, function(x){return(tryCatch(lme4::lFormula(formula("quant_value~1+(1|condition)+(1|lab)+(1|Sequence)"),x,control = lme4::lmerControl()), error=function(e){
@@ -937,7 +949,7 @@ modelCPTAC_RR_cleaned <- modelCPTAC_RR[-na_indices]
 data <- data[-na_indices]
 ```
 
-###5. Statistical inference
+### 5. Statistical inference
 
 Construct the contrast matrix L for inferring on the fold changes of interest.
 
@@ -1011,7 +1023,7 @@ ridgeSqM_custom <- prot.p.adjust(ridgeSqM_custom)
 ridgeSqM_custom <- prot.signif(ridgeSqM_custom)
 ```
 
-###6. Diagnostic plots and tables
+### 6. Diagnostic plots and tables
 
 In order to be able to make diagnostic plots and tables, load the required functions from our GitHub page.
 
@@ -1076,14 +1088,18 @@ plotROC(resultobjectlist, summary_objectlist=summary_objectlist, proteins=protei
 
 ## References
 
+Argentini, A.,	Goeminne, L. J. E.,	Verheggen, K.,	Hulstaert, N.,	Staes, A., Clement, L.	and Martens, L. (2016) moFF: a robust and automated approach to extract peptide ion intensities. Nature Methods 13, pp 964–966.
+
+Bolstad, B. M., Irizarry, R. A., Astrand, M., and Speed, T. P. (2003) A Comparison of Normalization Methods for High Density Oligonucleotide Array Data Based on Bias and Variance. Bioinformatics 19(2), pp 185-193. http://bmbolstad.com/misc/normalize/normalize.html
+
 Goeminne, L. J. E., Argentini, A., Martens, L., and Clement, L. (2015) Summarization vs Peptide-Based Models in Label-Free Quantitative Proteomics: Performance, Pitfalls, and Data Analysis Guidelines. Journal of Proteome Research 14(6), pp 2457-2465.
 
 Goeminne, L. J. E., Gevaert, K., and Clement, L. (2016) Peptide-level Robust Ridge Regression Improves Estimation, Sensitivity, and Specificity in Data-dependent Quantitative Label-free Shotgun Proteomics. Molecular & Cellular Proteomics 15(2), pp 657-668.
 
-Bolstad, B. M., Irizarry, R. A., Astrand, M., and Speed, T. P. (2003) A Comparison of Normalization Methods for High Density Oligonucleotide Array Data Based on Bias and Variance. Bioinformatics 19(2), pp 185-193. http://bmbolstad.com/misc/normalize/normalize.html
+Griss, J., Jones, A.R., Sachsenberg, T., Walzer, M., Gatto, L., Hartler, J., Thallinger, G.G., Salek, R.M., Steinbeck, C., Neuhauser, N., Cox, J., Neumann, S., Fan, J., Reisinger, F., Xu, Q.W., Del Toro, N., Pérez-Riverol, Y., Ghali, F., Bandeira, N., Xenarios, I., Kohlbacher, O., Vizcaíno, J.A. & Hermjakob, H. (2014) The mzTab data exchange format: communicating mass-spectrometry-based proteomics and metabolomics experimental results to a wider audience. Molecular and Cellular Proteomics 13(10), pp 2765-75.
 
 Navarro P., Kuharev J., Gillet, L. C., Bernhardt, O. M., MacLean, B., Röst, H. L., Tate, S. A., Tsou, C., Reiter, L., Distler, U., Rosenberger, G., Perez-Riverol, Y., Nesvizhskii, A. I., Aebersold, R., and Tenzer, S. (2016) A multicenter study benchmarks software tools for label-free proteome quantification. Nature Biotechnology.
 
-Ramond, E., Gesbert, G., Guerrera, I. C., Chhuon, C., Dupuis, M., Rigard, M., Henry, T., Barel, M., and Charbit, A. (2015) Importance of host cell arginine uptake in Francisella phagosomal escape and ribosomal protein amounts. Molecular & Cellular Proteomics 14, pp 870–881.
-
 Paulovich AG, Billheimer D, Ham A-JL, et al. (2010) Interlaboratory Study Characterizing a Yeast Performance Standard for Benchmarking LC-MS Platform Performance. Molecular & Cellular Proteomic 9(2), pp 242-254.
+
+Ramond, E., Gesbert, G., Guerrera, I. C., Chhuon, C., Dupuis, M., Rigard, M., Henry, T., Barel, M., and Charbit, A. (2015) Importance of host cell arginine uptake in Francisella phagosomal escape and ribosomal protein amounts. Molecular & Cellular Proteomics 14, pp 870–881.
