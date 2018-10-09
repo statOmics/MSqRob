@@ -148,3 +148,4 @@ Collate:
     'test_contrast_stagewise.R'
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
+License: GPL (>=2)
