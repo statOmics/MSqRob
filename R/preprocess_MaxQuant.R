@@ -45,11 +45,11 @@ read2MSnSet <- function(file, pattern=NULL, colInt=NULL, remove_pattern=FALSE, s
     pData <- Biobase::pData(peptides)
     colnames(exprs) <- make.names(gsub(pattern,"",colnames(exprs)), unique = TRUE)
     rownames(pData) <- make.names(gsub(pattern,"",rownames(pData)), unique = TRUE)
-    
+
     #Biobase::sampleNames(Biobase::protocolData(peptides)) <- rownames(pData)
     #Biobase::pData(peptides) <- pData
     #Biobase::exprs(peptides) <- exprs
-    
+
     peptides <- MSnbase::MSnSet(exprs=exprs, fData=Biobase::fData(peptides), pData=pData)
   }
   return(peptides)
@@ -391,10 +391,10 @@ preprocess_MaxQuant <- function(MSnSet, accession="Proteins", exp_annotation=NUL
 
   #If pData is completely empty due to a lack of annotation, at least add the runs
   #This feature is not included in preprocess_MSnSet, where you have more liberty to play with all kinds of preprocessing
-  if(ncol(pData(MSnSet))==0){
-  emptyPData <- data.frame(run=rownames(pData(MSnSet)))
-  rownames(emptyPData) <- rownames(pData(MSnSet))
-  pData(MSnSet) <- emptyPData
+  if(ncol(Biobase::pData(MSnSet))==0){
+  emptyPData <- data.frame(run=rownames(Biobase::pData(MSnSet)))
+  rownames(emptyPData) <- rownames(Biobase::pData(MSnSet))
+  Biobase::pData(MSnSet) <- emptyPData
   }
 
   return(MSnSet)
@@ -458,7 +458,11 @@ preprocess_generic <- function(MSnSet, MSnSetType, exp_annotation=NULL, type_ann
       aggr_by <- "sequence" #No problem if aggregation has already been done, such as in the GUI!
     }
   } else if(MSnSetType=="Progenesis"){
-    accession <- "Accession"
+    if("Accession" %in% colnames(fData(MSnSet))){
+      accession <- "Accession"
+    } else if("Protein" %in% colnames(fData(MSnSet))){
+      accession <- "Protein"
+    } else {stop("Could not find the protein identifier. Please rename the column with protein identifiers to either \"Accession\" or \"Protein\".")}
     split=", "
     if(!("Sequence" %in% useful_properties)){
       useful_properties <- c(useful_properties,"Sequence")
@@ -483,10 +487,10 @@ preprocess_generic <- function(MSnSet, MSnSetType, exp_annotation=NULL, type_ann
 
   #If pData is completely empty due to a lack of annotation, at least add the runs
   #This feature is not included in preprocess_MSnSet, where you have more liberty to play with all kinds of preprocessing
-  if(ncol(pData(MSnSet))==0){
-    emptyPData <- data.frame(run=rownames(pData(MSnSet)))
-    rownames(emptyPData) <- rownames(pData(MSnSet))
-    pData(MSnSet) <- emptyPData
+  if(ncol(Biobase::pData(MSnSet))==0){
+    emptyPData <- data.frame(run=rownames(Biobase::pData(MSnSet)))
+    rownames(emptyPData) <- rownames(Biobase::pData(MSnSet))
+    Biobase::pData(MSnSet) <- emptyPData
   }
 
   return(MSnSet)
