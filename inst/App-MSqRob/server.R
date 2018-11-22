@@ -139,9 +139,12 @@ shinyServer(function(input, output, session) {
     } else{
       # req(input$peptides)
       if(input$input_type=="Progenesis"){
-        make.names(as.vector(as.matrix(read.table(peptidesDatapath(), sep=",", skip=2, nrows=1, quote="", comment.char = ""))))
+        test <- read.table(peptidesDatapath(), sep=",", skip=2, nrows=1, quote="", comment.char = "", stringsAsFactors = FALSE)
+        a <- gsub("^\\\"","",test)
+        b <- gsub("\\\"$","",a)
+        make.names(b)
       } else{
-      make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="", comment.char = ""))))
+        make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="", comment.char = ""))))
       }
     }
   })
