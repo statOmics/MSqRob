@@ -271,10 +271,10 @@ shinyServer(function(input, output, session) {
 
   #Check waarom er nog altijd "Select accession" staat en niet "prot"!!!!
   selectedProteins <- reactive({
-    if(!any(c("Proteins","prot","Accession","accession") %in% filterOptions())) {
+    if(!any(c("Proteins","Protein", "prot","Accession","accession") %in% filterOptions())) {
       ""
     }else{
-      c("Proteins","prot","Accession","accession")[which(c("Proteins","prot","Accession","accession") %in% filterOptions())[1]]
+      c("Proteins","Protein","prot","Accession","accession")[which(c("Proteins","Protein","prot","Accession","accession") %in% filterOptions())[1]]
       }
   })
 
