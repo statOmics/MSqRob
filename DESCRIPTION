@@ -8,8 +8,8 @@ Authors@R: c(
     "lieven.clement@UGent.be"),
     person("Lieven", "Clement", role = c("aut", "cre"), email =
     "lieven.clement@UGent.be"))
-Version: 0.7.5
-Date: 2015-07-07
+Version: 0.7.6
+Date: 2018-11-23
 Author: Ludger Goeminne [aut],
     Kris Gevaert [ctb],
     Lieven Clement [aut, cre]
@@ -148,4 +148,3 @@ Collate:
     'test_contrast_stagewise.R'
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
-License: GPL (>=2)

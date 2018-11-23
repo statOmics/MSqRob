@@ -14,7 +14,7 @@ When you are a Windows user who only wants to use the functionality of the MSqRo
 
 ### 1.1. Install MSqRob as a standalone application (Windows only!)
 
-Download the MSqRob GUI through this link: https://github.com/statOmics/MSqRob/releases/download/MSqRob_standalone_Win_0.7.5/MSqRob.zip.  
+Download the MSqRob GUI through this link: https://github.com/statOmics/MSqRob/releases/download/MSqRob_standalone_Win_0.7.6/MSqRob.zip.  
 
 ### 1.2. Run the standalone MSqRob Shiny App (graphical user interface)
 
@@ -44,10 +44,10 @@ source("https://bioconductor.org/biocLite.R")
 biocLite()
 ~~~~
 
-Finally, we call this to install the latest version of `MSqRob` (0.7.5):
+Finally, we call this to install the latest version of `MSqRob` (0.7.6):
 
 ~~~~
-devtools::install_github("statOmics/MSqRob@MSqRob0.7.5")
+devtools::install_github("statOmics/MSqRob@MSqRob0.7.6")
 library(MSqRob)
 ~~~~
 
