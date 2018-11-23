@@ -40,8 +40,9 @@ library(devtools)
 Then, install `Bioconductor`:
 
 ~~~~
-source("https://bioconductor.org/biocLite.R")
-biocLite()
+if (!requireNamespace("BiocManager"))
+    install.packages("BiocManager")
+BiocManager::install()
 ~~~~
 
 Finally, we call this to install the latest version of `MSqRob` (0.7.6):
