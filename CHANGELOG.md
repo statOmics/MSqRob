@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 0.7.6 - 2018-11-23
+
+### Added
+
+- Added support for Progenesis when the protein identifier is called "Protein" instead of "Accession".
+
 ## 0.7.5 - 2017-10-20
 
 ### Added
