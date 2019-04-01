@@ -110,9 +110,8 @@ Description: The MSqRob package allows a user to do quantitative protein-level
     A tutorial with MSqRob. Journal of Proteomics (in press).
 License: LGPL (>= 3)
 LazyData: TRUE
-URL: http://www.r-project.org, http://www.another.url, http://cran.r-
-    project.org/package=MSqRob
-BugReports: http://pkgname.bugtracker.url
+URL: https://github.com/statOmics/MSqRob
+BugReports: https://github.com/statOmics/MSqRob/issues
 Collate:
     'updateProgress.R'
     'preprocess_hlpFunctions.R'
