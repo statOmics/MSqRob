@@ -62,7 +62,6 @@ read2MSnSet <- function(file, pattern=NULL, colInt=NULL, remove_pattern=FALSE, s
 #' @param file The name of a file. For more details about how this argument can be specified, see \code{\link[utils]{read.table}}.
 #' @param filetype One of the following: \code{"MaxQuant"} for a MaxQuant peptides.txt file, \code{"moFF"} for a moFF .tab file, \code{"mzTab"} for an mzTab .tsv file or \code{"Progenesis"} for a Progenesis .csv file.
 #' @param remove_pattern A logical indicating whether the expression in "pattern" should be removed from the column names in the resulting \code{\link[=MSnSet-class]{MSnSet}} object. Defaults to \code{NA}, in which case the decision to remove the pattern is made depending on the \code{filetype}.
-#' @param normalizedAbundances A logical indicating whether normalized or raw abundances should be imported. This setting is only relevant for Progenesis data, where both types of data are available. Defaults to \code{TRUE}, in which case normalized data is imported.
 #' @param shiny A logical indicating whether this function is being used by a Shiny app. Setting this to \code{TRUE} only works when using this function in a Shiny app and allows for dynamic progress bars. Defaults to \code{FALSE}.
 #' @param message Only used when \code{shiny=TRUE}. A single-element character vector: the message to be displayed to the user, or \code{NULL} to hide the current message (if any).
 #' @param ...	Further arguments that can be passed on to the \code{\link{read.table}}-like functions.
@@ -74,7 +73,7 @@ read2MSnSet <- function(file, pattern=NULL, colInt=NULL, remove_pattern=FALSE, s
 #' @references Argentini A,	Goeminne LJE,	Verheggen K,	Hulstaert N,	Staes A, Clement L	& Martens L. moFF: a robust and automated approach to extract peptide ion intensities. Nature Methods. 2016 13:964–966.  \url{http://www.nature.com/nmeth/journal/v13/n12/full/nmeth.4075.html}.
 #' @references Griss J., Jones A.R., Sachsenberg T., Walzer M., Gatto L., Hartler J., Thallinger G.G., Salek R.M., Steinbeck C., Neuhauser N., Cox J., Neumann S., Fan J., Reisinger F., Xu Q.W., Del Toro N., Pérez-Riverol Y., Ghali F., Bandeira N., Xenarios I., Kohlbacher O., Vizcaíno J.A. & Hermjakob H.The mzTab data exchange format: communicating mass-spectrometry-based proteomics and metabolomics experimental results to a wider audience. Mol Cell Proteomics. 2014 13(10):2765-75. \url{}
 #' @export
-import2MSnSet <- function(file, filetype, remove_pattern = NA, normalizedAbundances = TRUE, shiny = FALSE, message = NULL){
+import2MSnSet <- function(file, filetype, remove_pattern = NA, shiny = FALSE, message = NULL){ #, normalizedAbundances = TRUE #' @param normalizedAbundances A logical indicating whether normalized or raw abundances should be imported. This setting is only relevant for Progenesis data, where both types of data are available. Defaults to \code{TRUE}, in which case normalized data is imported.
 
   if(is.na(remove_pattern)){
     if(filetype %in% c("mzTab", "Progenesis")){remove_pattern <- FALSE
@@ -96,15 +95,15 @@ import2MSnSet <- function(file, filetype, remove_pattern = NA, normalizedAbundan
   #Progenesis
     else if(filetype=="Progenesis"){
 
-      if(isTRUE(normalizedAbundances)){
-        abundanceType <- "Normalized abundance"
-      } else{
-        abundanceType <- "Raw abundance"
-      }
+      # if(isTRUE(normalizedAbundances)){
+      #   abundanceType <- "Normalized abundance"
+      # } else{
+      #   abundanceType <- "Raw abundance"
+      # }
 
       firstLine <- read.table(file, sep=",", nrows=1)
       endInts <- c(which(!is.na(firstLine))-1,length(firstLine))
-      beginInt <- which(firstLine==abundanceType)
+      beginInt <- which(firstLine == "Normalized abundance" | firstLine == "Raw abundance")
       endInt <- endInts[which(endInts>beginInt)[1]]
 
       ### Determine the header line ###
