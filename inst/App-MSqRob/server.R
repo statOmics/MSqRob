@@ -139,7 +139,20 @@ shinyServer(function(input, output, session) {
     } else{
       # req(input$peptides)
       if(input$input_type=="Progenesis"){
-        test <- read.table(peptidesDatapath(), sep=",", skip=2, nrows=1, quote="", comment.char = "", stringsAsFactors = FALSE)
+
+        ### Determine the header line ###
+        full.file <- read.table(peptidesDatapath(), sep=",", quote = "\\\"", comment.char = "", na.strings = "", stringsAsFactors = FALSE)
+        is.header.line <- rep(FALSE, nrow(full.file))
+
+        for(header.index in 1:nrow(full.file)){
+          is.header.line[header.index] <- ("Protein" %in% full.file[header.index,]) & ("Sequence" %in% full.file[header.index,])
+          if(is.header.line[header.index]){
+            break
+          }
+        }
+        ######
+
+        test <- read.table(peptidesDatapath(), sep=",", skip=(header.index-1), nrows=1, quote="\\\"", comment.char = "", stringsAsFactors = FALSE)
         a <- gsub("^\\\"","",test)
         b <- gsub("\\\"$","",a)
         make.names(b)
