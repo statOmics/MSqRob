@@ -74,10 +74,10 @@ read2MSnSet <- function(file, pattern=NULL, colInt=NULL, remove_pattern=FALSE, s
 #' @references Argentini A,	Goeminne LJE,	Verheggen K,	Hulstaert N,	Staes A, Clement L	& Martens L. moFF: a robust and automated approach to extract peptide ion intensities. Nature Methods. 2016 13:964–966.  \url{http://www.nature.com/nmeth/journal/v13/n12/full/nmeth.4075.html}.
 #' @references Griss J., Jones A.R., Sachsenberg T., Walzer M., Gatto L., Hartler J., Thallinger G.G., Salek R.M., Steinbeck C., Neuhauser N., Cox J., Neumann S., Fan J., Reisinger F., Xu Q.W., Del Toro N., Pérez-Riverol Y., Ghali F., Bandeira N., Xenarios I., Kohlbacher O., Vizcaíno J.A. & Hermjakob H.The mzTab data exchange format: communicating mass-spectrometry-based proteomics and metabolomics experimental results to a wider audience. Mol Cell Proteomics. 2014 13(10):2765-75. \url{}
 #' @export
-import2MSnSet <- function(file, filetype, remove_pattern=NA, normalizedAbundances=TRUE, shiny = FALSE, message = NULL){
+import2MSnSet <- function(file, filetype, remove_pattern = NA, normalizedAbundances = TRUE, shiny = FALSE, message = NULL){
 
   if(is.na(remove_pattern)){
-    if(filetype %in% c("mzTab","Progenesis")){remove_pattern <- FALSE
+    if(filetype %in% c("mzTab", "Progenesis")){remove_pattern <- FALSE
     } else{
       remove_pattern <- TRUE
     }
@@ -107,7 +107,19 @@ import2MSnSet <- function(file, filetype, remove_pattern=NA, normalizedAbundance
       beginInt <- which(firstLine==abundanceType)
       endInt <- endInts[which(endInts>beginInt)[1]]
 
-    peptides <- read2MSnSet(file=file, colInt=beginInt:endInt, remove_pattern=remove_pattern, sep=",", na.strings = "", quote = "\\\"", skip=2, shiny=shiny, message=message)
+      ### Determine the header line ###
+      full.file <- read.table(file, sep=",", quote = "\\\"", comment.char = "", na.strings = "", stringsAsFactors = FALSE)
+      is.header.line <- rep(FALSE, nrow(full.file))
+
+      for(header.index in 1:nrow(full.file)){
+        is.header.line[header.index] <- ("Protein" %in% full.file[header.index,]) & ("Sequence" %in% full.file[header.index,])
+        if(is.header.line[header.index]){
+          break
+        }
+      }
+      ######
+
+    peptides <- read2MSnSet(file=file, colInt=beginInt:endInt, remove_pattern=remove_pattern, sep=",", na.strings = "", quote = "\\\"", skip=(header.index-1), shiny=shiny, message=message)
   } else{
     stop("\"filetype\" argment should be one of: \"MaxQuant\", \"moFF\", \"mzTab\" or \"Progenesis\"!")
   }
