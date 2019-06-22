@@ -43,7 +43,6 @@ Imports:
     htmltools,
     mzR,
     ProtGenerics,
-    BiocInstaller,
     BiocParallel,
     snow,
     httpuv,
