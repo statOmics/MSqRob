@@ -120,6 +120,6 @@ Ludger Goeminne, Andrea Argentini, Lennart Martens and Lieven Clement (2015). Su
 
 **When using MSqRob, please refer to our published algorithm and our tutorial article on how to use the graphical user interface:**
 
-Ludger Goeminne, Kris Gevaert, and Lieven Clement (2016). Peptide-level Robust Ridge Regression Improves Estimation, Sensitivity, and Specificity in Data-dependent Quantitative Label-free Shotgun Proteomics. Molecular & Cellular Proteomics 15(2), pp 657-668.
+Ludger Goeminne, Kris Gevaert, and Lieven Clement (2016). Peptide-level Robust Ridge Regression Improves Estimation, Sensitivity, and Specificity in Data-dependent Quantitative Label-free Shotgun Proteomics. Molecular & Cellular Proteomics 15(2), pp. 657-668.
 
-Ludger Goeminne, Kris Gevaert and Lieven Clement (2017). Experimental design and data-analysis in label-free quantitative LC/MS proteomics: A tutorial with MSqRob. Journal of Proteomics (in press).
+Ludger Goeminne, Kris Gevaert and Lieven Clement (2018). Experimental design and data-analysis in label-free quantitative LC/MS proteomics: A tutorial with MSqRob. Journal of proteomics, 171(Supplement C), pp.23-36.
