@@ -26,7 +26,7 @@ To start MSqRob, doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
 
 If you're not a Windows user, and/or you are already using R and/or RStudio, and/or you also want to have access to MSqRob on the R command line, follow the following instructions to install MSqRob.
 
-First, make sure that R is installed on your computer. Optionally, you can also install RStudio as an integrated development invironment (IDE) for R. Instructions on how to install R and RStudio can be found here: http://web.cs.ucla.edu/~gulzar/rstudio/.
+First, make sure that R is installed on your computer. Optionally, you can also install RStudio as an integrated development environment (IDE) for R. Instructions on how to install R and RStudio can be found here: http://web.cs.ucla.edu/~gulzar/rstudio/.
 
 On Windows, make sure that RTools is installed. Go to: https://cran.r-project.org/bin/windows/Rtools/ to download RTools. A user guide on how to install RTools on Windows can be found at: https://github.com/stan-dev/rstan/wiki/Install-Rtools-for-Windows. Errors in MSqRob on Windows related to unable to zip the results Excel file might be related to errors in configuring RTools.
 
