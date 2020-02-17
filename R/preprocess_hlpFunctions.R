@@ -48,7 +48,7 @@ makeAnnotation <- function(exp_annotation, run_names, type_annot=NULL, colClasse
   #If exp_annotation is not a data frame, it should be imported from a file.
   if(!is.data.frame(exp_annotation)){
 
-    if(isTRUE(as.logical(grep(".xlsx[/\\]*$",exp_annotation))) || type_annot=="xlsx"){
+    if(isTRUE(as.logical(grep(".xlsx[/\\]*$",exp_annotation))) || isTRUE(type_annot=="xlsx")){
       ann_frame <- openxlsx::read.xlsx(exp_annotation)
       #Convert characters to factors: this is the default for files and will be put into your colClasses if colClasses="keep"!
       ann_frame <- as.data.frame(unclass(ann_frame))
