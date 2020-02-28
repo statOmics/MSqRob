@@ -18,7 +18,7 @@ Download the MSqRob GUI through this link: https://github.com/statOmics/MSqRob/r
 
 ### 1.2. Run the standalone MSqRob Shiny App (graphical user interface)
 
-To start MSqRob, doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
+To start MSqRob, first unzip the zip file and then doubleclick the file "run_MSqRob.vbs" in the "dist" folder.
 
 ## 2. MSqRob within the R framework
 
