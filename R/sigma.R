@@ -9,8 +9,18 @@ setGeneric (
 )
 
 .getSigmaMermod <- function(object){
+  
   sigma <- attr(object,"MSqRob_sigma")
-  if(is.null(sigma)){sigma <- sigma(object)}
+  
+  if(is.null(sigma)){
+    # With the newest version of lme4, "sigma" is now part of the "stats" package
+    # For some reason, "sigma" alone does not always work
+    sigma <- try(stats::sigma(object), silent = TRUE)
+    if(class(sigma) == "try-error"){
+    sigma <- try(lme4::sigma(object), silent = TRUE)
+  }
+}
+  
   return(sigma)
 }
 
