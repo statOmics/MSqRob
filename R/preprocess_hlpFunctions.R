@@ -23,7 +23,7 @@ init_ann_MQ_Excel <- function(file, savepath=NULL, output_name="experimental_ann
     runs <- gsub(pattern,"",runs)
   }
 
-  run_column <- data.frame(run=runs)
+  run_column <- data.frame(run = runs, stringsAsFactors = TRUE)
   colnames(run_column) <- col_name
 
   #Remove potential extension in output_name to avoid double extension
