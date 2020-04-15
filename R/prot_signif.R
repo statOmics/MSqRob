@@ -31,7 +31,7 @@ prot.signif <- function(coefmatlist, level=0.05, qcol="qval", pcol="pval")
     nolist <- TRUE}
 
     coefmatlist <- lapply(coefmatlist, function(x) {
-      y <- data.frame(x, signif=x[,qcol]<level)
+      y <- data.frame(x, signif=x[,qcol]<level, stringsAsFactors = TRUE)
 
       #If there is a column with p-values, sort first on p-values
       if(!is.null(pcol)){y <- y[order(abs(y[,pcol]), decreasing = FALSE),]}
