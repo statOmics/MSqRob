@@ -20,7 +20,7 @@ makeSummary <- function(resultobject, upratio, qval="qval", level=0.05, TPcol="u
 
   n <- length(resultobject)
 
-  summary_object <- data.frame(bias0=rep(NA, n),bias1=rep(NA, n),sd0=rep(NA, n),sd1=rep(NA, n),mad0=rep(NA, n),mad1=rep(NA, n),RMSE0=rep(NA, n),RMSE1=rep(NA, n),TP5proc=rep(NA, n),FP5proc=rep(NA, n),TN5proc=rep(NA, n),FN5proc=rep(NA, n))
+  summary_object <- data.frame(bias0=rep(NA, n),bias1=rep(NA, n),sd0=rep(NA, n),sd1=rep(NA, n),mad0=rep(NA, n),mad1=rep(NA, n),RMSE0=rep(NA, n),RMSE1=rep(NA, n),TP5proc=rep(NA, n),FP5proc=rep(NA, n),TN5proc=rep(NA, n),FN5proc=rep(NA, n), stringsAsFactors = TRUE)
 
   for(i in 1:n)
   {
