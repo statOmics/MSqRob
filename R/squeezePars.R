@@ -176,7 +176,7 @@ squeezeThetas <- function(thetas, df_thetas, vars, df_vars, squeezeVar=TRUE, min
       sqVarObj <- tryCatch(
       squeezeVarRob(thetas[,j]*vars, df=df_thetas[,j], min_df=min_df, robust=robust_var, ...)
       , error=function(e){
-        sqVarObj <- data.frame(var.post=thetas[,j]*vars, df.prior=0)
+        sqVarObj <- data.frame(var.post=thetas[,j]*vars, df.prior=0, stringsAsFactors = TRUE)
 
         if(!is.null(colnames(thetas)[j])){
           failedTheta <- colnames(thetas)[j]
