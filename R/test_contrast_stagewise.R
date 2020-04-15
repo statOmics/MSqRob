@@ -56,7 +56,7 @@ test.contrast_stagewise <- function(protLM, L, level=0.05, method_stage1="fdr", 
     #Order each matrix according to the first stage
     x <- x[match(rownames(contrast_S1), rownames(x)),]
     #Add the pval, qval and signif columns of the first stage at the appropriate place in the data frame
-    x <- data.frame(x[,1:(4+n_ann)],pvalS1=contrast_S1[,"pval"],qvalS1=contrast_S1[,"qval"],signifS1=contrast_S1[,"signif"],pval=x[,(5+n_ann)])
+    x <- data.frame(x[,1:(4+n_ann)],pvalS1=contrast_S1[,"pval"],qvalS1=contrast_S1[,"qval"],signifS1=contrast_S1[,"signif"],pval=x[,(5+n_ann)], stringsAsFactors = TRUE)
     return(x)})
 
   contrasts <- prot.p.adjust_protwise(contrasts, L, stage2=TRUE, significant_stage1=significantS1)
