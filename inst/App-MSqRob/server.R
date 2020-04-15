@@ -210,7 +210,7 @@ shinyServer(function(input, output, session) {
         # } else{
         exp_annotation <- openxlsx::read.xlsx(annotationDatapath())
         #Convert characters to factors:
-        exp_annotation <- as.data.frame(unclass(exp_annotation))
+        exp_annotation <- as.data.frame(unclass(exp_annotation), stringsAsFactors = TRUE)
         # }
 
       } else{
@@ -766,7 +766,7 @@ observe({
       }
       #!!! "as.numeric:"  Quick fix voor ANOVA waarbij alles NA is (e.g. data Emmy, treatKO-treatWT en treatKO_LPS_1h-treatWT_LPS_1h), verder verfijnen!!!!:
       dataset$minus_log10_p <- -log10(as.numeric(dataset$pval)) #Necessary to select data in table according to the zoom in the plot
-      dataset <- data.frame(Accessions=rownames(dataset), dataset)
+      dataset <- data.frame(Accessions=rownames(dataset), dataset, stringsAsFactors = TRUE)
       rownames(dataset) <- NULL
     } else{dataset <- NULL}
     return(dataset)

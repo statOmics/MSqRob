@@ -819,7 +819,7 @@ addZerosQR <- function(Q=NULL, R){
     names(coefs) <- c(intercept_name,names(unlist(sapply(flist, function(x){return(unique(x)[-1])}))))
   }else {names(coefs) <- names(unlist(sapply(flist, function(x){return(unique(x))})))}
 
-  emptyLM <- list(coefficients=coefs,residuals=rep(NA, n),fitted.values=rep(NA, n),effects=rep(NA, n),rank=sum(times)-1+as.numeric(add.intercept),weights=rep(1, n), qr=list(qr=matrix(NA, nrow(x), length(coefs)), qraux=rep(NA, length(coefs)), pivot=1:length(coefs), tol=NA, rank=length(coefs)), df.residual=n-(sum(times)-1+as.numeric(add.intercept)),call=call("lm(formula = formula, data = x, weights = weights)"),terms=terms,contrasts=NA,xlevels=NA,offset=NA,y=NA,x=NA,model=data.frame(x[c(response,predictors)], "(weights)"=rep(1, n), check.names=FALSE),na.action=NA)
+  emptyLM <- list(coefficients=coefs,residuals=rep(NA, n),fitted.values=rep(NA, n),effects=rep(NA, n),rank=sum(times)-1+as.numeric(add.intercept),weights=rep(1, n), qr=list(qr=matrix(NA, nrow(x), length(coefs)), qraux=rep(NA, length(coefs)), pivot=1:length(coefs), tol=NA, rank=length(coefs)), df.residual=n-(sum(times)-1+as.numeric(add.intercept)),call=call("lm(formula = formula, data = x, weights = weights)"),terms=terms,contrasts=NA,xlevels=NA,offset=NA,y=NA,x=NA,model=data.frame(x[c(response,predictors)], "(weights)"=rep(1, n), check.names=FALSE, stringsAsFactors = TRUE),na.action=NA)
   class(emptyLM) <- "lm"
 
   return(emptyLM)

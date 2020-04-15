@@ -17,10 +17,10 @@ prot.p.adjust_protwise <- function(coefmatlist, L, method = "Holm", pcol="pval",
 
 if(is.list(coefmatlist)){
 
-  p_frame <- data.frame(accession=character(0))
+  p_frame <- data.frame(accession=character(0), stringsAsFactors = TRUE)
   for(i in 1:length(coefmatlist))
     {
-    p_column <- data.frame(accession=rownames(coefmatlist[[i]]), pval=coefmatlist[[i]][,pcol])
+    p_column <- data.frame(accession=rownames(coefmatlist[[i]]), pval=coefmatlist[[i]][,pcol], stringsAsFactors = TRUE)
     p_frame <- suppressWarnings(merge(p_frame,p_column, all=TRUE, by="accession"))
     }
 

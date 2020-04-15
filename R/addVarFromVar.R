@@ -28,7 +28,7 @@ addVarFromVar <- function(protdata, basecol, name, vector){
 
      #Make a data frame equal to the existing one with an extra column
      #that places the values in "vector" next to their corresponding values in "basecol".
-     x <- data.frame(x,vector[as.character(do.call('$',list(x,basecol)))])
+     x <- data.frame(x,vector[as.character(do.call('$',list(x,basecol)))], stringsAsFactors = TRUE)
 
      #Give the chosen name to the added column.
      colnames(x)[ncol(x)] <- name

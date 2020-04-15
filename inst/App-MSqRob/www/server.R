@@ -14,9 +14,9 @@ plotnorm = function(p,method = 'quantiles',logp = TRUE,mdscol=1){
   exprs[is.infinite(exprs)] = NA
   Biobase::exprs(p) = exprs
 
-  unnorm = as.data.frame(p)
+  unnorm = as.data.frame(p, stringsAsFactors = TRUE)
   p = normalise(p,method)
-  norm = as.data.frame(p)
+  norm = as.data.frame(p, stringsAsFactors = TRUE)
   
   dens = density(unlist(unnorm[1,]),na.rm = TRUE)
   densrest = lapply(2:nrow(unnorm),function(i){
@@ -389,7 +389,7 @@ shinyServer(function(input, output, session) {
     }
     #!!! "as.numeric:"  Quick fix voor ANOVA waarbij alles NA is (e.g. data Emmy, treatKO-treatWT en treatKO_LPS_1h-treatWT_LPS_1h), verder verfijnen!!!!:
     dataset$minus_log10_p <- -log10(as.numeric(dataset$pval)) #Moet er zijn omdat anders yvar niet gevonden kan worden!
-    dataset <- data.frame(Accessions=rownames(dataset), dataset)
+    dataset <- data.frame(Accessions=rownames(dataset), dataset, stringsAsFactors = TRUE)
     rownames(dataset) <- NULL
     return(dataset)
   })

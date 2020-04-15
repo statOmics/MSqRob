@@ -13,9 +13,9 @@ addFactorInteractions <- function(protdata, basecols, name=NULL){
   protdatanew <- lapply(protdata@data, function(x){
 
     if(all(vapply(x[,basecols], "is.numeric",TRUE))){
-      x <- data.frame(x,apply(x[,basecols], 1, prod))
+      x <- data.frame(x,apply(x[,basecols], 1, prod), stringsAsFactors = TRUE)
     } else{
-      x <- data.frame(x,apply(x[,basecols], 1, paste, collapse="_"))
+      x <- data.frame(x,apply(x[,basecols], 1, paste, collapse="_"), stringsAsFactors = TRUE)
     }
 
     if(is.null(name)){colnames(x)[ncol(x)] <- paste(colnames(x[,basecols]), collapse="_")

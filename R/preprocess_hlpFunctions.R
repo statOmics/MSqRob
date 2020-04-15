@@ -23,7 +23,7 @@ init_ann_MQ_Excel <- function(file, savepath=NULL, output_name="experimental_ann
     runs <- gsub(pattern,"",runs)
   }
 
-  run_column <- data.frame(run=runs)
+  run_column <- data.frame(run = runs, stringsAsFactors = TRUE)
   colnames(run_column) <- col_name
 
   #Remove potential extension in output_name to avoid double extension
@@ -51,7 +51,7 @@ makeAnnotation <- function(exp_annotation, run_names, type_annot=NULL, colClasse
     if(isTRUE(as.logical(grep(".xlsx[/\\]*$",exp_annotation))) || isTRUE(type_annot=="xlsx")){
       ann_frame <- openxlsx::read.xlsx(exp_annotation)
       #Convert characters to factors: this is the default for files and will be put into your colClasses if colClasses="keep"!
-      ann_frame <- as.data.frame(unclass(ann_frame))
+      ann_frame <- as.data.frame(unclass(ann_frame), stringsAsFactors = TRUE)
     } else{ #if(type_annot=="tab-delim")
       ann_frame <- read.table(exp_annotation, sep="\t", header=TRUE, row.names = NULL, stringsAsFactors = TRUE)
     }

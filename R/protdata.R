@@ -7,7 +7,7 @@
 
 setClass("protdata",
          slots = list(accession="factor", data="list", annotation="matrix", pData="data.frame"),
-         prototype = list(accession=factor(), data=list(), annotation=matrix(nrow=0,ncol=0), pData=data.frame()))
+         prototype = list(accession=factor(), data=list(), annotation=matrix(nrow=0,ncol=0), pData=data.frame(stringsAsFactors = TRUE)))
 
 #Validity check
 
