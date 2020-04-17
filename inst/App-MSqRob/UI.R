@@ -174,7 +174,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 		          "We are always ready to help you with any kind of issue that you might encounter!
 		          If for some reason, using MSqRob is hard or counter-intuitive to you,
 		          or you encounter some weird and unexpected results,
-		          please do not hesitate to contact us at", a("ludger.goeminne@vib-ugent.be.", href="mailto:ludger.goeminne@vib-ugent.be"),
+		          please do not hesitate to contact us at", a("ludger.goeminne@epfl.ch.", href="mailto:ludger.goeminne@epfl.ch"),
 		          strong("User feedback is very important to us in order to improve MSqRob's user-friendliness.")
 		          ))
 		)
