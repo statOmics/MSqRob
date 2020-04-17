@@ -18,7 +18,7 @@ This vignette might be a bit overwhelming for a first-time user.
 
 Note that we mainly focus on MaxQuant output, but that any type type of search engine output can be used with MSqRob, see "1.2. Importing other data types" for more info.
 
-If anything is unclear, please do not hesitate to contact me at ludger.goeminne@vib-ugent.be or to open an issue on GitHub. Your feedback is highly welcomed!
+If anything is unclear, please do not hesitate to contact me at ludger.goeminne@epfl.ch or to open an issue on GitHub. Your feedback is highly welcomed!
 
 ## Introduction
 
