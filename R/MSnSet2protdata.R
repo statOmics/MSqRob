@@ -64,16 +64,20 @@ MSnSet2protdata <- function(MSnSet, accession = NULL, annotations = NULL, quant_
 
     properties <- fData[x,-which(colnames(fData) %in% c(colnames(fData[,accession,drop=FALSE]),colnames(fData[,annotations,drop=FALSE]))), drop=FALSE]
 
+    property.df <- as.data.frame(lapply(properties, function(z){
+      
+    property_col <- rep(z, ncol(exprs))
+    if(is.factor(property_col)){property_col <- droplevels(property_col)}
+      
+     return(property_col)
+    }))
+    
+    if(nrow(property.df) == 0){property.df <- data.frame(matrix(ncol=0,nrow=ncol(exprs)))}
+    
     return(
       cbind(
         data.frame(c(exprs[x,,drop=FALSE]), stringsAsFactors = TRUE),
-        lapply(properties, function(z){
-
-          property_col <- rep(z, ncol(exprs))
-          if(is.factor(property_col)){property_col <- droplevels(property_col)}
-
-          return(property_col)
-        }),
+        property.df,
         pData[rep(row.names(pData), each=length(x)),,drop=FALSE]
       )
     )})
