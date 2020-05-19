@@ -9,7 +9,7 @@
 #' #Select the columns containing intensities
 #' colInt <- grepEcols(system.file("extdata/CPTAC", "peptides.txt", package = "MSqRob"), pattern="Intensity.", split = "\t")
 #' #Import MaxQuant's peptides.txt file and convert it to an MSnSet object
-#' peptidesCPTAC <- readMSnSet2(system.file("extdata/CPTAC", "peptides.txt", package = "MSqRob"), ecol = colInt, sep = "\t")
+#' peptidesCPTAC <- readMSnSet2(system.file("extdata/CPTAC", "peptides.txt", package = "MSqRob"), ecol = colInt, sep = "\t", stringsAsFactors = TRUE)
 #'
 #' #Our approach: a peptide can map to multiple proteins, as long as there is none of these proteins present in a smaller subgroup.
 #' groups <- smallestUniqueGroups(fData(peptidesCPTAC)$Proteins)
