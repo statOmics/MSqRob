@@ -14,7 +14,7 @@
 #' library(MSnbase)
 #' colInt <- grepEcols(system.file("extdata/CPTAC", "peptides.txt", package = "MSqRob"), pattern="Intensity.", split = "\t")
 #' #Import the data as an MSnSet object
-#' peptides <- readMSnSet2(system.file("extdata/CPTAC", "peptides.txt", package = "MSqRob"), ecol = colInt, sep = "\t")
+#' peptides <- readMSnSet2(system.file("extdata/CPTAC", "peptides.txt", package = "MSqRob"), ecol = colInt, sep = "\t", stringsAsFactors = TRUE)
 #' fData(peptides) <- fData(peptides)[,c("Proteins","Sequence","PEP")]
 #' #Do this only for the first 50 peptide to save execution time
 #' proteins <- MSnSet2protdata(peptides[1:50], "Proteins")

@@ -33,7 +33,7 @@ read2MSnSet <- function(file, pattern=NULL, colInt=NULL, remove_pattern=FALSE, s
   if(is.null(colInt)){
   colInt <- MSnbase::grepEcols(file, pattern=pattern, split = sep)
   }
-  peptides <- MSnbase::readMSnSet2(file, ecol = colInt, sep = sep, na.strings = na.strings, quote = quote, comment.char = comment.char, ...)
+  peptides <- MSnbase::readMSnSet2(file, ecol = colInt, sep = sep, na.strings = na.strings, quote = quote, comment.char = comment.char, stringsAsFactors = TRUE, ...)
 
   if(isTRUE(remove_pattern) && !is.null(pattern)){
 
