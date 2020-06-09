@@ -27,7 +27,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
 ############################################################################
 #Navigation bar with 3 panel:Input, preprocessing, quantification
 ############################################################################
-   navbarPage("MSqRob Shiny App v 0.7.6", inverse=TRUE,
+   navbarPage("MSqRob Shiny App v 0.7.7", inverse=TRUE,
 
 
     ####################################
