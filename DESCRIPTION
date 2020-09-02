@@ -3,13 +3,13 @@ Type: Package
 Title: Robust statistical inference for quantitative LC-MS proteomics
 Authors@R: c(
     person("Ludger", "Goeminne", role = c("aut"), email =
-    "ludger.goeminne@UGent.be"),
+    "ludger.goeminne@epfl.ch"),
     person("Kris", "Gevaert", role = c("ctb"), email =
     "lieven.clement@UGent.be"),
     person("Lieven", "Clement", role = c("aut", "cre"), email =
     "lieven.clement@UGent.be"))
-Version: 0.7.6
-Date: 2018-11-23
+Version: 0.7.7
+Date: 2020-06-09
 Author: Ludger Goeminne [aut],
     Kris Gevaert [ctb],
     Lieven Clement [aut, cre]

@@ -45,10 +45,10 @@ if (!requireNamespace("BiocManager"))
 BiocManager::install()
 ~~~~
 
-Finally, we call this to install the latest version of `MSqRob` (0.7.6):
+Finally, we call this to install the latest version of `MSqRob` (0.7.7):
 
 ~~~~
-devtools::install_github("statOmics/MSqRob@MSqRob0.7.6")
+devtools::install_github("statOmics/MSqRob@MSqRob0.7.7")
 library(MSqRob)
 ~~~~
 
