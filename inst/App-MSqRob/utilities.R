@@ -1,3 +1,11 @@
+# Re-introduce Shiny %AND% function which is now obsolete
+shiny_AND <- function (x, y) 
+{
+    if (!is.null(x) && !isTRUE(is.na(x))) 
+        if (!is.null(y) && !isTRUE(is.na(y))) 
+            return(y)
+    return(NULL)
+}
 
 #A function to prompt a folder chooser under Mac OS X,
 #normal choose.dir sometimes gives just NA because system has no access to finder
@@ -219,7 +227,7 @@ folderInput <- function(inputId, label, value = NA, multiple = FALSE, accept = N
 
   div(class = "form-group shiny-input-container",
       style = if (!is.null(width)) paste0("width: ", validateCssUnit(width), ";"),
-      shiny:::`%AND%`(label, tags$label(label)),
+      shiny_AND(label, tags$label(label)),
 
       div(class = "input-group",
           tags$label(class = "input-group-btn",
@@ -264,7 +272,7 @@ fileInput <- function (inputId, label, multiple = FALSE, accept = NULL, width = 
     inputTag$attribs$accept <- paste(accept, collapse = ",")
   div(class = "form-group shiny-input-container", style = if (!is.null(width))
     paste0("width: ", validateCssUnit(width), ";"),
-    shiny:::`%AND%`(label, tags$label(label)),
+    shiny_AND(label, tags$label(label)),
     div(class = "input-group", tags$label(class = "input-group-btn",
                                                                span(id = paste(inputId, "_label", sep = ""), class = "btn btn-default btn-file", "Browse...",
                                                                     inputTag)), tags$input(type = "text", class = "form-control",
