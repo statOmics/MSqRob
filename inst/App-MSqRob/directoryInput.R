@@ -14,6 +14,7 @@
 #' @return
 #' A length one character vector, character NA if 'Cancel' was selected.
 #'
+source("utilities.R")
 if (Sys.info()['sysname'] == 'Darwin') {
   choose.dir = function(default = NA, caption = NA) {
     command = 'osascript'
@@ -79,7 +80,7 @@ directoryInput = function(inputId, label, value = NULL) {
 
     div(
       class = 'form-group directory-input-container',
-      shiny:::`%AND%`(label, tags$label(label)),
+      shiny_AND(label, tags$label(label)),
       div(
         span(
           class = 'col-xs-9 col-md-11',
