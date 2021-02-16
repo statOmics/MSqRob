@@ -80,7 +80,7 @@ directoryInput = function(inputId, label, value = NULL) {
 
     div(
       class = 'form-group directory-input-container',
-      shiny:::`%AND%`(label, tags$label(label)),
+      shiny_AND(label, tags$label(label)),
       div(
         span(
           class = 'col-xs-9 col-md-11',
