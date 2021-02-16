@@ -14,6 +14,7 @@
 #' @return
 #' A length one character vector, character NA if 'Cancel' was selected.
 #'
+source("utilities.R")
 if (Sys.info()['sysname'] == 'Darwin') {
   choose.dir = function(default = NA, caption = NA) {
     command = 'osascript'
