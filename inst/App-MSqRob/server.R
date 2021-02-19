@@ -145,7 +145,7 @@ shinyServer(function(input, output, session) {
         is.header.line <- rep(FALSE, nrow(full.file))
 
         for(header.index in 1:nrow(full.file)){
-          is.header.line[header.index] <- ("Protein" %in% full.file[header.index,]) & ("Sequence" %in% full.file[header.index,])
+          is.header.line[header.index] <- (("Protein" %in% full.file[header.index,]) | ("Accession" %in% full.file[header.index,])) & ("Sequence" %in% full.file[header.index,])
           if(is.header.line[header.index]){
             break
           }
