@@ -137,7 +137,7 @@ shinyUI(fluidPage(theme = "MSqRob.css",
                 a("here", href="https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/Francisella/label-free_Francisella_annotation.xlsx"),
                 "and",
                 a("here.", href="https://github.com/statOmics/MSqRobData/blob/master/inst/extdata/CPTAC/label-free_CPTAC_annotation.xlsx"),
-                "Click the button to initialize an Excel file with a \"run\" column (works only if peptides.txt is already uploaded!).
+                "Click the button to initialize an Excel file with a \"run\" column (works only if the peptides file is already uploaded!).
                 The annotation file will be saved in the output location.
                 You still need to add other relevant columns (treatments, biological repeats, technical repeat, etc.) manually!")),
 		          actionButton("create_annot", "Create annotation file", class="MSqRob_button_space"),
