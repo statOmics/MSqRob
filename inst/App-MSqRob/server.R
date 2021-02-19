@@ -112,7 +112,7 @@ shinyServer(function(input, output, session) {
   newExpAnnText <- eventReactive(input$create_annot, {
     #Check if save folder is set
     check_save_folder(saveFolder$folder)
-    init_ann_Excel(peptidesDatapath(), filetype = input$input_type, savepath=saveFolder$folder, output_name=paste0(input$project_name,"_experimental_annotation"), col_name="run", remove_pattern=TRUE)
+    init_ann_Excel(peptidesDatapath(), filetype = input$input_type, savepath=saveFolder$folder, output_name=paste0(input$project_name,"_experimental_annotation"), col_name="run", pattern = NA, remove_pattern = NA)
     newExpAnnText <- paste0("Annotation file initialized. Check ",saveFolder$folder,"/",input$project_name,"_experimental_annotation.xlsx. \n Adjust this file according to your experimental settings and upload it as your experimental annotation file.")
     return(newExpAnnText)
   })
