@@ -6,11 +6,11 @@
 #' @param savepath The file path to the directory where you want the output Excel annotation file to be saved. If set to \code{NULL} (the default), the Excel file will be saved in the working directory.
 #' @param output_name The name of the output Excel annotation file. Defaults to \code{"experimental_annotation"}.
 #' @param col_name The name of the only column created in the Excel file. Defaults to \code{"run"}.
-#' @param pattern A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values. Defaults to "Intensity.".
+#' @param pattern A character string containing a regular expression that will be matched to the file's header. The columns matching the expression should be the columns containing the peptide intensity values. Defaults to NA, in which case it will be set to "Intensity " for MaxQuant, "sumIntensity_" for moFF, and "peptide_abundance_study_variable" for mzTab (no default for Progenesis).
 #' @param remove_pattern A logical indicating whether the expression in "pattern" should be removed from the column names in the resulting Excel file. Defaults to \code{TRUE}.
 #' @return An Excel file with one column containing the different run names present in the MaxQuant peptides.txt file and column name \code{col_name}.
 #' @export
-init_ann_Excel <- function(file, filetype, savepath = NULL, output_name = "experimental_annotation", col_name = "run", remove_pattern = NA){
+init_ann_Excel <- function(file, filetype, savepath = NULL, output_name = "experimental_annotation", col_name = "run", pattern = NA, remove_pattern = NA){
   
   if(is.na(remove_pattern)){
     if(filetype %in% c("mzTab", "Progenesis")){remove_pattern <- FALSE
@@ -23,17 +23,20 @@ init_ann_Excel <- function(file, filetype, savepath = NULL, output_name = "exper
   
   #MaxQuant
   if(filetype=="MaxQuant"){
-    colInt <- MSnbase::grepEcols(file, pattern = "Intensity ", split = "\t")
+    if(is.na(pattern)){pattern <- "Intensity "}
+    colInt <- MSnbase::grepEcols(file, pattern = pattern, split = "\t")
     runs <- read.table(file, header=FALSE, nrow=1, sep = "\t", quote = "",
                        stringsAsFactors = FALSE, comment.char = "")[colInt]
     #moFF
   } else if(filetype=="moFF"){
-    colInt <- MSnbase::grepEcols(file, pattern = "sumIntensity_", split = "\t")
+    if(is.na(pattern)){pattern <- "sumIntensity_"}
+    colInt <- MSnbase::grepEcols(file, pattern = pattern, split = "\t")
     runs <- read.table(file, header=FALSE, nrow=1, sep = "\t", quote = "",
                        stringsAsFactors = FALSE, comment.char = "")[colInt]
     #mzTab
   } else if(filetype=="mzTab"){
-    colInt <- MSnbase::grepEcols(file, pattern = "peptide_abundance_study_variable", split = "\t")
+    if(is.na(pattern)){pattern <- "peptide_abundance_study_variable"}
+    colInt <- MSnbase::grepEcols(file, pattern = pattern, split = "\t")
     runs <- read.table(file, header=FALSE, nrow=1, sep = "\t", quote = "",
                        stringsAsFactors = FALSE, comment.char = "")[colInt]
   }
@@ -70,7 +73,7 @@ init_ann_Excel <- function(file, filetype, savepath = NULL, output_name = "exper
     colInt <- beginInt:endInt
     runs <- read.table(file, header=FALSE, nrow=1, sep = ",", quote = "\\\"", na.strings = "", skip=(header.index-1),
                        stringsAsFactors = FALSE, comment.char = "")[colInt]
-    } else{
+  } else{
     stop("\"filetype\" argment should be one of: \"MaxQuant\", \"moFF\", \"mzTab\" or \"Progenesis\"!")
   }
   
@@ -89,6 +92,7 @@ init_ann_Excel <- function(file, filetype, savepath = NULL, output_name = "exper
   
   openxlsx::write.xlsx(run_column, file = file.path(savepath, paste0(output_name,".xlsx")), colNames = TRUE, rowNames = FALSE)
 }
+
 #' Create an annotation data frame
 #'
 #' @description Creates an annotation data frame based on either an existing annotation data frame or a path to a file which contains the experiment annotation.  Annotation in a file can be both a tab-delimited text document or an Excel file. For more details, see \code{\link[utils]{read.table}} and \code{\link[openxlsx]{read.xlsx}}. As an error protection measurement, leading and trailing spaces in each column are trimmed off.
