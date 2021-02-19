@@ -104,6 +104,10 @@ import2MSnSet <- function(file, filetype, remove_pattern = NA, shiny = FALSE, me
       firstLine <- read.table(file, sep=",", nrows=1)
       endInts <- c(which(!is.na(firstLine))-1,length(firstLine))
       beginInt <- which(firstLine == "Normalized abundance" | firstLine == "Raw abundance")
+      # If both "Normalized abundance" and "Raw abundance" are there, pick normalized abundance
+      if(length(beginInt) > 1){
+         beginInt <- which(firstLine == "Normalized abundance")
+      }
       endInt <- endInts[which(endInts>beginInt)[1]]
 
       ### Determine the header line ###
@@ -111,7 +115,7 @@ import2MSnSet <- function(file, filetype, remove_pattern = NA, shiny = FALSE, me
       is.header.line <- rep(FALSE, nrow(full.file))
 
       for(header.index in 1:nrow(full.file)){
-        is.header.line[header.index] <- ("Protein" %in% full.file[header.index,]) & ("Sequence" %in% full.file[header.index,])
+        is.header.line[header.index] <- (("Protein" %in% full.file[header.index,]) | ("Accession" %in% full.file[header.index,])) & ("Sequence" %in% full.file[header.index,])
         if(is.header.line[header.index]){
           break
         }
