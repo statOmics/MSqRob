@@ -2,6 +2,9 @@
 
 Robust statistical inference for quantitative LC-MS proteomics.
 
+## IMPORTANT THE PACKAGE IS NO LONGER MAINTAINED ==> [msqrob2](https://www.bioconductor.org/packages/release/bioc/html/msqrob2.html)
+All functionalities are ported to our novel bioconductor tool [msqrob2](https://www.bioconductor.org/packages/release/bioc/html/msqrob2.html)
+
 The MSqRob package allows a user to do quantitative protein-level statistical inference on LC-MS proteomics data. More specifically, our package makes use of peptide-level input data, thus correcting for unbalancedness and peptide-specific biases. As previously shown (Goeminne et al. (2015)), this approach is both more sensitive and specific than summarizing peptide-level input to protein-level values. Model estimates are stabilized by ridge regression, empirical Bayes variance estimation and downweighing of outliers. Currently, only label-free proteomics data types are supported.
 
 The MSqRob Shiny App allows for an easy-to-use graphical user interface that requires no programming skills. Interactive plots are outputted and results are automatically exported to Excel.
