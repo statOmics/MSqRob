@@ -36,10 +36,14 @@ init_ann_Excel <- function(file, filetype, savepath = NULL, output_name = "exper
     #mzTab
   } else if(filetype=="mzTab"){
     if(is.na(pattern)){pattern <- "peptide_abundance_study_variable"}
-    colInt <- MSnbase::grepEcols(file, pattern = pattern, split = "\t")
+  
+    tmp.lines <- readLines(con=file)
+    skip <- (which(grepl(pattern, tmp.lines))-1)[1]
+    colInt <- grep(pattern, strsplit(tmp.lines[(skip+1)], split = "\t")[1][[1]])
+
     runs <- read.table(file, header=FALSE, nrow=1, sep = "\t", quote = "",
-                       stringsAsFactors = FALSE, comment.char = "")[colInt]
-  }
+                     stringsAsFactors = FALSE, comment.char = "", skip = skip)[colInt]
+}
   #Progenesis
   else if(filetype=="Progenesis"){
     

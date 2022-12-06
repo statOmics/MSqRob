@@ -156,7 +156,14 @@ shinyServer(function(input, output, session) {
         a <- gsub("^\\\"","",test)
         b <- gsub("\\\"$","",a)
         make.names(b)
-      } else{
+     } else if(input$input_type=="mzTab"){
+      
+        tmp.lines <- readLines(con=peptidesDatapath())
+        skip <- (which(grepl("peptide_abundance_study_variable", tmp.lines))-1)[1]
+ 
+        make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="", comment.char = "", skip = skip))))
+      
+    } else{
         make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="", comment.char = ""))))
       }
     }
