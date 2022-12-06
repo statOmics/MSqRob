@@ -15,42 +15,42 @@
 #' @return An object of class \code{\link[=MSnSet-class]{MSnSet}}.
 #' @references Gatto L, Lilley KS. MSnbase - an R/Bioconductor package for isobaric tagged mass spectrometry data visualization, processing and quantitation. Bioinformatics. 2012 Jan 15;28(2):288-9. \url{https://doi.org/10.1093/bioinformatics/btr645}.
 #' @export
-read2MSnSet <- function(file, pattern=NULL, colInt=NULL, remove_pattern=FALSE, sep="\t", na.strings = NULL, quote = "", comment.char = "", shiny=FALSE ,  message=NULL, ...)
+read2MSnSet <- function (file, pattern = NULL, colInt = NULL, remove_pattern = FALSE, 
+          sep = "\t", na.strings = NULL, quote = "", comment.char = "",
+          shiny = FALSE, message = NULL, ...) 
 {
-
-  if(is.null(pattern) && is.null(colInt)){stop("Please specify either a valid \"pattern\" or a valid \"colInt\" argument.")}
-
+  if (is.null(pattern) && is.null(colInt)) {
+    stop("Please specify either a valid \"pattern\" or a valid \"colInt\" argument.")
+  }
   progress <- NULL
-  if(isTRUE(shiny)){
-    # Create a Progress object
+  if (isTRUE(shiny)) {
     progress <- shiny::Progress$new()
-
-    # Make sure it closes when we exit this reactive, even if there's an error
     on.exit(progress$close())
     progress$set(message = message, value = 0)
   }
-
-  if(is.null(colInt)){
-  colInt <- MSnbase::grepEcols(file, pattern=pattern, split = sep)
+  if (is.null(colInt)) {
+    colInt <- MSnbase::grepEcols(file, pattern = pattern, split = sep)
+  } 
+  skip <- 0
+  # colInt == integer(0) if the pattern cannot be found on the first line; in that case we look further in the file.
+  if(length(colInt) == 0){
+    tmp.lines <- readLines(con=file)
+    skip <- (which(grepl(pattern, tmp.lines))-1)[1]
+    colInt <- grep(pattern, strsplit(tmp.lines[(skip+1)], split = sep)[1][[1]])
   }
-  peptides <- MSnbase::readMSnSet2(file, ecol = colInt, sep = sep, na.strings = na.strings, quote = quote, comment.char = comment.char, stringsAsFactors = TRUE, ...)
-
-  if(isTRUE(remove_pattern) && !is.null(pattern)){
-
-    #Only now call make.names
+  peptides <- MSnbase::readMSnSet2(file, ecol = colInt, sep = sep, 
+                                   na.strings = na.strings, quote = quote, comment.char = comment.char, 
+                                   stringsAsFactors = TRUE, skip = skip, ...)
+  if (isTRUE(remove_pattern) && !is.null(pattern)) {
     pattern <- make.names(pattern, unique = TRUE)
-
-    #Remove pattern from colnames of exprs
     exprs <- Biobase::exprs(peptides)
     pData <- Biobase::pData(peptides)
-    colnames(exprs) <- make.names(gsub(pattern,"",colnames(exprs)), unique = TRUE)
-    rownames(pData) <- make.names(gsub(pattern,"",rownames(pData)), unique = TRUE)
-
-    #Biobase::sampleNames(Biobase::protocolData(peptides)) <- rownames(pData)
-    #Biobase::pData(peptides) <- pData
-    #Biobase::exprs(peptides) <- exprs
-
-    peptides <- MSnbase::MSnSet(exprs=exprs, fData=Biobase::fData(peptides), pData=pData)
+    colnames(exprs) <- make.names(gsub(pattern, "", 
+                                       colnames(exprs)), unique = TRUE)
+    rownames(pData) <- make.names(gsub(pattern, "", 
+                                       rownames(pData)), unique = TRUE)
+    peptides <- MSnbase::MSnSet(exprs = exprs, fData = Biobase::fData(peptides), 
+                                pData = pData)
   }
   return(peptides)
 }
