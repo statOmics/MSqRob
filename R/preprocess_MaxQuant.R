@@ -578,7 +578,7 @@ aggregateMSnSet <- function(MSnSet, aggr_by, aggr_function="sum", split, shiny=F
       updateProgress(progress=progress2, detail=paste0("Aggregating peptide ",i," of ",n,"."), n=n, shiny=shiny, print=isTRUE(printProgress))
       tmp <- fData[MSqRob_ID==uniqueIDs[i], , drop=FALSE]
       fData2[i,] <- apply(tmp, 2, function(x){paste0(unique(x), collapse = split)})
-      exprs2[i,] <- apply(exprs[MSqRob_ID==uniqueIDs[i], , drop=FALSE],2,aggr_function)
+      exprs2[i,] <- apply(exprs[MSqRob_ID==uniqueIDs[i], , drop=FALSE],2,aggr_function, na.rm = TRUE)
 
     }
 
