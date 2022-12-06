@@ -160,12 +160,8 @@ shinyServer(function(input, output, session) {
       
         tmp.lines <- readLines(con=peptidesDatapath())
         skip <- (which(grepl("peptide_abundance_study_variable", tmp.lines))-1)[1]
-        colInt <- grep("peptide_abundance_study_variable", strsplit(tmp.lines[(skip+1)], split = sep)[1][[1]])
-      
-        test <- read.table(peptidesDatapath(), sep=",", skip=skip, nrows=1, quote="\\\"", comment.char = "", stringsAsFactors = FALSE)
-        a <- gsub("^\\\"","",test)
-        b <- gsub("\\\"$","",a)
-        make.names(b)
+ 
+        make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="", comment.char = "", skip = skip))))
       
     } else{
         make.names(as.vector(as.matrix(read.table(peptidesDatapath(), nrows=1, sep="\t", quote="", comment.char = ""))))
